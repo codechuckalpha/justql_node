@@ -264,23 +264,18 @@
 
 /* Main content area */
 .main-content {
-    flex: 1;
-    background: #1e1e1e;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #cccccc;
-    font-size: 14px;
-    overflow-y: auto;
-    width: 100vw;
+  /*
+  
+  */
 }
 
-.content-container {
-    display: flex;
-    position: absolute;
-    top: 44px; /* Header height */
-    bottom: 0;
-    left: 0;
-    right: 0;
+/* Adjust main content when sidebar is expanded */
+.sidebar-container:not(.collapsed) ~ .main-content {
+    padding-left: 300px; /* Adjust left padding for expanded sidebar */
 
 }
+#sql-query-section, #data-table-section, #data-analysis-section {
+  width: 100%; /* Make inner sections fill the available width of the main-content padding */
+  box-sizing: border-box; /* Include padding in the element's total width */
+}
+
