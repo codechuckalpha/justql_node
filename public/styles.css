@@ -102,6 +102,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+
 /* Icon Bar */
 .icon-bar {
     width: 60px;
@@ -266,10 +267,12 @@
 
 .main-content {
   margin-top: 60px;
+  margin-left: 60px;
   background: #f0f0f0; /*#0f0f0f;*/
 }
 .grid-stack {
-  margin-top: 70px;
+  margin-top: 60px;
+  
 }
 
 /* Adjust main content when sidebar is expanded */
@@ -281,10 +284,7 @@
   /* Make inner sections fill the available width of the main-content padding */
   box-sizing: border-box; /* Include padding in the element's total width */
 }
-/* Grid Stack Items */
-.grid-stack {
-  
-}
+
 .grid-stack-item-content {
   background: #f0f0f0; /*#2d2d30;*/
   border: 1px solid #ccc;
