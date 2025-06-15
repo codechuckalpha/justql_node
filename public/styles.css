@@ -280,22 +280,22 @@
 }
 /* Grid Stack Items */
 .grid-stack {
-  background: #f0f0f0;
+  background: #0f0f0f;/*#f0f0f0;*/
   height: 100vh;
 }
 .grid-stack-item-content {
-  background: white;
+  background: #2d2d30; /*#f0f0f0;*/
   border: 1px solid #ccc;
   padding: 10px;
   font-family: Arial, sans-serif;
   overflow: auto;
 }
 .text-input {
-  background-color: #e0f7fa;
+  background-color: #2d2d30; 
 }
 .data-table {
-  background-color: #fff3e0;
+  background-color: #2d2d30; 
 }
 .chart-div {
-  background-color: #ede7f6;
+  background-color: #2d2d30; 
 }
