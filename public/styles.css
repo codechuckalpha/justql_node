@@ -266,25 +266,27 @@
 
 .main-content {
   margin-top: 60px;
+  background: #f0f0f0; /*#0f0f0f;*/
 }
-
+.grid-stack {
+  margin-top: 70px;
+}
 
 /* Adjust main content when sidebar is expanded */
 .sidebar-container:not(.collapsed) ~ .main-content {
-    padding-left: 300px; /* Adjust left padding for expanded sidebar */
-
+    padding-left: 240px; /* Adjust left padding for expanded sidebar */
 }
+
 #sql-query-section, #data-table-section, #data-analysis-section {
-  width: 100%; /* Make inner sections fill the available width of the main-content padding */
+  /* Make inner sections fill the available width of the main-content padding */
   box-sizing: border-box; /* Include padding in the element's total width */
 }
 /* Grid Stack Items */
 .grid-stack {
-  background: #0f0f0f;/*#f0f0f0;*/
-  height: 100vh;
+  
 }
 .grid-stack-item-content {
-  background: #2d2d30; /*#f0f0f0;*/
+  background: #f0f0f0; /*#2d2d30;*/
   border: 1px solid #ccc;
   padding: 10px;
   font-family: Arial, sans-serif;
