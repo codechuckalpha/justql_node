@@ -264,11 +264,11 @@
 }
 
 /* Main content area */
-
 .main-content {
   margin-top: 60px;
   margin-left: 60px;
   background: #1a1a1a; /*#0f0f0f;*/
+  height: 100vh;
 }
 .grid-stack {
   margin-top: 80px;
@@ -287,7 +287,6 @@
 
 
 .grid-stack-item-content {
-  background: #f0f0f0; /*#2d2d30;*/
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 2px;
   padding: 0px;
