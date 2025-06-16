@@ -291,38 +291,41 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
   padding: 10px;
-  font-family: Arial, sans-serif;
+  font-size: 13px;
   overflow: auto;
 }
 
 .text-input {
   background-color: #2d2d30; 
   color: #cccccc;
+  
 }
 .text-input input {
   background-color: #1a1a1a;
   color: #ffffff;
-  padding: 8px;
+  padding: 4px;
   border-radius: 4px;
   width: 100%;
-  margin-top: 8px;
+  margin-top: 4px;
+  font-size: 13px;  
 }
 .data-table {
   background-color: #2d2d30; 
   color: #cccccc;
+
 }
 .data-table table {
   color: #cccccc;
   border-collapse: collapse;
+  border-radius: 14px;
 }
 .data-table th, .data-table td {
-  background-color: #1a1a1a;
+  text-align: left;
+  background-color: #0f0f0f;
   border: 1px solid #333;
-  padding: 8px;
+  padding-left: 10px;
 }
-.data-table th {
-  background-color: #333;
-}
+
 .chart-div {
   background-color: #2d2d30; 
   color: #cccccc;
