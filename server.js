@@ -1,10 +1,16 @@
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+};
 const express = require('express');
-const path = require('path')
+const path = require('path');
 const mysql = require('mysql');
 
 const app = express();
 
-const port = parseInt(process.env.PORT) || process.argv[3] || 8080;
+const port = process.argv[3] || process.env.PORT;
+
+// Middleware to parse JSON request bodies
+app.use(express.json()); // <--- ADD THIS LINE
 
 app.use(express.static(path.join(__dirname, 'public')))
   .set('views', path.join(__dirname, 'views'))
@@ -14,27 +20,42 @@ app.get('/', (req, res) => {
   res.render('index');
 });
 
-const pool = mysql.createPool({
-  host: process.env.MYSQL_HOST,
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DB
-});
+const isProduction = process.env.NODE_ENV === 'production';
+
+const dbConfig = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+};
+
+if (isProduction) {
+  dbConfig.socketPath = `/cloudsql/${process.env.CLOUD_SQL_CONNECTION_NAME}`;
+} else {
+  dbConfig.host = process.env.DB_HOST;
+}
+const pool = mysql.createPool(dbConfig);
 
 app.post('/run-query', (req, res) => {
-  const query = req.body.query;
+  // Ensure the query is extracted correctly from the request body
+  const query = req.body.sql; // <--- MAKE SURE YOU ARE ACCESSING 'sql' not 'query'
+
+  if (!query) {
+    return res.status(400).json({ error: 'SQL query is missing from the request body.' });
+  }
 
   pool.getConnection((err, connection) => {
     if (err) {
       console.error('Error getting database connection:', err);
-      return res.status(500).json({ error: 'Database connection error' });
+      // In a production environment, avoid sending raw database errors to the client
+      return res.status(500).json({ error: 'Database connection error', details: err.message });
     }
 
     connection.query(query, (error, results, fields) => {
       connection.release();
       if (error) {
         console.error('Error executing query:', error);
-        return res.status(500).json({ error: 'Error executing query' });
+        // Similarly, refine error messages for production
+        return res.status(500).json({ error: 'Error executing query', details: error.message });
       }
       res.json({ results });
     });
@@ -43,4 +64,4 @@ app.post('/run-query', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Listening on http://localhost:${port}`);
-})
+});

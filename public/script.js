@@ -60,7 +60,7 @@
             runButton.addEventListener('click', async () => {
                 const sqlQuery = sqlTextarea.value;
                 try {
-                    const response = await fetch('/execute-sql', {
+                    const response = await fetch('/run-query', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ sql: sqlQuery })
