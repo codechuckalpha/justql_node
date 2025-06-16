@@ -141,20 +141,17 @@
               </div>
           </div>
       </div>
-
-      
-
   </div>
   
   <div class="main-content">
     <div class="grid-stack" >
-      <div class="grid-stack-item" gs-w="12" gs-h="2">
+      <div class="grid-stack-item" gs-w="12" gs-h="2" id="sql-editor-item">
         <div class="grid-stack-item-content rounded-xl p-4 shadow-md text-input" gs-w="8" gs-h="2">
-          <h3>Query Input</h3>
-          <input type="text" placeholder="select * from..."/>
+          <h3>SQL Query Editor</h3>
+          <textarea id="sql-textarea" placeholder="SELECT * FROM users WHERE...&#10;-- Write your SQL query here&#10;-- Use multiple lines for complex queries"></textarea>
         </div>
       </div>
-      <div class="grid-stack-item" gs-w="12" gs-h="4" id="data-table-section">
+      <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-table-section">
         <div class="grid-stack-item-content rounded-xl p-4 shadow-md data-table">
           <h3>Data Table</h3>
           <table border="1" width="100%">
@@ -165,7 +162,7 @@
           </table>
         </div>
       </div>
-      <div class="grid-stack-item" gs-w="12" gs-h="4" id="data-analysis-section">
+      <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-analysis-section">
         <div class="grid-stack-item-content rounded-xl p-4 shadow-md chart-div">
           <h3>Chart</h3>
           <h3>Data Visualization</h3>
@@ -188,7 +185,97 @@
       cellHeight: 80,
       disableResize: false
     });
+
+// Add textarea resize functionality
+const textarea = document.getElementById('sql-textarea');
+    const gridItem = document.getElementById('sql-editor-item');
+    
+    if (textarea && gridItem) {
+      // Store original dimensions
+      let originalHeight = textarea.offsetHeight;
+      
+      // Create a ResizeObserver to watch for textarea size changes
+      const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+          const newHeight = entry.contentRect.height;
+          const heightDiff = newHeight - originalHeight;
+          
+          // Calculate how many grid units to add (each unit is ~80px)
+          const gridUnitsToAdd = Math.floor(heightDiff / 80);
+          
+          if (gridUnitsToAdd > 0) {
+            // Get current grid item height
+            const currentGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
+            const newGridHeight = currentGridHeight + gridUnitsToAdd;
+            
+            // Update the grid item height
+            grid.update(gridItem, {h: newGridHeight});
+            
+            // Update our reference height
+            originalHeight = newHeight;
+          } else if (gridUnitsToAdd < 0 && heightDiff < -40) {
+            // Allow shrinking too, but with some threshold
+            const currentGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
+            const newGridHeight = Math.max(2, currentGridHeight + gridUnitsToAdd);
+            
+            if (newGridHeight !== currentGridHeight) {
+              grid.update(gridItem, {h: newGridHeight});
+              originalHeight = newHeight;
+            }
+          }
+        }
+      });
+      
+      // Start observing the textarea
+      resizeObserver.observe(textarea);
+      
+      // Alternative approach using mouse events for more immediate feedback
+      let isResizing = false;
+      let startHeight = 0;
+      let startGridHeight = 0;
+      
+      textarea.addEventListener('mousedown', function(e) {
+        // Check if clicking near the bottom-right corner (resize handle)
+        const rect = textarea.getBoundingClientRect();
+        const isNearBottomRight = (
+          e.clientX > rect.right - 20 && 
+          e.clientY > rect.bottom - 20
+        );
+        
+        if (isNearBottomRight) {
+          isResizing = true;
+          startHeight = textarea.offsetHeight;
+          startGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
+          
+          document.addEventListener('mousemove', handleMouseMove);
+          document.addEventListener('mouseup', handleMouseUp);
+        }
+      });
+      
+      function handleMouseMove(e) {
+        if (!isResizing) return;
+        
+        // Calculate height difference
+        const currentHeight = textarea.offsetHeight;
+        const heightDiff = currentHeight - startHeight;
+        const gridUnitsToAdd = Math.floor(heightDiff / 60); // Slightly more sensitive
+        
+        if (Math.abs(gridUnitsToAdd) > 0) {
+          const newGridHeight = Math.max(2, startGridHeight + gridUnitsToAdd);
+          grid.update(gridItem, {h: newGridHeight});
+        }
+      }
+      
+      function handleMouseUp() {
+        isResizing = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      }
+    }
+
   });
+
+  
 </script>
 
 </body>

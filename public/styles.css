@@ -300,14 +300,18 @@
   color: #cccccc;
   
 }
-.text-input input {
+.text-input textarea {
   background-color: #1a1a1a;
-  color: #ffffff;
   padding: 4px;
   border-radius: 4px;
   width: 100%;
   margin-top: 4px;
   font-size: 13px;  
+}
+.text-input textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
 }
 .data-table {
   background-color: #2d2d30; 
