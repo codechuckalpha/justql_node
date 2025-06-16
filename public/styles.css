@@ -285,20 +285,45 @@
   box-sizing: border-box; /* Include padding in the element's total width */
 }
 
+
 .grid-stack-item-content {
   background: #f0f0f0; /*#2d2d30;*/
-  border: 1px solid #ccc;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
   padding: 10px;
   font-family: Arial, sans-serif;
   overflow: auto;
 }
+
 .text-input {
   background-color: #2d2d30; 
-  color: red;
+  color: #cccccc;
+}
+.text-input input {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  padding: 8px;
+  border-radius: 4px;
+  width: 100%;
+  margin-top: 8px;
 }
 .data-table {
   background-color: #2d2d30; 
+  color: #cccccc;
+}
+.data-table table {
+  color: #cccccc;
+  border-collapse: collapse;
+}
+.data-table th, .data-table td {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  padding: 8px;
+}
+.data-table th {
+  background-color: #333;
 }
 .chart-div {
   background-color: #2d2d30; 
+  color: #cccccc;
 }

@@ -150,24 +150,29 @@
     <div class="grid-stack" >
       <div class="grid-stack-item" gs-w="12" gs-h="2">
         <div class="grid-stack-item-content rounded-xl p-4 shadow-md text-input" gs-w="8" gs-h="2">
-          <h3>Text Input</h3>
-          <input type="text" placeholder="Type something..."/>
+          <h3>Query Input</h3>
+          <input type="text" placeholder="select * from..."/>
         </div>
       </div>
       <div class="grid-stack-item" gs-w="12" gs-h="4" id="data-table-section">
         <div class="grid-stack-item-content rounded-xl p-4 shadow-md data-table">
           <h3>Data Table</h3>
           <table border="1" width="100%">
-            <tr><th>ID</th><th>Name</th></tr>
-            <tr><td>1</td><td>Alice</td></tr>
-            <tr><td>2</td><td>Bob</td></tr>
+            <tr><th>ID</th><th>Name</th><th>Email</th><th>Department</th></tr>
+            <tr><td>1</td><td>Alice Johnson</td><td>alice@company.com</td><td>Engineering</td></tr>
+            <tr><td>2</td><td>Bob Smith</td><td>bob@company.com</td><td>Marketing</td></tr>
+            <tr><td>3</td><td>Carol Davis</td><td>carol@company.com</td><td>Sales</td></tr>
           </table>
         </div>
       </div>
       <div class="grid-stack-item" gs-w="12" gs-h="4" id="data-analysis-section">
         <div class="grid-stack-item-content rounded-xl p-4 shadow-md chart-div">
           <h3>Chart</h3>
-          <p>[Chart Placeholder]</p>
+          <h3>Data Visualization</h3>
+          <div style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;">
+            <p>📊 Chart visualization will appear here</p>
+            <p style="font-size: 12px; margin-top: 10px; color: #888;">Charts will be generated based on your query results</p>
+          </div>
         </div>
       </div>
 
