@@ -25,20 +25,7 @@
           </div>
         </div>
         <div class="header-right">
-          <button class="header-button">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-              <path d="M224,128A96,96,0,1,1,128,32,96,96,0,0,1,224,128Z" opacity="0.2"/>
-              <path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/>
-            </svg>
-            Execute
-          </button>
-          <button class="header-button">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-              <path d="M224,56V200a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V56A16,16,0,0,1,48,40H208A16,16,0,0,1,224,56Z" opacity="0.2"/>
-              <path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/>
-            </svg>
-            Save
-          </button>
+          
           <button class="header-button">
             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
               <path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/>
@@ -147,7 +134,14 @@
     <div class="grid-stack" >
       <div class="grid-stack-item" gs-w="12" gs-h="2" id="sql-editor-item">
         <div class="grid-stack-item-content  p-4 shadow-md text-input" gs-w="8" gs-h="2">
-          <h3>📝 Query Editor</h3>
+          <h3 class="flex items-center justify-between">
+            📝 Query Editor
+            <div class="flex space-x-2">
+              <button class="header-query">💾</button>
+              <button class="header-query">🛑</button>
+               <button class="header-query">▶</button>
+            </div>
+          </h3>
           <textarea id="sql-textarea" placeholder="SELECT * FROM users WHERE...&#10;-- Write your SQL query here&#10;-- Use multiple lines for complex queries"></textarea>
         </div>
       </div>
