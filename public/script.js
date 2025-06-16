@@ -53,4 +53,24 @@
             }
         });
 
+        const runButton = document.getElementById('run-button');
+        const sqlTextarea = document.getElementById('sql-textarea');
+
+        if (runButton && sqlTextarea) {
+            runButton.addEventListener('click', async () => {
+                const sqlQuery = sqlTextarea.value;
+                try {
+                    const response = await fetch('/execute-sql', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ sql: sqlQuery })
+                    });
+                    const data = await response.json();
+                    console.log(data); // Log the response from the server
+                } catch (error) {
+                    console.error('Error executing SQL:', error);
+                }
+            });
+        }
+
         
