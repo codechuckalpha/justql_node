@@ -72,5 +72,21 @@
                 }
             });
         }
-
         
+
+        // To handle tab presses when typing sql queries
+        sqlTextarea.addEventListener('keydown', function(event) {
+            if (event.key === 'Tab') {
+              event.preventDefault(); // Prevent default tab behavior
+          
+              const start = this.selectionStart;
+              const end = this.selectionEnd;
+              const value = this.value;
+          
+              // Insert a tab character at the current cursor position
+              this.value = value.substring(0, start) + '\t' + value.substring(end);
+          
+              // Move the cursor to after the inserted tab
+              this.selectionStart = this.selectionEnd = start + 1;
+            }
+          });
