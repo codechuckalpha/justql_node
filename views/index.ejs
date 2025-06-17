@@ -167,7 +167,7 @@
 </div>
       
 
-      <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-analysis-section">
+      <div class="grid-stack-item" gs-w="12" gs-h="3">
         <div class="grid-stack-item-content  p-4 shadow-md chart-div">
           <h3>📊 Data Visualization</h3>
           <div style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;">
@@ -177,10 +177,23 @@
         </div>
       </div>
 
+      <div class="grid-stack-item" gs-w="12" gs-h="8" id="data-analysis-section">
+        <div class="grid-stack-item-content rounded-xl p-4 shadow-md chart-div">
+          <h3>📊 Data Visualization</h3>
+          <div id="chart-container" style="width: 100%; height: 200px;">
+            <div style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;" id="chart-placeholder">
+              <p>Chart visualization will appear here</p>
+              <p style="font-size: 12px; margin-top: 10px; color: #888;">Charts will be generated based on your query results</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
   
 <script src="/script.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gridstack@9.2.1/dist/gridstack-all.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
@@ -189,6 +202,46 @@
       cellHeight: 80,
       disableResize: false
     });
+
+    // Add this to your DOMContentLoaded event listener
+// Add this to your DOMContentLoaded event listener, after grid initialization
+grid.on('resizestart', function(event, el) {
+  // Disable Plotly interactions during resize
+  const plotlyDiv = el.querySelector('.plotly-graph-div');
+  if (plotlyDiv) {
+    plotlyDiv.style.pointerEvents = 'none';
+  }
+});
+
+grid.on('resizestop', function(event, el) {
+  // Re-enable Plotly interactions after resize
+  const plotlyDiv = el.querySelector('.plotly-graph-div');
+  if (plotlyDiv) {
+    plotlyDiv.style.pointerEvents = 'auto';
+    // Resize the chart to fit new container
+    if (el.id === 'data-analysis-section') {
+      setTimeout(() => {
+        Plotly.Plots.resize('chart-container');
+      }, 100);
+    }
+  }
+});
+
+grid.on('dragstart', function(event, el) {
+  // Disable Plotly interactions during drag
+  const plotlyDiv = el.querySelector('.plotly-graph-div');
+  if (plotlyDiv) {
+    plotlyDiv.style.pointerEvents = 'none';
+  }
+});
+
+grid.on('dragstop', function(event, el) {
+  // Re-enable Plotly interactions after drag
+  const plotlyDiv = el.querySelector('.plotly-graph-div');
+  if (plotlyDiv) {
+    plotlyDiv.style.pointerEvents = 'auto';
+  }
+});
 
 // Add textarea resize functionality
 const textarea = document.getElementById('sql-textarea');
@@ -299,7 +352,7 @@ const textarea = document.getElementById('sql-textarea');
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ sql: query }), // Changed to 'sql'
+    body: JSON.stringify({ sql: query }),
   })
   .then(response => {
     if (!response.ok) {
@@ -311,33 +364,39 @@ const textarea = document.getElementById('sql-textarea');
     errorMessageParagraph.textContent = ''; // Clear error message
     
     if (data.results && data.results.length > 0) {
-  //let tableHTML = '<h3>📑 Data Table</h3>';
-  //ableHTML += '<div class="table-wrapper"><table border="1">';
-  let tableHTML = '<table border="1">';
-
-  // Add headers
-  const headers = Object.keys(data.results[0]);
-  tableHTML += '<thead><tr>';
-  headers.forEach(header => {
-    tableHTML += `<th>${header}</th>`;
-  });
-  tableHTML += '</tr></thead>';
-
-  // Add data rows
-  tableHTML += '<tbody>';
-  data.results.forEach(row => {
-    tableHTML += '<tr>';
-    headers.forEach(header => {
-      tableHTML += `<td>${row[header] || ''}</td>`;
-    });
-    tableHTML += '</tr>';
-  });
-  tableHTML += '</tbody></table></div>';
-
-  dataTable.innerHTML = tableHTML;
-} else {
-  dataTable.innerHTML = '<h3>📑 Data Table</h3><p>Query executed successfully but returned no results.</p>';
-}
+      // Build table (your existing code)
+      let tableHTML = '<table border="1">';
+      
+      // Add headers
+      const headers = Object.keys(data.results[0]);
+      tableHTML += '<thead><tr>';
+      headers.forEach(header => {
+        tableHTML += `<th>${header}</th>`;
+      });
+      tableHTML += '</tr></thead>';
+      
+      // Add data rows
+      tableHTML += '<tbody>';
+      data.results.forEach(row => {
+        tableHTML += '<tr>';
+        headers.forEach(header => {
+          tableHTML += `<td>${row[header] || ''}</td>`;
+        });
+        tableHTML += '</tr>';
+      });
+      tableHTML += '</tbody></table>';
+      
+      dataTable.innerHTML = tableHTML;
+      
+      // ADD THIS LINE: Generate chart with the same data
+      generateChart(data.results);
+      
+    } else {
+      dataTable.innerHTML = '<h3>📑 Data Table</h3><p>Query executed successfully but returned no results.</p>';
+      
+      // ADD THIS LINE: Clear chart when no results
+      clearChart();
+    }
   })
   .catch((error) => {
     console.error('Error:', error);
@@ -348,8 +407,188 @@ const textarea = document.getElementById('sql-textarea');
     } else {
       errorMessageParagraph.textContent = `Error: ${error.message || 'Unknown error occurred'}`;
     }
+    
+    // ADD THIS LINE: Clear chart on error
+    clearChart();
   });
 });
+function generateChart(results) {
+  const chartContainer = document.getElementById('chart-container');
+  const chartPlaceholder = document.getElementById('chart-placeholder');
+  
+  if (results.length === 0) {
+    clearChart();
+    return;
+  }
+  
+  // Hide placeholder
+  if (chartPlaceholder) chartPlaceholder.style.display = 'none';
+  
+  // Get all columns
+  const columns = Object.keys(results[0]);
+  
+  if (columns.length >= 3) {
+    // Default structure: col1=x-axis, col2=grouping, col3=y-axis
+    createMultiLineChart(results, columns[0], columns[1], columns[2], chartContainer);
+  } else if (columns.length === 2) {
+    // Fallback: simple line chart with col1=x, col2=y
+    createSimpleLineChart(results, columns[0], columns[1], chartContainer);
+  } else {
+    // Fallback: count chart for single column
+    createCountChart(results, columns[0], chartContainer);
+  }
+}
+
+function createMultiLineChart(results, xColumn, groupColumn, yColumn, container) {
+  // Group data by the grouping column
+  const groupedData = {};
+  
+  results.forEach(row => {
+    const groupValue = row[groupColumn];
+    if (!groupedData[groupValue]) {
+      groupedData[groupValue] = [];
+    }
+    groupedData[groupValue].push({
+      x: row[xColumn],
+      y: parseFloat(row[yColumn]) || 0
+    });
+  });
+  
+  // Create traces for each group
+  const traces = Object.keys(groupedData).map((groupName, index) => {
+    // Sort by x-axis for proper line connection
+    const sortedData = groupedData[groupName].sort((a, b) => {
+      if (typeof a.x === 'string' && typeof b.x === 'string') {
+        return a.x.localeCompare(b.x);
+      }
+      return a.x - b.x;
+    });
+    
+    return {
+      x: sortedData.map(d => d.x),
+      y: sortedData.map(d => d.y),
+      type: 'scatter',
+      mode: 'lines+markers',
+      name: groupName,
+      line: {
+        color: getLineColor(index),
+        width: 2
+      },
+      marker: {
+        size: 6,
+        color: getLineColor(index)
+      }
+    };
+  });
+  
+  const layout = {
+    title: `${yColumn} by ${xColumn} (grouped by ${groupColumn})`,
+    paper_bgcolor: '#2d2d30',
+    plot_bgcolor: '#1a1a1a',
+    font: { color: '#cccccc' },
+    xaxis: { 
+      title: xColumn,
+      color: '#cccccc',
+      gridcolor: '#404040'
+    },
+    yaxis: { 
+      title: yColumn,
+      color: '#cccccc',
+      gridcolor: '#404040'
+    },
+    legend: {
+      font: { color: '#cccccc' },
+      bgcolor: 'rgba(45, 45, 48, 0.8)',
+      bordercolor: '#333',
+      borderwidth: 1
+    }
+  };
+  
+  const config = {
+    responsive: true,
+    displayModeBar: true,
+    modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
+    // Add these to prevent interference with GridStack
+    scrollZoom: false,
+    doubleClick: false,
+    showTips: false,
+    staticPlot: false
+  };
+  
+  Plotly.newPlot(container, traces, layout, config);
+}
+
+function createSimpleLineChart(results, xColumn, yColumn, container) {
+  // Sort data by x-axis
+  const sortedResults = [...results].sort((a, b) => {
+    if (typeof a[xColumn] === 'string' && typeof b[xColumn] === 'string') {
+      return a[xColumn].localeCompare(b[xColumn]);
+    }
+    return a[xColumn] - b[xColumn];
+  });
+  
+  const trace = {
+    x: sortedResults.map(row => row[xColumn]),
+    y: sortedResults.map(row => parseFloat(row[yColumn]) || 0),
+    type: 'scatter',
+    mode: 'lines+markers',
+    name: yColumn,
+    line: {
+      color: '#6366f1',
+      width: 2
+    },
+    marker: {
+      size: 6,
+      color: '#6366f1'
+    }
+  };
+  
+  const layout = {
+    title: `${yColumn} by ${xColumn}`,
+    paper_bgcolor: '#2d2d30',
+    plot_bgcolor: '#1a1a1a',
+    font: { color: '#cccccc' },
+    xaxis: { 
+      title: xColumn,
+      color: '#cccccc',
+      gridcolor: '#404040'
+    },
+    yaxis: { 
+      title: yColumn,
+      color: '#cccccc',
+      gridcolor: '#404040'
+    }
+  };
+  
+  const config = {
+    responsive: true,
+    displayModeBar: true,
+    // Add these to prevent interference with GridStack
+    scrollZoom: false,
+    doubleClick: false,
+    showTips: false,
+    staticPlot: false
+  };
+  
+  Plotly.newPlot(container, [trace], layout, config);
+}
+
+// Helper function to get different colors for each line
+function getLineColor(index) {
+  const colors = [
+    '#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b',
+    '#ef4444', '#ec4899', '#84cc16', '#f97316', '#6b7280'
+  ];
+  return colors[index % colors.length];
+}
+
+function clearChart() {
+  const chartContainer = document.getElementById('chart-container');
+  const chartPlaceholder = document.getElementById('chart-placeholder');
+  
+  if (chartPlaceholder) chartPlaceholder.style.display = 'block';
+  if (chartContainer) Plotly.purge(chartContainer);
+}
   });
 
 

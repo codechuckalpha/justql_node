@@ -356,4 +356,31 @@
 .chart-div {
   background-color: #2d2d30; 
   color: #cccccc;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-div h3 {
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
+#chart-container {
+  flex: 1;
+  min-height: 150px;
+}
+
+/* Prevent Plotly from interfering with GridStack resize */
+.grid-stack-item.ui-resizable-resizing .plotly-graph-div {
+  pointer-events: none;
+}
+
+.grid-stack-item.ui-draggable-dragging .plotly-graph-div {
+  pointer-events: none;
+}
+
+/* Also disable during any grid interaction */
+.grid-stack.grid-stack-animate .plotly-graph-div {
+  pointer-events: none;
 }
