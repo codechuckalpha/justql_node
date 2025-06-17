@@ -154,9 +154,9 @@
         
         
       <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-table-section">
-  <div class="grid-stack-item-content p-4 shadow-md data-table" id="data-table">
+  <div class="grid-stack-item-content p-4 shadow-md" gs-w="8" gs-h="2"　id="data-table">
     <h3 class="flex items-center justify-between">📑 Data Table</h3>
-    <div class="table-container" id="table-container">
+    <div class="table-wrapper data-table" id="table-wrapper">
       <div style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;" id="table-placeholder">
         <p>Data table will appear here</p>
         <p style="font-size: 12px; margin-top: 10px; color: #888;">Data table will be generated based on your query results</p>
@@ -279,7 +279,7 @@ const textarea = document.getElementById('sql-textarea');
     
   const runButton = document.getElementById('run-button');
   const sqlTextarea = document.getElementById('sql-textarea');
-  const dataTable = document.getElementById('table-container');
+  const dataTable = document.getElementById('table-wrapper');
   const errorDetailsDiv = document.getElementById('error-details'); // Get the new div
   const errorMessageParagraph = errorDetailsDiv.querySelector('.error-message'); // Get the paragraph
 
@@ -313,7 +313,7 @@ const textarea = document.getElementById('sql-textarea');
     if (data.results && data.results.length > 0) {
   //let tableHTML = '<h3>📑 Data Table</h3>';
   //ableHTML += '<div class="table-wrapper"><table border="1">';
-  let tableHTML = '<div class="table-wrapper"><table border="1">';
+  let tableHTML = '<table border="1">';
 
   // Add headers
   const headers = Object.keys(data.results[0]);
