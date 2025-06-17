@@ -320,16 +320,35 @@
 .data-table {
   background-color: #2d2d30; 
   color: #cccccc;
-
+}
+.data-table h3 {
+  margin-bottom: 10px;
+}
+.data-table .table-wrapper {
+  max-height: 400px; /* Or adjust to fit your layout */
+  overflow-y: auto;
 }
 .data-table table {
   color: #cccccc;
   background-color: #1a1a1a;
+  border-spacing: 0;
+  width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
-  border-radius: 2px;
-  margin-top: 4px;
 }
-.data-table th, .data-table td {
+.data-table th {
+  text-align: left;
+  background-color: #0f0f0f;
+  border: 1px solid #333;
+  padding-left: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-sizing: border-box;
+  
+}
+
+.data-table td {
   text-align: left;
   background-color: #0f0f0f;
   border: 1px solid #333;

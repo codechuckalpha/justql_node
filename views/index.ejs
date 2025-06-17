@@ -154,26 +154,17 @@
         
         
       <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-table-section">
-        <div class="grid-stack-item-content  p-4 shadow-md data-table">
-          <h3>📑 Data Table</h3>
-          <table border="1" width="100%">
-            <tr><th>ID</th><th>Name</th><th>Email</th><th>Department</th></tr>
-            <tr><td>1</td><td>Alice Johnson</td><td>alice@company.com</td><td>Engineering</td></tr>
-            <tr><td>2</td><td>Bob Smith</td><td>bob@company.com</td><td>Marketing</td></tr>
-            <tr><td>3</td><td>Carol Davis</td><td>carol@company.com</td><td>Sales</td></tr>
-          </table>
-        </div>
+  <div class="grid-stack-item-content p-4 shadow-md data-table" id="data-table">
+    <h3>📑 Data Table</h3>
+    <div class="table-container">
+      <div style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;" id="table-placeholder">
+        <p>Data table will appear here</p>
+        <p style="font-size: 12px; margin-top: 10px; color: #888;">Data table will be generated based on your query results</p>
       </div>
-      <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-table-section">
-        <div class="grid-stack-item-content  p-4 shadow-md data-table" id="data-table">
-          <h3>📑 Data Table</h3>
-          <div style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;">
-            <p>Data table will appear here</p>
-            <p style="font-size: 12px; margin-top: 10px; color: #888;">Data table will be generated based on your query results</p>
-          </div>
-          <table border="1" width="100%"></table>
-        </div>
-      </div>
+      <table border="1" width="100%" id="results-table" style="display: none;"></table>
+    </div>
+  </div>
+</div>
       
 
       <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-analysis-section">
@@ -320,31 +311,32 @@ const textarea = document.getElementById('sql-textarea');
     errorMessageParagraph.textContent = ''; // Clear error message
     
     if (data.results && data.results.length > 0) {
-      // Build table HTML
-      let tableHTML = '<h3>📑 Data Table</h3><table border="1" width="100%">';
-      
-      // Add headers
-      const headers = Object.keys(data.results[0]);
-      tableHTML += '<tr>';
-      headers.forEach(header => {
-        tableHTML += `<th>${header}</th>`;
-      });
-      tableHTML += '</tr>';
-      
-      // Add data rows
-      data.results.forEach(row => {
-        tableHTML += '<tr>';
-        headers.forEach(header => {
-          tableHTML += `<td>${row[header] || ''}</td>`;
-        });
-        tableHTML += '</tr>';
-      });
-      tableHTML += '</table>';
-      
-      dataTable.innerHTML = tableHTML;
-    } else {
-      dataTable.innerHTML = '<h3>📑 Data Table</h3><p>Query executed successfully but returned no results.</p>';
-    }
+  let tableHTML = '<h3>📑 Data Table</h3>';
+  tableHTML += '<div class="table-wrapper"><table border="1">';
+
+  // Add headers
+  const headers = Object.keys(data.results[0]);
+  tableHTML += '<thead><tr>';
+  headers.forEach(header => {
+    tableHTML += `<th>${header}</th>`;
+  });
+  tableHTML += '</tr></thead>';
+
+  // Add data rows
+  tableHTML += '<tbody>';
+  data.results.forEach(row => {
+    tableHTML += '<tr>';
+    headers.forEach(header => {
+      tableHTML += `<td>${row[header] || ''}</td>`;
+    });
+    tableHTML += '</tr>';
+  });
+  tableHTML += '</tbody></table></div>';
+
+  dataTable.innerHTML = tableHTML;
+} else {
+  dataTable.innerHTML = '<h3>📑 Data Table</h3><p>Query executed successfully but returned no results.</p>';
+}
   })
   .catch((error) => {
     console.error('Error:', error);
