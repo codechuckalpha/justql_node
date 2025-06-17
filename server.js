@@ -36,9 +36,8 @@ if (isProduction) {
 const pool = mysql.createPool(dbConfig);
 
 app.post('/run-query', (req, res) => {
-  // Ensure the query is extracted correctly from the request body
-  const query = req.body.sql; // <--- MAKE SURE YOU ARE ACCESSING 'sql' not 'query'
-
+  const query = req.body.sql; // This is correct
+  
   if (!query) {
     return res.status(400).json({ error: 'SQL query is missing from the request body.' });
   }
@@ -46,7 +45,6 @@ app.post('/run-query', (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
       console.error('Error getting database connection:', err);
-      // In a production environment, avoid sending raw database errors to the client
       return res.status(500).json({ error: 'Database connection error', details: err.message });
     }
 
@@ -54,10 +52,9 @@ app.post('/run-query', (req, res) => {
       connection.release();
       if (error) {
         console.error('Error executing query:', error);
-        // Similarly, refine error messages for production
         return res.status(500).json({ error: 'Error executing query', details: error.message });
       }
-      res.json({ results });
+      res.json({ results, fields }); // Include fields for table headers
     });
   });
 });

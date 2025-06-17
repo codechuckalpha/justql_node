@@ -143,8 +143,16 @@
             </div>
           </h3>
           <textarea id="sql-textarea" placeholder="SELECT * FROM users WHERE...&#10;-- Write your SQL query here&#10;-- Use multiple lines for complex queries"></textarea>
+        <!-- THIS IS THE MOVED DIV -->
+        <div class="flex items-center justify-between" id="error-details">
+          <div class="error-message"></div>
+        </div>
+        <!-- END OF MOVED DIV -->
+        
         </div>
       </div>
+        </div>
+        
       <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-table-section">
         <div class="grid-stack-item-content  p-4 shadow-md data-table">
           <h3>📑 Data Table</h3>
@@ -156,6 +164,18 @@
           </table>
         </div>
       </div>
+      <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-table-section">
+        <div class="grid-stack-item-content  p-4 shadow-md data-table" id="data-table">
+          <h3>📑 Data Table</h3>
+          <div style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;">
+            <p>Data table will appear here</p>
+            <p style="font-size: 12px; margin-top: 10px; color: #888;">Data table will be generated based on your query results</p>
+          </div>
+          <table border="1" width="100%"></table>
+        </div>
+      </div>
+      
+
       <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-analysis-section">
         <div class="grid-stack-item-content  p-4 shadow-md chart-div">
           <h3>📊 Data Visualization</h3>
@@ -182,35 +202,35 @@
 // Add textarea resize functionality
 const textarea = document.getElementById('sql-textarea');
     const gridItem = document.getElementById('sql-editor-item');
-    
+
     if (textarea && gridItem) {
       // Store original dimensions
       let originalHeight = textarea.offsetHeight;
-      
+
       // Create a ResizeObserver to watch for textarea size changes
       const resizeObserver = new ResizeObserver(entries => {
         for (let entry of entries) {
           const newHeight = entry.contentRect.height;
           const heightDiff = newHeight - originalHeight;
-          
+
           // Calculate how many grid units to add (each unit is ~80px)
           const gridUnitsToAdd = Math.floor(heightDiff / 80);
-          
+
           if (gridUnitsToAdd > 0) {
             // Get current grid item height
             const currentGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
             const newGridHeight = currentGridHeight + gridUnitsToAdd;
-            
+
             // Update the grid item height
             grid.update(gridItem, {h: newGridHeight});
-            
+
             // Update our reference height
             originalHeight = newHeight;
           } else if (gridUnitsToAdd < 0 && heightDiff < -40) {
             // Allow shrinking too, but with some threshold
             const currentGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
             const newGridHeight = Math.max(2, currentGridHeight + gridUnitsToAdd);
-            
+
             if (newGridHeight !== currentGridHeight) {
               grid.update(gridItem, {h: newGridHeight});
               originalHeight = newHeight;
@@ -218,47 +238,47 @@ const textarea = document.getElementById('sql-textarea');
           }
         }
       });
-      
+
       // Start observing the textarea
       resizeObserver.observe(textarea);
-      
+
       // Alternative approach using mouse events for more immediate feedback
       let isResizing = false;
       let startHeight = 0;
       let startGridHeight = 0;
-      
+
       textarea.addEventListener('mousedown', function(e) {
         // Check if clicking near the bottom-right corner (resize handle)
         const rect = textarea.getBoundingClientRect();
         const isNearBottomRight = (
-          e.clientX > rect.right - 20 && 
+          e.clientX > rect.right - 20 &&
           e.clientY > rect.bottom - 20
         );
-        
+
         if (isNearBottomRight) {
           isResizing = true;
           startHeight = textarea.offsetHeight;
           startGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
-          
+
           document.addEventListener('mousemove', handleMouseMove);
           document.addEventListener('mouseup', handleMouseUp);
         }
       });
-      
+
       function handleMouseMove(e) {
         if (!isResizing) return;
-        
+
         // Calculate height difference
         const currentHeight = textarea.offsetHeight;
         const heightDiff = currentHeight - startHeight;
         const gridUnitsToAdd = Math.floor(heightDiff / 60); // Slightly more sensitive
-        
+
         if (Math.abs(gridUnitsToAdd) > 0) {
           const newGridHeight = Math.max(2, startGridHeight + gridUnitsToAdd);
           grid.update(gridItem, {h: newGridHeight});
         }
       }
-      
+
       function handleMouseUp() {
         isResizing = false;
         document.removeEventListener('mousemove', handleMouseMove);
@@ -266,11 +286,82 @@ const textarea = document.getElementById('sql-textarea');
       }
     }
     
+  const runButton = document.getElementById('run-button');
+  const sqlTextarea = document.getElementById('sql-textarea');
+  const dataTable = document.getElementById('data-table');
+  const errorDetailsDiv = document.getElementById('error-details'); // Get the new div
+  const errorMessageParagraph = errorDetailsDiv.querySelector('.error-message'); // Get the paragraph
 
+  runButton.addEventListener('click', function() {
+  const query = sqlTextarea.value.trim();
+  
+  if (!query) {
+    errorMessageParagraph.textContent = 'Please enter a SQL query';
+    return;
+  }
+
+  // Show loading state
+  errorMessageParagraph.textContent = 'Executing query...';
+  
+  fetch('/run-query', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ sql: query }), // Changed to 'sql'
+  })
+  .then(response => {
+    if (!response.ok) {
+      return response.json().then(err => Promise.reject(err));
+    }
+    return response.json();
+  })
+  .then(data => {
+    errorMessageParagraph.textContent = ''; // Clear error message
+    
+    if (data.results && data.results.length > 0) {
+      // Build table HTML
+      let tableHTML = '<h3>📑 Data Table</h3><table border="1" width="100%">';
+      
+      // Add headers
+      const headers = Object.keys(data.results[0]);
+      tableHTML += '<tr>';
+      headers.forEach(header => {
+        tableHTML += `<th>${header}</th>`;
+      });
+      tableHTML += '</tr>';
+      
+      // Add data rows
+      data.results.forEach(row => {
+        tableHTML += '<tr>';
+        headers.forEach(header => {
+          tableHTML += `<td>${row[header] || ''}</td>`;
+        });
+        tableHTML += '</tr>';
+      });
+      tableHTML += '</table>';
+      
+      dataTable.innerHTML = tableHTML;
+    } else {
+      dataTable.innerHTML = '<h3>📑 Data Table</h3><p>Query executed successfully but returned no results.</p>';
+    }
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+    if (error.details) {
+      errorMessageParagraph.textContent = `Error: ${error.details}`;
+    } else if (error.error) {
+      errorMessageParagraph.textContent = `Error: ${error.error}`;
+    } else {
+      errorMessageParagraph.textContent = `Error: ${error.message || 'Unknown error occurred'}`;
+    }
+  });
+});
   });
 
-  
+
 </script>
+
 
 </body>
 </html>
