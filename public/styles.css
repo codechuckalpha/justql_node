@@ -276,8 +276,7 @@
   height: 100vh;
 }
 .grid-stack {
-  margin-top: 80px;
-  
+  margin-top: 80px; 
 }
 
 /* Adjust main content when sidebar is expanded */
@@ -297,6 +296,7 @@
   padding: 0px;
   font-size: 13px;
   background-color: #2d2d30; 
+  
 }
 
 .text-input {
