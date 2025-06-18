@@ -349,6 +349,7 @@ function clearChart() {
 // Ensure GridStack and Plotly are aware of each other's resizing
 document.addEventListener('DOMContentLoaded', function () {
     const grid = GridStack.init({
+        alwaysShowResizeHandle: true,
         float: true,
         cellHeight: 80,
         disableResize: false

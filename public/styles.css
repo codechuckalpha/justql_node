@@ -298,7 +298,7 @@ body {
   /* Include padding in the element's total width */
 }
 
-
+/* grid-stack elements */
 .grid-stack-item-content {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 2px;
@@ -311,7 +311,6 @@ body {
 .text-input {
   background-color: #2d2d30;
   color: #cccccc;
-
 }
 
 .text-input textarea {
@@ -373,14 +372,16 @@ body {
   flex-direction: column;
 }
 
-.chart-div h3 {
-
-
-}
-
 #chart-container {
   flex: 1;
+}
 
+/* --- GridStack Resize Handle Visibility Fix --- */
+
+
+/* Remove hover effects that might hide them again */
+.grid-stack-item:not(.ui-resizable-resizing) > .ui-resizable-handle {
+    opacity: 1 !important;
 }
 
 /* Prevent Plotly from interfering with GridStack resize */
