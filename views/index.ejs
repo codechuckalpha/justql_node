@@ -604,104 +604,84 @@
         if (chartContainer) Plotly.purge(chartContainer);
       }
       
-// Simple and direct chart resize handling for GridStack item changes
-            grid.on('change', function (event, items) {
-                items.forEach(item => {
-                    if (item.el && item.el.id === 'data-analysis-section') {
-                        const chartContainer = document.getElementById('chart-container');
-                        if (chartContainer && chartContainer.data) { // Only resize if a chart is rendered
-                            // Force chart resize after a brief delay to allow DOM to settle
-                            setTimeout(() => {
-                                try {
-                                    Plotly.Plots.resize(chartContainer);
-                                    console.log('Chart resized due to grid change');
-                                } catch (e) {
-                                    console.log('Chart resize failed on grid change:', e);
-                                }
-                            }, 200); // Increased delay slightly
-                        }
-                    }
-                });
-            });
-
-            // Toggle Sidebar
-            const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
-            const sidebarContainer = document.getElementById('sidebar-container');
-            const mainContent = document.querySelector('.main-content'); // Assuming .main-content is adjusted by sidebar
-
-            toggleSidebarBtn.addEventListener('click', () => {
-                sidebarContainer.classList.toggle('collapsed');
-            });
-
-            // MutationObserver to watch for sidebar class changes
-            const observer = new MutationObserver((mutationsList) => {
-                for (const mutation of mutationsList) {
-                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                        console.log('Sidebar class changed. Triggering chart resize.');
-                        // Trigger resize after a short delay to allow CSS transitions to complete
-                        setTimeout(() => {
-                            const chartContainer = document.getElementById('chart-container');
-                            if (chartContainer && chartContainer.data) { // Only resize if a chart is rendered
-                                try {
-                                    Plotly.Plots.resize(chartContainer);
-                                    console.log('Chart resized after sidebar state change.');
-                                } catch (e) {
-                                    console.log('Chart resize failed after sidebar change:', e);
-                                }
-                            }
-                        }, 350); // Increased delay
-                    }
-                }
-            });
-
-            // Start observing the sidebar container for attribute changes
-            if (sidebarContainer) {
-                observer.observe(sidebarContainer, { attributes: true });
+// Simple and direct chart resize handling
+grid.on('change', function(event, items) {
+    // 'change' fires when any grid item is moved or resized
+    items.forEach(item => {
+      if (item.el && item.el.id === 'data-analysis-section') {
+        const chartContainer = document.getElementById('chart-container');
+        if (chartContainer) {
+          // Force chart resize after a brief delay
+          setTimeout(() => {
+            try {
+              Plotly.Plots.resize(chartContainer);
+            } catch (e) {
+              console.log('Chart resize failed:', e);
             }
+          }, 200);
+        }
+      }
+    });
+  });
+  
+  // Enhanced sidebar handling with chart resize
+  function handleSidebarToggle() {
+    // Wait for CSS transition to complete, then resize chart
+    setTimeout(() => {
+      const chartContainer = document.getElementById('chart-container');
+      if (chartContainer && chartContainer.querySelector('.plotly-graph-div')) {
+        try {
+          // Force a complete chart redraw for better compatibility
+          Plotly.Plots.resize('chart-container');
+          
+          // If that doesn't work, try a more aggressive approach
+          setTimeout(() => {
+            Plotly.Plots.resize('chart-container');
+          }, 100);
+        } catch (e) {
+          console.log('Chart resize after sidebar toggle failed:', e);
+        }
+      }
+    }, 350); // Match your CSS transition duration
+  }
 
-            // Sidebar icon clicks to switch panels
-            const iconItems = document.querySelectorAll('.icon-item');
-            const panelSections = document.querySelectorAll('.panel-section');
-
-            iconItems.forEach(item => {
-                item.addEventListener('click', () => {
-                    const panelId = item.dataset.panel + '-panel'; // e.g., 'connections-panel'
-
-                    // Remove active class from all icons and hide all panels
-                    iconItems.forEach(i => i.classList.remove('active'));
-                    panelSections.forEach(p => p.style.display = 'none');
-
-                    // Add active class to clicked icon and show corresponding panel
-                    item.classList.add('active');
-                    const targetPanel = document.getElementById(panelId);
-                    if (targetPanel) {
-                        targetPanel.style.display = 'block';
-                    }
-                    // If sidebar is collapsed, expand it on icon click
-                    if (sidebarContainer.classList.contains('collapsed')) {
-                        sidebarContainer.classList.remove('collapsed');
-                    }
-                });
-            });
-
-            // Initial active panel (e.g., Connections)
-            const initialActiveIcon = document.querySelector('.icon-item[data-panel="connections"]');
-            if (initialActiveIcon) {
-                initialActiveIcon.classList.add('active');
-                document.getElementById('connections-panel').style.display = 'block';
+  // Monitor main content area width changes (more reliable than sidebar monitoring)
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) {
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        // Main content size changed (likely due to sidebar toggle)
+        const chartContainer = document.getElementById('chart-container');
+        if (chartContainer && chartContainer.querySelector('.plotly-graph-div')) {
+          clearTimeout(window.sidebarChartResize);
+          window.sidebarChartResize = setTimeout(() => {
+            try {
+              Plotly.Plots.resize('chart-container');
+            } catch (e) {
+              console.log('Chart resize from main content change failed:', e);
             }
+          }, 200);
+        }
+      }
+    });
+    
+    resizeObserver.observe(mainContent);
+  }
 
-            // Section header collapse/expand (chevrons)
-            const sectionHeaders = document.querySelectorAll('.section-header');
-            sectionHeaders.forEach(header => {
-                header.addEventListener('click', () => {
-                    header.classList.toggle('collapsed');
-                    const sectionItems = header.nextElementSibling;
-                    if (sectionItems) {
-                        sectionItems.style.display = sectionItems.style.display === 'none' ? 'block' : 'none';
-                    }
-                });
-            });
+  // Also listen for window resize events (backup method)
+  window.addEventListener('resize', function() {
+    const chartContainer = document.getElementById('chart-container');
+    if (chartContainer && chartContainer.querySelector('.plotly-graph-div')) {
+      clearTimeout(window.windowChartResize);
+      window.windowChartResize = setTimeout(() => {
+        try {
+          Plotly.Plots.resize('chart-container');
+        } catch (e) {
+          console.log('Chart resize from window resize failed:', e);
+        }
+      }, 300);
+    }
+  });
       
     });
 
