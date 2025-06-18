@@ -142,8 +142,8 @@
 
   <div class="main-content">
     <div class="grid-stack">
-      <div class="grid-stack-item" gs-w="12" gs-h="2" id="sql-editor-item">
-        <div class="grid-stack-item-content p-4 shadow-md text-input" gs-w="8" gs-h="2">
+      <div class="grid-stack-item" gs-w="12" gs-h="3" id="sql-editor-item">
+        <div class="grid-stack-item-content p-4 shadow-md text-input" gs-w="8" gs-h="3">
           <h3 class="flex items-center justify-between">
             📝 Query Editor
             <div class="flex space-x-2">
@@ -165,7 +165,7 @@
 
 
       <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-table-section">
-        <div class="grid-stack-item-content p-4 shadow-md data-table" gs-w="8" gs-h="2" 　id="data-table">
+        <div class="grid-stack-item-content p-4 shadow-md data-table" gs-w="3" gs-h="3" 　id="data-table">
           <h3 class="flex items-center justify-between">📑 Data Table</h3>
           <div class="table-wrapper data-table" id="table-wrapper">
             <div
@@ -181,7 +181,7 @@
       </div>
 
       <div class="grid-stack-item" gs-w="12" gs-h="5" id="data-analysis-section">
-        <div class="grid-stack-item-content p-4 shadow-md chart-div">
+        <div class="grid-stack-item-content p-4 shadow-md chart-div" gs-w="3" gs-h="5">
           <h3>📊 Data Visualization</h3>
           <div id="chart-container">
             <div
@@ -604,25 +604,104 @@
         if (chartContainer) Plotly.purge(chartContainer);
       }
       
-// Simple and direct chart resize handling
-grid.on('change', function(event, items) {
-    // 'change' fires when any grid item is moved or resized
-    items.forEach(item => {
-      if (item.el && item.el.id === 'data-analysis-section') {
-        const chartContainer = document.getElementById('chart-container');
-        if (chartContainer) {
-          // Force chart resize after a brief delay
-          setTimeout(() => {
-            try {
-              Plotly.Plots.resize(chartContainer);
-            } catch (e) {
-              console.log('Chart resize failed:', e);
+// Simple and direct chart resize handling for GridStack item changes
+            grid.on('change', function (event, items) {
+                items.forEach(item => {
+                    if (item.el && item.el.id === 'data-analysis-section') {
+                        const chartContainer = document.getElementById('chart-container');
+                        if (chartContainer && chartContainer.data) { // Only resize if a chart is rendered
+                            // Force chart resize after a brief delay to allow DOM to settle
+                            setTimeout(() => {
+                                try {
+                                    Plotly.Plots.resize(chartContainer);
+                                    console.log('Chart resized due to grid change');
+                                } catch (e) {
+                                    console.log('Chart resize failed on grid change:', e);
+                                }
+                            }, 200); // Increased delay slightly
+                        }
+                    }
+                });
+            });
+
+            // Toggle Sidebar
+            const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+            const sidebarContainer = document.getElementById('sidebar-container');
+            const mainContent = document.querySelector('.main-content'); // Assuming .main-content is adjusted by sidebar
+
+            toggleSidebarBtn.addEventListener('click', () => {
+                sidebarContainer.classList.toggle('collapsed');
+            });
+
+            // MutationObserver to watch for sidebar class changes
+            const observer = new MutationObserver((mutationsList) => {
+                for (const mutation of mutationsList) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        console.log('Sidebar class changed. Triggering chart resize.');
+                        // Trigger resize after a short delay to allow CSS transitions to complete
+                        setTimeout(() => {
+                            const chartContainer = document.getElementById('chart-container');
+                            if (chartContainer && chartContainer.data) { // Only resize if a chart is rendered
+                                try {
+                                    Plotly.Plots.resize(chartContainer);
+                                    console.log('Chart resized after sidebar state change.');
+                                } catch (e) {
+                                    console.log('Chart resize failed after sidebar change:', e);
+                                }
+                            }
+                        }, 350); // Increased delay
+                    }
+                }
+            });
+
+            // Start observing the sidebar container for attribute changes
+            if (sidebarContainer) {
+                observer.observe(sidebarContainer, { attributes: true });
             }
-          }, 200);
-        }
-      }
-    });
-  });
+
+            // Sidebar icon clicks to switch panels
+            const iconItems = document.querySelectorAll('.icon-item');
+            const panelSections = document.querySelectorAll('.panel-section');
+
+            iconItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const panelId = item.dataset.panel + '-panel'; // e.g., 'connections-panel'
+
+                    // Remove active class from all icons and hide all panels
+                    iconItems.forEach(i => i.classList.remove('active'));
+                    panelSections.forEach(p => p.style.display = 'none');
+
+                    // Add active class to clicked icon and show corresponding panel
+                    item.classList.add('active');
+                    const targetPanel = document.getElementById(panelId);
+                    if (targetPanel) {
+                        targetPanel.style.display = 'block';
+                    }
+                    // If sidebar is collapsed, expand it on icon click
+                    if (sidebarContainer.classList.contains('collapsed')) {
+                        sidebarContainer.classList.remove('collapsed');
+                    }
+                });
+            });
+
+            // Initial active panel (e.g., Connections)
+            const initialActiveIcon = document.querySelector('.icon-item[data-panel="connections"]');
+            if (initialActiveIcon) {
+                initialActiveIcon.classList.add('active');
+                document.getElementById('connections-panel').style.display = 'block';
+            }
+
+            // Section header collapse/expand (chevrons)
+            const sectionHeaders = document.querySelectorAll('.section-header');
+            sectionHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    header.classList.toggle('collapsed');
+                    const sectionItems = header.nextElementSibling;
+                    if (sectionItems) {
+                        sectionItems.style.display = sectionItems.style.display === 'none' ? 'block' : 'none';
+                    }
+                });
+            });
       
     });
 
