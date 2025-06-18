@@ -1,61 +1,58 @@
+// Handle icon clicks
+document.querySelectorAll('.icon-item').forEach(icon => {
+    icon.addEventListener('click', function() {
+        const panel = this.dataset.panel;
+        const contentPanel = document.getElementById('contentPanel');
+        const sidebarContainer = document.querySelector('.sidebar-container');
+        const isCurrentlyActive = this.classList.contains('active');
+        const isExpanded = contentPanel.classList.contains('expanded');
+        
+        // If clicking the same active icon and panel is expanded, collapse it
+        if (isCurrentlyActive && isExpanded) {
+            contentPanel.classList.remove('expanded');
+            this.classList.remove('active');
+            sidebarContainer.classList.add('collapsed');
+            return;
+        }
+        
+        // Remove collapsed state and active class from all icons
+        sidebarContainer.classList.remove('collapsed');
+        document.querySelectorAll('.icon-item').forEach(i => i.classList.remove('active'));
+        
+        // Add active class to clicked icon
+        this.classList.add('active');
+        
+        // Show/hide panels
+        document.querySelectorAll('.panel-section').forEach(p => p.style.display = 'none');
+        document.getElementById(panel + '-panel').style.display = 'block';
+        
+        // Expand content panel
+        contentPanel.classList.add('expanded');
+    });
+});
 
-        // Handle icon clicks
-        document.querySelectorAll('.icon-item').forEach(icon => {
-            icon.addEventListener('click', function() {
-                const panel = this.dataset.panel;
-                const contentPanel = document.getElementById('contentPanel');
-                const sidebarContainer = document.querySelector('.sidebar-container');
-                const isCurrentlyActive = this.classList.contains('active');
-                const isExpanded = contentPanel.classList.contains('expanded');
-                
-                // If clicking the same active icon and panel is expanded, collapse it
-                if (isCurrentlyActive && isExpanded) {
-                    contentPanel.classList.remove('expanded');
-                    this.classList.remove('active');
-                    sidebarContainer.classList.add('collapsed');
-                    return;
-                }
-                
-                // Remove collapsed state and active class from all icons
-                sidebarContainer.classList.remove('collapsed');
-                document.querySelectorAll('.icon-item').forEach(i => i.classList.remove('active'));
-                
-                // Add active class to clicked icon
-                this.classList.add('active');
-                
-                // Show/hide panels
-                document.querySelectorAll('.panel-section').forEach(p => p.style.display = 'none');
-                document.getElementById(panel + '-panel').style.display = 'block';
-                
-                // Expand content panel
-                contentPanel.classList.add('expanded');
-            });
-        });
+// Handle section collapse/expand
+document.querySelectorAll('.section-header').forEach(header => {
+    header.addEventListener('click', function() {
+        this.classList.toggle('collapsed');
+        const items = this.nextElementSibling;
+        items.classList.toggle('collapsed');
+    });
+});
 
-        // Handle section collapse/expand
-        document.querySelectorAll('.section-header').forEach(header => {
-            header.addEventListener('click', function() {
-                this.classList.toggle('collapsed');
-                const items = this.nextElementSibling;
-                items.classList.toggle('collapsed');
-            });
-        });
+// Handle clicking outside to collapse (optional)
+document.addEventListener('click', function(e) {
+    const sidebar = document.querySelector('.sidebar-container');
+    const contentPanel = document.getElementById('contentPanel');
+    
+    if (!sidebar.contains(e.target)) {
+        // Uncomment below if you want clicking outside to collapse the panel
+        // contentPanel.classList.remove('expanded');
+        // document.querySelectorAll('.icon-item').forEach(i => i.classList.remove('active'));
+    }
+});
 
-        // Handle clicking outside to collapse (optional)
-        document.addEventListener('click', function(e) {
-            const sidebar = document.querySelector('.sidebar-container');
-            const contentPanel = document.getElementById('contentPanel');
-            
-            if (!sidebar.contains(e.target)) {
-                // Uncomment below if you want clicking outside to collapse the panel
-                // contentPanel.classList.remove('expanded');
-                // document.querySelectorAll('.icon-item').forEach(i => i.classList.remove('active'));
-            }
-        });
-
-
-
-        const runButton = document.getElementById('run-button');
+const runButton = document.getElementById('run-button');
 const sqlTextarea = document.getElementById('sql-textarea');
 const tableWrapper = document.getElementById('table-wrapper');
 const tablePlaceholder = document.getElementById('table-placeholder');
@@ -144,9 +141,8 @@ if (runButton && sqlTextarea) {
         }
     });
 }
-        
 
-        // To handle tab presses when typing sql queries
+// To handle tab presses when typing sql queries
 sqlTextarea.addEventListener('keydown', function(event) {
     if (event.key === 'Tab') {
       event.preventDefault(); // Prevent default tab behavior
@@ -263,7 +259,8 @@ function createMultiLineChart(results, xColumn, groupColumn, yColumn, container)
 
     const config = {
         responsive: true,
-        displayModeBar: true,
+        displayModeBar: false, // Hide the mode bar
+        displaylogo: false,   // Hide the Plotly logo
         modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
         scrollZoom: false,
         doubleClick: false,
@@ -279,7 +276,8 @@ function createSimpleLineChart(results, xColumn, yColumn, container) {
         if (typeof a[xColumn] === 'string' && typeof b[xColumn] === 'string') {
             return a[xColumn].localeCompare(b[xColumn]);
         }
-        return a[xColumn] - b[xColumn]; // <-- Corrected line
+        // Fix: Corrected sorting for numerical columns
+        return (parseFloat(a[xColumn]) || 0) - (parseFloat(b[xColumn]) || 0);
     });
 
     const trace = {
@@ -318,7 +316,8 @@ function createSimpleLineChart(results, xColumn, yColumn, container) {
 
     const config = {
         responsive: true,
-        displayModeBar: true,
+        displayModeBar: false, // Hide the mode bar
+        displaylogo: false,   // Hide the Plotly logo
         modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
         scrollZoom: false,
         doubleClick: false,
@@ -409,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const currentGridHeight = parseInt(sqlEditorItem.getAttribute('gs-h')) || 3;
                     const newGridHeight = Math.max(2, currentGridHeight + gridUnitsToAdd);
                     if (newGridHeight !== currentGridHeight) {
-                        grid.update(sqlEditorItem, { h: newGridHeight });
+                        grid.update(sqlEditorItem, { h: newGridHeight }); 
                         originalHeight = newHeight;
                     }
                 }
@@ -457,19 +456,41 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // New: ResizeObserver for the chart container's parent
+    const dataAnalysisSection = document.getElementById('data-analysis-section');
+    if (dataAnalysisSection) {
+        const chartResizeObserver = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                // Check if the content box size has changed
+                if (entry.contentBoxSize) {
+                    const chartContainer = document.getElementById('chart-container');
+                    // Ensure a chart has actually been plotted before attempting to resize
+                    if (chartContainer && chartContainer.data) {
+                        // Use requestAnimationFrame for smooth resizing
+                        window.requestAnimationFrame(() => {
+                            try {
+                                Plotly.Plots.resize(chartContainer);
+                                console.log('Chart resized via ResizeObserver.');
+                            } catch (e) {
+                                console.log('Chart resize failed via ResizeObserver:', e);
+                            }
+                        });
+                    }
+                }
+            }
+        });
+        // Observe the parent container that changes size
+        chartResizeObserver.observe(dataAnalysisSection);
+    }
+
+
     grid.on('change', function (event, items) {
         items.forEach(item => {
             if (item.el && item.el.id === 'data-analysis-section') {
                 const chartContainer = document.getElementById('chart-container');
                 if (chartContainer && chartContainer.data) {
-                    setTimeout(() => {
-                        try {
-                            Plotly.Plots.resize(chartContainer);
-                            console.log('Chart resized due to grid change');
-                        } catch (e) {
-                            console.log('Chart resize failed on grid change:', e);
-                        }
-                    }, 350); 
+                    // This is now redundant as ResizeObserver on dataAnalysisSection handles it.
+                    // setTimeout(() => { Plotly.Plots.resize('chart-container'); }, 100);
                 }
             }
         });
@@ -480,34 +501,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     toggleSidebarBtn.addEventListener('click', () => {
         sidebarContainer.classList.toggle('collapsed');
+        // Let the ResizeObserver on data-analysis-section handle the chart resize.
+        // The sidebar's class change will affect .main-content's width, which affects data-analysis-section's width.
     });
 
-    const observer = new MutationObserver((mutationsList) => {
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                console.log('Sidebar class changed. Triggering chart resize.');
-                // Allow CSS transition to complete and browser to reflow
-                setTimeout(() => {
-                    // Dispatch a global resize event, which Plotly often listens to
-                    window.dispatchEvent(new Event('resize'));
-                    // Directly call Plotly resize as a backup/immediate trigger
-                    const chartContainer = document.getElementById('chart-container');
-                    if (chartContainer && chartContainer.data) { // Ensure a chart is actually plotted
-                        try {
-                            Plotly.Plots.resize(chartContainer);
-                            console.log('Chart resized after sidebar state change.');
-                        } catch (e) {
-                            console.log('Chart resize failed after sidebar change:', e);
-                        }
-                    }
-                }, 400); // Slightly adjusted delay (e.g., 400ms for a 300ms transition + buffer)
-            }
-        }
-    });
-
-    if (sidebarContainer) {
-        observer.observe(sidebarContainer, { attributes: true });
-    }
+    // Removed the MutationObserver that was previously here attempting to handle chart resize.
+    // This simplifies the logic and relies on ResizeObserver being the single source of truth.
 
     const iconItems = document.querySelectorAll('.icon-item');
     const panelSections = document.querySelectorAll('.panel-section');
