@@ -279,7 +279,7 @@ function createSimpleLineChart(results, xColumn, yColumn, container) {
         if (typeof a[xColumn] === 'string' && typeof b[xColumn] === 'string') {
             return a[xColumn].localeCompare(b[xColumn]);
         }
-        return a[xColumn] - b[xColumn];
+        return a[xColumn] - b[xColumn]; // <-- Corrected line
     });
 
     const trace = {
@@ -486,19 +486,21 @@ document.addEventListener('DOMContentLoaded', function () {
         for (const mutation of mutationsList) {
             if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
                 console.log('Sidebar class changed. Triggering chart resize.');
-                window.requestAnimationFrame(() => {
-                    setTimeout(() => {
-                        const chartContainer = document.getElementById('chart-container');
-                        if (chartContainer && chartContainer.data) {
-                            try {
-                                Plotly.Plots.resize(chartContainer);
-                                console.log('Chart resized after sidebar state change.');
-                            } catch (e) {
-                                console.log('Chart resize failed after sidebar change:', e);
-                            }
+                // Allow CSS transition to complete and browser to reflow
+                setTimeout(() => {
+                    // Dispatch a global resize event, which Plotly often listens to
+                    window.dispatchEvent(new Event('resize'));
+                    // Directly call Plotly resize as a backup/immediate trigger
+                    const chartContainer = document.getElementById('chart-container');
+                    if (chartContainer && chartContainer.data) { // Ensure a chart is actually plotted
+                        try {
+                            Plotly.Plots.resize(chartContainer);
+                            console.log('Chart resized after sidebar state change.');
+                        } catch (e) {
+                            console.log('Chart resize failed after sidebar change:', e);
                         }
-                    }, 450);
-                });
+                    }
+                }, 400); // Slightly adjusted delay (e.g., 400ms for a 300ms transition + buffer)
             }
         }
     });
