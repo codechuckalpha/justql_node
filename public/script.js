@@ -51,7 +51,7 @@ document.addEventListener('click', function(e) {
         // document.querySelectorAll('.icon-item').forEach(i => i.classList.remove('active'));
     }
 });
-
+// run query from textarea
 const runButton = document.getElementById('run-button');
 const sqlTextarea = document.getElementById('sql-textarea');
 const tableWrapper = document.getElementById('table-wrapper');
@@ -59,7 +59,6 @@ const tablePlaceholder = document.getElementById('table-placeholder');
 const resultsTable = document.getElementById('results-table');
 const errorDetailsDiv = document.getElementById('error-details');
 const errorMessageParagraph = errorDetailsDiv.querySelector('.error-message');
-
 
 if (runButton && sqlTextarea) {
     runButton.addEventListener('click', async () => {
@@ -142,7 +141,7 @@ if (runButton && sqlTextarea) {
     });
 }
 
-// To handle tab presses when typing sql queries
+// To handle tab presses when typing sql queries and Ctrl + Enter to run query 
 sqlTextarea.addEventListener('keydown', function(event) {
     if (event.key === 'Tab') {
       event.preventDefault(); // Prevent default tab behavior
@@ -165,7 +164,7 @@ sqlTextarea.addEventListener('keydown', function(event) {
 });
 
 
-// Charting Functions (already present in your code)
+// Charting Functions 
 function generateChart(results) {
     const chartContainer = document.getElementById('chart-container');
     const chartPlaceholder = document.getElementById('chart-placeholder');

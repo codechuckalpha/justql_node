@@ -139,7 +139,6 @@
       </div>
     </div>
   </div>
-
   <div class="main-content">
     <div class="grid-stack">
       <div class="grid-stack-item" gs-w="12" gs-h="3" id="sql-editor-item">
@@ -154,16 +153,11 @@
           </h3>
           <textarea id="sql-textarea"
             placeholder="SELECT * FROM users WHERE...&#10;-- Write your SQL query here&#10;-- Use multiple lines for complex queries"></textarea>
-          <!-- THIS IS THE MOVED DIV -->
           <div class="flex items-center justify-between" id="error-details">
             <div class="error-message"></div>
           </div>
-          <!-- END OF MOVED DIV -->
-
         </div>
       </div>
-
-
       <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-table-section">
         <div class="grid-stack-item-content p-4 shadow-md data-table" gs-w="3" gs-h="3" 　id="data-table">
           <h3 class="flex items-center justify-between">📑 Data Table</h3>
@@ -179,10 +173,17 @@
           </div>
         </div>
       </div>
-
       <div class="grid-stack-item" gs-w="12" gs-h="5" id="data-analysis-section">
         <div class="grid-stack-item-content p-4 shadow-md chart-div" gs-w="3" gs-h="5">
-          <h3>📊 Data Visualization</h3>
+          <h3 class="flex items-center justify-between">📊 Data Visualization
+            <div class="flex space-x-2">
+              <select id="chart-type-dropdown" class="header-query">
+                <option value="line">Line chart</option>
+                <option value="column">Column chart</option>
+              </select>
+              <button class="header-query" id="customise-button">🔧</button>
+            </div>
+          </h3>
           <div id="chart-container">
             <div
               style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;"

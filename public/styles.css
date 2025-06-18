@@ -276,7 +276,6 @@ body {
 .main-content {
   margin-top: 60px;
   margin-left: 60px;
-
   height: 100vh;
 }
 
@@ -305,7 +304,6 @@ body {
   padding: 0px;
   font-size: 13px;
   background-color: #2d2d30;
-
 }
 
 .text-input {
@@ -321,7 +319,6 @@ body {
   margin-top: 4px;
   font-size: 13px;
   height: 150px; /* Set your desired initial height */
-
 }
 
 .text-input textarea:focus {
@@ -346,7 +343,6 @@ body {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  
 }
 
 .data-table th {
@@ -367,17 +363,23 @@ body {
 .chart-div {
   background-color: #2d2d30;
   color: #cccccc;
-
   display: flex;
   flex-direction: column;
+}
+#chart-type-dropdown {
+  background-color: #2d2d30;
+  font-size: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  font-size: 13px;
+  background-color: #2d2d30;
 }
 
 #chart-container {
   flex: 1;
 }
-
-/* --- GridStack Resize Handle Visibility Fix --- */
-
 
 /* Remove hover effects that might hide them again */
 .grid-stack-item:not(.ui-resizable-resizing) > .ui-resizable-handle {
