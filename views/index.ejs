@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 
-<head> 
+<head>
   <link rel="stylesheet" type="text/css" href="/styles.css" />
-  <link href="https://cdn.jsdelivr.net/npm/gridstack@9.2.1/dist/gridstack.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/gridstack@9.2.1/dist/gridstack.min.css" rel="stylesheet" />
   <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
   <link rel="stylesheet" as="style" onload="this.rel='stylesheet'"
     href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40400%3B500%3B700%3B900&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900" />
@@ -13,125 +13,135 @@
 </head>
 
 <body>
-    <header class="app-header">
-        <div class="header-left">
-          <div class="header-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-              <path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64Zm-21.61,74.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/>
-            </svg>
-          </div>
-          <div class="app-logo">
-            justQL
-          </div>
-        </div>
-        <div class="header-right">
-          
-          <button class="header-button">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-              <path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/>
-            </svg>
-          </button>
-        </div>
-      </header>
+  <header class="app-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+          <path
+            d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64Zm-21.61,74.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z" />
+        </svg>
+      </div>
+      <div class="app-logo">
+        justQL
+      </div>
+    </div>
+    <div class="header-right">
+
+      <button class="header-button">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+          <path
+            d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z" />
+        </svg>
+      </button>
+    </div>
+  </header>
   <div class="sidebar-container collapsed">
-      <!-- Icon Bar -->
-      <div class="icon-bar">
-          <div class="icon-item" data-panel="connections" title="Connections">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-                  <path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64Zm-21.61,74.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/>
-              </svg>
-          </div>
-          <div class="icon-item" data-panel="queries" title="Saved Queries">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-                  <path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z"/>
-              </svg>
-          </div>
-          <div class="icon-item" data-panel="schema" title="Table Schema">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-                  <path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48ZM40,112H80v32H40Zm56,0H216v32H96ZM216,64V96H40V64ZM40,160H80v32H40Zm176,32H96V160H216v32Z"/>
-              </svg>
-          </div>
+    <!-- Icon Bar -->
+    <div class="icon-bar">
+      <div class="icon-item" data-panel="connections" title="Connections">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+          <path
+            d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64Zm-21.61,74.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z" />
+        </svg>
       </div>
-
-      <!-- Content Panel -->
-      <div class="content-panel" id="contentPanel">
-          <div class="panel-content" id="panelContent">
-              <!-- Connections Panel -->
-              <div class="panel-section" id="connections-panel">
-                  <div class="panel-header">CONNECTIONS</div>
-                  <div class="section-header" data-section="active-connections">
-                      <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-                          <path d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
-                      </svg>
-                      <span>Active Connections</span>
-                      <div class="add-button">+</div>
-                  </div>
-                  <div class="section-items">
-                      <div class="section-item">Production DB</div>
-                      <div class="section-item">Development DB</div>
-                      <div class="section-item">Test Environment</div>
-                  </div>
-              </div>
-
-              <!-- Queries Panel (hidden by default) -->
-              <div class="panel-section" id="queries-panel" style="display: none;">
-                  <div class="panel-header">SAVED QUERIES</div>
-                  <div class="section-header" data-section="recent-queries">
-                      <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-                          <path d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
-                      </svg>
-                      <span>Recent Queries</span>
-                      <div class="add-button">+</div>
-                  </div>
-                  <div class="section-items">
-                      <div class="section-item">User Analytics Query</div>
-                      <div class="section-item">Sales Report Query</div>
-                      <div class="section-item">Performance Metrics</div>
-                  </div>
-                  <div class="section-header" data-section="favorites">
-                      <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-                          <path d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
-                      </svg>
-                      <span>Favorites</span>
-                  </div>
-                  <div class="section-items">
-                      <div class="section-item">Daily Dashboard</div>
-                      <div class="section-item">Monthly Report</div>
-                  </div>
-              </div>
-
-              <!-- Schema Panel (hidden by default) -->
-              <div class="panel-section" id="schema-panel" style="display: none;">
-                  <div class="panel-header">TABLE SCHEMA</div>
-                  <div class="section-header" data-section="tables">
-                      <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-                          <path d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
-                      </svg>
-                      <span>Tables</span>
-                  </div>
-                  <div class="section-items">
-                      <div class="section-item">users</div>
-                      <div class="section-item">orders</div>
-                      <div class="section-item">products</div>
-                      <div class="section-item">categories</div>
-                  </div>
-                  <div class="section-header" data-section="views">
-                      <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
-                          <path d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
-                      </svg>
-                      <span>Views</span>
-                  </div>
-                  <div class="section-items">
-                      <div class="section-item">user_analytics_view</div>
-                      <div class="section-item">sales_summary_view</div>
-                  </div>
-              </div>
-          </div>
+      <div class="icon-item" data-panel="queries" title="Saved Queries">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+          <path
+            d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z" />
+        </svg>
       </div>
+      <div class="icon-item" data-panel="schema" title="Table Schema">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+          <path
+            d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48ZM40,112H80v32H40Zm56,0H216v32H96ZM216,64V96H40V64ZM40,160H80v32H40Zm176,32H96V160H216v32Z" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Content Panel -->
+    <div class="content-panel" id="contentPanel">
+      <div class="panel-content" id="panelContent">
+        <!-- Connections Panel -->
+        <div class="panel-section" id="connections-panel">
+          <div class="panel-header">CONNECTIONS</div>
+          <div class="section-header" data-section="active-connections">
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+              <path
+                d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" />
+            </svg>
+            <span>Active Connections</span>
+            <div class="add-button">+</div>
+          </div>
+          <div class="section-items">
+            <div class="section-item">Production DB</div>
+            <div class="section-item">Development DB</div>
+            <div class="section-item">Test Environment</div>
+          </div>
+        </div>
+
+        <!-- Queries Panel (hidden by default) -->
+        <div class="panel-section" id="queries-panel" style="display: none;">
+          <div class="panel-header">SAVED QUERIES</div>
+          <div class="section-header" data-section="recent-queries">
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+              <path
+                d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" />
+            </svg>
+            <span>Recent Queries</span>
+            <div class="add-button">+</div>
+          </div>
+          <div class="section-items">
+            <div class="section-item">User Analytics Query</div>
+            <div class="section-item">Sales Report Query</div>
+            <div class="section-item">Performance Metrics</div>
+          </div>
+          <div class="section-header" data-section="favorites">
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+              <path
+                d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" />
+            </svg>
+            <span>Favorites</span>
+          </div>
+          <div class="section-items">
+            <div class="section-item">Daily Dashboard</div>
+            <div class="section-item">Monthly Report</div>
+          </div>
+        </div>
+
+        <!-- Schema Panel (hidden by default) -->
+        <div class="panel-section" id="schema-panel" style="display: none;">
+          <div class="panel-header">TABLE SCHEMA</div>
+          <div class="section-header" data-section="tables">
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+              <path
+                d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" />
+            </svg>
+            <span>Tables</span>
+          </div>
+          <div class="section-items">
+            <div class="section-item">users</div>
+            <div class="section-item">orders</div>
+            <div class="section-item">products</div>
+            <div class="section-item">categories</div>
+          </div>
+          <div class="section-header" data-section="views">
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+              <path
+                d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" />
+            </svg>
+            <span>Views</span>
+          </div>
+          <div class="section-items">
+            <div class="section-item">user_analytics_view</div>
+            <div class="section-item">sales_summary_view</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  
+
   <div class="main-content">
-    <div class="grid-stack" >
+    <div class="grid-stack">
       <div class="grid-stack-item" gs-w="12" gs-h="2" id="sql-editor-item">
         <div class="grid-stack-item-content p-4 shadow-md text-input" gs-w="8" gs-h="2">
           <h3 class="flex items-center justify-between">
@@ -139,51 +149,49 @@
             <div class="flex space-x-2">
               <button class="header-query">💾</button>
               <button class="header-query">🛑</button>
-               <button class="header-query" id="run-button">▶</button>
+              <button class="header-query" id="run-button">▶</button>
             </div>
           </h3>
-          <textarea id="sql-textarea" placeholder="SELECT * FROM users WHERE...&#10;-- Write your SQL query here&#10;-- Use multiple lines for complex queries"></textarea>
-        <!-- THIS IS THE MOVED DIV -->
-        <div class="flex items-center justify-between" id="error-details">
-          <div class="error-message"></div>
-        </div>
-        <!-- END OF MOVED DIV -->
-        
-        </div>
-      </div>
-        
-        
-      <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-table-section">
-  <div class="grid-stack-item-content p-4 shadow-md" gs-w="8" gs-h="2"　id="data-table">
-    <h3 class="flex items-center justify-between">📑 Data Table</h3>
-    <div class="table-wrapper data-table" id="table-wrapper">
-      <div style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;" id="table-placeholder">
-        <p>Data table will appear here</p>
-        <p style="font-size: 12px; margin-top: 10px; color: #888;">Data table will be generated based on your query results</p>
-      </div>
-      <table border="1" width="100%" id="results-table" style="display: none;"></table>
-    </div>
-  </div>
-</div>
-      
+          <textarea id="sql-textarea"
+            placeholder="SELECT * FROM users WHERE...&#10;-- Write your SQL query here&#10;-- Use multiple lines for complex queries"></textarea>
+          <!-- THIS IS THE MOVED DIV -->
+          <div class="flex items-center justify-between" id="error-details">
+            <div class="error-message"></div>
+          </div>
+          <!-- END OF MOVED DIV -->
 
-      <div class="grid-stack-item" gs-w="12" gs-h="3">
-        <div class="grid-stack-item-content  p-4 shadow-md chart-div">
-          <h3>📊 Data Visualization</h3>
-          <div style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;">
-            <p>Chart visualization will appear here</p>
-            <p style="font-size: 12px; margin-top: 10px; color: #888;">Charts will be generated based on your query results</p>
+        </div>
+      </div>
+
+
+      <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-table-section">
+        <div class="grid-stack-item-content p-4 shadow-md data-table" gs-w="8" gs-h="2" 　id="data-table">
+          <h3 class="flex items-center justify-between">📑 Data Table</h3>
+          <div class="table-wrapper data-table" id="table-wrapper">
+            <div
+              style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;"
+              id="table-placeholder">
+              <p>Data table will appear here</p>
+              <p style="font-size: 12px; margin-top: 10px; color: #888;">Data table will be generated based on your
+                query results</p>
+            </div>
+            <table border="1" width="100%" id="results-table" style="display: none;"></table>
           </div>
         </div>
       </div>
 
-      <div class="grid-stack-item" gs-w="12" gs-h="8" id="data-analysis-section">
-        <div class="grid-stack-item-content rounded-xl p-4 shadow-md chart-div">
+      <div class="grid-stack-item" gs-w="12" gs-h="5" id="data-analysis-section">
+        <div class="grid-stack-item-content p-4 shadow-md chart-div">
           <h3>📊 Data Visualization</h3>
-          <div id="chart-container" style="width: 100%; height: 200px;">
-            <div style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;" id="chart-placeholder">
+          <div id="chart-container">
+            <div
+              style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;"
+              id="chart-placeholder">
               <p>Chart visualization will appear here</p>
-              <p style="font-size: 12px; margin-top: 10px; color: #888;">Charts will be generated based on your query results</p>
+              <p style="font-size: 12px; margin-top: 10px; color: #888;">Charts will be generated based on your query
+                results</p>
+              <p style="font-size: 12px; margin-top: 10px; color: #888;">Default charts require exactly 3 columns:
+                X-axis, Grouping, Y-axis</p>
             </div>
           </div>
         </div>
@@ -191,409 +199,416 @@
 
     </div>
   </div>
-  
-<script src="/script.js"></script>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gridstack@9.2.1/dist/gridstack-all.min.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const grid = GridStack.init({
-      float: true, // allows widgets to float
-      cellHeight: 80,
-      disableResize: false
-    });
 
-    // Add this to your DOMContentLoaded event listener
-// Add this to your DOMContentLoaded event listener, after grid initialization
-grid.on('resizestart', function(event, el) {
-  // Disable Plotly interactions during resize
-  const plotlyDiv = el.querySelector('.plotly-graph-div');
-  if (plotlyDiv) {
-    plotlyDiv.style.pointerEvents = 'none';
-  }
-});
+  <script src="/script.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@9.2.1/dist/gridstack-all.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const grid = GridStack.init({
+        float: true, // allows widgets to float
+        cellHeight: 80,
+        disableResize: false
+      });
 
-grid.on('resizestop', function(event, el) {
-  // Re-enable Plotly interactions after resize
-  const plotlyDiv = el.querySelector('.plotly-graph-div');
-  if (plotlyDiv) {
-    plotlyDiv.style.pointerEvents = 'auto';
-    // Resize the chart to fit new container
-    if (el.id === 'data-analysis-section') {
-      setTimeout(() => {
-        Plotly.Plots.resize('chart-container');
-      }, 100);
-    }
-  }
-});
 
-grid.on('dragstart', function(event, el) {
-  // Disable Plotly interactions during drag
-  const plotlyDiv = el.querySelector('.plotly-graph-div');
-  if (plotlyDiv) {
-    plotlyDiv.style.pointerEvents = 'none';
-  }
-});
+      // Stop chart click functionality while moving and resizing grid stack elements
+      grid.on('resizestart', function (event, el) {
+        // Disable Plotly interactions during resize
+        const plotlyDiv = el.querySelector('.plotly-graph-div');
+        if (plotlyDiv) {
+          plotlyDiv.style.pointerEvents = 'none';
+        }
+      });
 
-grid.on('dragstop', function(event, el) {
-  // Re-enable Plotly interactions after drag
-  const plotlyDiv = el.querySelector('.plotly-graph-div');
-  if (plotlyDiv) {
-    plotlyDiv.style.pointerEvents = 'auto';
-  }
-});
-
-// Add textarea resize functionality
-const textarea = document.getElementById('sql-textarea');
-    const gridItem = document.getElementById('sql-editor-item');
-
-    if (textarea && gridItem) {
-      // Store original dimensions
-      let originalHeight = textarea.offsetHeight;
-
-      // Create a ResizeObserver to watch for textarea size changes
-      const resizeObserver = new ResizeObserver(entries => {
-        for (let entry of entries) {
-          const newHeight = entry.contentRect.height;
-          const heightDiff = newHeight - originalHeight;
-
-          // Calculate how many grid units to add (each unit is ~80px)
-          const gridUnitsToAdd = Math.floor(heightDiff / 80);
-
-          if (gridUnitsToAdd > 0) {
-            // Get current grid item height
-            const currentGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
-            const newGridHeight = currentGridHeight + gridUnitsToAdd;
-
-            // Update the grid item height
-            grid.update(gridItem, {h: newGridHeight});
-
-            // Update our reference height
-            originalHeight = newHeight;
-          } else if (gridUnitsToAdd < 0 && heightDiff < -40) {
-            // Allow shrinking too, but with some threshold
-            const currentGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
-            const newGridHeight = Math.max(2, currentGridHeight + gridUnitsToAdd);
-
-            if (newGridHeight !== currentGridHeight) {
-              grid.update(gridItem, {h: newGridHeight});
-              originalHeight = newHeight;
-            }
+      grid.on('resizestop', function (event, el) {
+        // Re-enable Plotly interactions after resize
+        const plotlyDiv = el.querySelector('.plotly-graph-div');
+        if (plotlyDiv) {
+          plotlyDiv.style.pointerEvents = 'auto';
+          // Resize the chart to fit new container
+          if (el.id === 'data-analysis-section') {
+            setTimeout(() => {
+              Plotly.Plots.resize('chart-container');
+            }, 100);
           }
         }
       });
 
-      // Start observing the textarea
-      resizeObserver.observe(textarea);
-
-      // Alternative approach using mouse events for more immediate feedback
-      let isResizing = false;
-      let startHeight = 0;
-      let startGridHeight = 0;
-
-      textarea.addEventListener('mousedown', function(e) {
-        // Check if clicking near the bottom-right corner (resize handle)
-        const rect = textarea.getBoundingClientRect();
-        const isNearBottomRight = (
-          e.clientX > rect.right - 20 &&
-          e.clientY > rect.bottom - 20
-        );
-
-        if (isNearBottomRight) {
-          isResizing = true;
-          startHeight = textarea.offsetHeight;
-          startGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
-
-          document.addEventListener('mousemove', handleMouseMove);
-          document.addEventListener('mouseup', handleMouseUp);
+      grid.on('dragstart', function (event, el) {
+        // Disable Plotly interactions during drag
+        const plotlyDiv = el.querySelector('.plotly-graph-div');
+        if (plotlyDiv) {
+          plotlyDiv.style.pointerEvents = 'none';
         }
       });
 
-      function handleMouseMove(e) {
-        if (!isResizing) return;
-
-        // Calculate height difference
-        const currentHeight = textarea.offsetHeight;
-        const heightDiff = currentHeight - startHeight;
-        const gridUnitsToAdd = Math.floor(heightDiff / 60); // Slightly more sensitive
-
-        if (Math.abs(gridUnitsToAdd) > 0) {
-          const newGridHeight = Math.max(2, startGridHeight + gridUnitsToAdd);
-          grid.update(gridItem, {h: newGridHeight});
+      grid.on('dragstop', function (event, el) {
+        // Re-enable Plotly interactions after drag
+        const plotlyDiv = el.querySelector('.plotly-graph-div');
+        if (plotlyDiv) {
+          plotlyDiv.style.pointerEvents = 'auto';
         }
-      }
-
-      function handleMouseUp() {
-        isResizing = false;
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      }
-    }
-    
-  const runButton = document.getElementById('run-button');
-  const sqlTextarea = document.getElementById('sql-textarea');
-  const dataTable = document.getElementById('table-wrapper');
-  const errorDetailsDiv = document.getElementById('error-details'); // Get the new div
-  const errorMessageParagraph = errorDetailsDiv.querySelector('.error-message'); // Get the paragraph
-
-  runButton.addEventListener('click', function() {
-  const query = sqlTextarea.value.trim();
-  
-  if (!query) {
-    errorMessageParagraph.textContent = 'Please enter a SQL query';
-    return;
-  }
-
-  // Show loading state
-  errorMessageParagraph.textContent = 'Executing query...';
-  
-  fetch('/run-query', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ sql: query }),
-  })
-  .then(response => {
-    if (!response.ok) {
-      return response.json().then(err => Promise.reject(err));
-    }
-    return response.json();
-  })
-  .then(data => {
-    errorMessageParagraph.textContent = ''; // Clear error message
-    
-    if (data.results && data.results.length > 0) {
-      // Build table (your existing code)
-      let tableHTML = '<table border="1">';
-      
-      // Add headers
-      const headers = Object.keys(data.results[0]);
-      tableHTML += '<thead><tr>';
-      headers.forEach(header => {
-        tableHTML += `<th>${header}</th>`;
       });
-      tableHTML += '</tr></thead>';
-      
-      // Add data rows
-      tableHTML += '<tbody>';
-      data.results.forEach(row => {
-        tableHTML += '<tr>';
-        headers.forEach(header => {
-          tableHTML += `<td>${row[header] || ''}</td>`;
+
+      // Add textarea resize functionality
+      const textarea = document.getElementById('sql-textarea');
+      const gridItem = document.getElementById('sql-editor-item');
+
+      if (textarea && gridItem) {
+        // Store original dimensions
+        let originalHeight = textarea.offsetHeight;
+
+        // Create a ResizeObserver to watch for textarea size changes
+        const resizeObserver = new ResizeObserver(entries => {
+          for (let entry of entries) {
+            const newHeight = entry.contentRect.height;
+            const heightDiff = newHeight - originalHeight;
+
+            // Calculate how many grid units to add (each unit is ~80px)
+            const gridUnitsToAdd = Math.floor(heightDiff / 80);
+
+            if (gridUnitsToAdd > 0) {
+              // Get current grid item height
+              const currentGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
+              const newGridHeight = currentGridHeight + gridUnitsToAdd;
+
+              // Update the grid item height
+              grid.update(gridItem, { h: newGridHeight });
+
+              // Update our reference height
+              originalHeight = newHeight;
+            } else if (gridUnitsToAdd < 0 && heightDiff < -40) {
+              // Allow shrinking too, but with some threshold
+              const currentGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
+              const newGridHeight = Math.max(2, currentGridHeight + gridUnitsToAdd);
+
+              if (newGridHeight !== currentGridHeight) {
+                grid.update(gridItem, { h: newGridHeight });
+                originalHeight = newHeight;
+              }
+            }
+          }
         });
-        tableHTML += '</tr>';
+
+        // Start observing the textarea
+        resizeObserver.observe(textarea);
+
+        // Alternative approach using mouse events for more immediate feedback
+        let isResizing = false;
+        let startHeight = 0;
+        let startGridHeight = 0;
+
+        textarea.addEventListener('mousedown', function (e) {
+          // Check if clicking near the bottom-right corner (resize handle)
+          const rect = textarea.getBoundingClientRect();
+          const isNearBottomRight = (
+            e.clientX > rect.right - 20 &&
+            e.clientY > rect.bottom - 20
+          );
+
+          if (isNearBottomRight) {
+            isResizing = true;
+            startHeight = textarea.offsetHeight;
+            startGridHeight = parseInt(gridItem.getAttribute('gs-h')) || 3;
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+          }
+        });
+
+        function handleMouseMove(e) {
+          if (!isResizing) return;
+
+          // Calculate height difference
+          const currentHeight = textarea.offsetHeight;
+          const heightDiff = currentHeight - startHeight;
+          const gridUnitsToAdd = Math.floor(heightDiff / 60); // Slightly more sensitive
+
+          if (Math.abs(gridUnitsToAdd) > 0) {
+            const newGridHeight = Math.max(2, startGridHeight + gridUnitsToAdd);
+            grid.update(gridItem, { h: newGridHeight });
+          }
+        }
+
+        function handleMouseUp() {
+          isResizing = false;
+          document.removeEventListener('mousemove', handleMouseMove);
+          document.removeEventListener('mouseup', handleMouseUp);
+        }
+      }
+
+      // Fetch data from textarea for query execution
+      const runButton = document.getElementById('run-button');
+      const sqlTextarea = document.getElementById('sql-textarea');
+      const dataTable = document.getElementById('table-wrapper');
+      const errorDetailsDiv = document.getElementById('error-details'); // Get the new div
+      const errorMessageParagraph = errorDetailsDiv.querySelector('.error-message'); // Get the paragraph
+
+      runButton.addEventListener('click', function () {
+        const query = sqlTextarea.value.trim();
+
+        if (!query) {
+          errorMessageParagraph.textContent = 'Please enter a SQL query';
+          return;
+        }
+
+        // Show loading state
+        errorMessageParagraph.textContent = 'Executing query...';
+
+        fetch('/run-query', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sql: query }),
+        })
+          .then(response => {
+            if (!response.ok) {
+              return response.json().then(err => Promise.reject(err));
+            }
+            return response.json();
+          })
+          .then(data => {
+            errorMessageParagraph.textContent = ''; // Clear error message
+
+            if (data.results && data.results.length > 0) {
+              // Build table (your existing code)
+              let tableHTML = '<table border="1">';
+
+              // Add headers
+              const headers = Object.keys(data.results[0]);
+              tableHTML += '<thead><tr>';
+              headers.forEach(header => {
+                tableHTML += `<th>${header}</th>`;
+              });
+              tableHTML += '</tr></thead>';
+
+              // Add data rows
+              tableHTML += '<tbody>';
+              data.results.forEach(row => {
+                tableHTML += '<tr>';
+                headers.forEach(header => {
+                  tableHTML += `<td>${row[header] || ''}</td>`;
+                });
+                tableHTML += '</tr>';
+              });
+              tableHTML += '</tbody></table>';
+
+              dataTable.innerHTML = tableHTML;
+
+              // ADD THIS LINE: Generate chart with the same data
+              generateChart(data.results);
+
+            } else {
+              dataTable.innerHTML = '<h3>📑 Data Table</h3><p>Query executed successfully but returned no results.</p>';
+
+              // ADD THIS LINE: Clear chart when no results
+              clearChart();
+            }
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+            if (error.details) {
+              errorMessageParagraph.textContent = `Error: ${error.details}`;
+            } else if (error.error) {
+              errorMessageParagraph.textContent = `Error: ${error.error}`;
+            } else {
+              errorMessageParagraph.textContent = `Error: ${error.message || 'Unknown error occurred'}`;
+            }
+
+            // ADD THIS LINE: Clear chart on error
+            clearChart();
+          });
       });
-      tableHTML += '</tbody></table>';
-      
-      dataTable.innerHTML = tableHTML;
-      
-      // ADD THIS LINE: Generate chart with the same data
-      generateChart(data.results);
-      
-    } else {
-      dataTable.innerHTML = '<h3>📑 Data Table</h3><p>Query executed successfully but returned no results.</p>';
-      
-      // ADD THIS LINE: Clear chart when no results
-      clearChart();
-    }
-  })
-  .catch((error) => {
-    console.error('Error:', error);
-    if (error.details) {
-      errorMessageParagraph.textContent = `Error: ${error.details}`;
-    } else if (error.error) {
-      errorMessageParagraph.textContent = `Error: ${error.error}`;
-    } else {
-      errorMessageParagraph.textContent = `Error: ${error.message || 'Unknown error occurred'}`;
-    }
-    
-    // ADD THIS LINE: Clear chart on error
-    clearChart();
-  });
-});
-function generateChart(results) {
-  const chartContainer = document.getElementById('chart-container');
-  const chartPlaceholder = document.getElementById('chart-placeholder');
-  
-  if (results.length === 0) {
-    clearChart();
-    return;
-  }
-  
-  // Hide placeholder
-  if (chartPlaceholder) chartPlaceholder.style.display = 'none';
-  
-  // Get all columns
-  const columns = Object.keys(results[0]);
-  
-  if (columns.length >= 3) {
-    // Default structure: col1=x-axis, col2=grouping, col3=y-axis
-    createMultiLineChart(results, columns[0], columns[1], columns[2], chartContainer);
-  } else if (columns.length === 2) {
-    // Fallback: simple line chart with col1=x, col2=y
-    createSimpleLineChart(results, columns[0], columns[1], chartContainer);
-  } else {
-    // Fallback: count chart for single column
-    createCountChart(results, columns[0], chartContainer);
-  }
-}
 
-function createMultiLineChart(results, xColumn, groupColumn, yColumn, container) {
-  // Group data by the grouping column
-  const groupedData = {};
-  
-  results.forEach(row => {
-    const groupValue = row[groupColumn];
-    if (!groupedData[groupValue]) {
-      groupedData[groupValue] = [];
-    }
-    groupedData[groupValue].push({
-      x: row[xColumn],
-      y: parseFloat(row[yColumn]) || 0
-    });
-  });
-  
-  // Create traces for each group
-  const traces = Object.keys(groupedData).map((groupName, index) => {
-    // Sort by x-axis for proper line connection
-    const sortedData = groupedData[groupName].sort((a, b) => {
-      if (typeof a.x === 'string' && typeof b.x === 'string') {
-        return a.x.localeCompare(b.x);
+      function generateChart(results) {
+        const chartContainer = document.getElementById('chart-container');
+        const chartPlaceholder = document.getElementById('chart-placeholder');
+        const chartDiv = document.querySelector('.chart-div');
+
+        if (results.length === 0) {
+          clearChart();
+          return;
+        }
+
+        // Get all columns
+        const columns = Object.keys(results[0]);
+
+        if (columns.length === 3) {
+          // Only create chart if exactly 3 columns
+          // Hide placeholder
+          if (chartPlaceholder) chartPlaceholder.style.display = 'none';
+
+          // Set chart container minHeight 
+          if (chartDiv) {
+            chartDiv.style.minHeight = '350px';
+          }
+
+          // Default structure: col1=x-axis, col2=grouping, col3=y-axis
+          createMultiLineChart(results, columns[0], columns[1], columns[2], chartContainer);
+        } else {
+          // Show placeholder for any other number of columns
+          clearChart();
+        }
       }
-      return a.x - b.x;
-    });
-    
-    return {
-      x: sortedData.map(d => d.x),
-      y: sortedData.map(d => d.y),
-      type: 'scatter',
-      mode: 'lines+markers',
-      name: groupName,
-      line: {
-        color: getLineColor(index),
-        width: 2
-      },
-      marker: {
-        size: 6,
-        color: getLineColor(index)
+
+      function createMultiLineChart(results, xColumn, groupColumn, yColumn, container) {
+        // Group data by the grouping column
+        const groupedData = {};
+
+        results.forEach(row => {
+          const groupValue = row[groupColumn];
+          if (!groupedData[groupValue]) {
+            groupedData[groupValue] = [];
+          }
+          groupedData[groupValue].push({
+            x: row[xColumn],
+            y: parseFloat(row[yColumn]) || 0
+          });
+        });
+
+        // Create traces for each group
+        const traces = Object.keys(groupedData).map((groupName, index) => {
+          // Sort by x-axis for proper line connection
+          const sortedData = groupedData[groupName].sort((a, b) => {
+            if (typeof a.x === 'string' && typeof b.x === 'string') {
+              return a.x.localeCompare(b.x);
+            }
+            return a.x - b.x;
+          });
+
+          return {
+            x: sortedData.map(d => d.x),
+            y: sortedData.map(d => d.y),
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: groupName,
+            line: {
+              color: getLineColor(index),
+              width: 2
+            },
+            marker: {
+              size: 6,
+              color: getLineColor(index)
+            }
+          };
+        });
+
+        const layout = {
+          title: `${yColumn} by ${xColumn} (grouped by ${groupColumn})`,
+          paper_bgcolor: '#2d2d30',
+          plot_bgcolor: '#1a1a1a',
+          font: { color: '#cccccc' },
+          xaxis: {
+            title: xColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+          },
+          yaxis: {
+            title: yColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+          },
+          legend: {
+            font: { color: '#cccccc' },
+            bgcolor: 'rgba(45, 45, 48, 0.8)',
+            bordercolor: '#333',
+            borderwidth: 1
+          }
+        };
+
+        const config = {
+          responsive: true,
+          displayModeBar: true,
+          modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
+          // Add these to prevent interference with GridStack
+          scrollZoom: false,
+          doubleClick: false,
+          showTips: false,
+          staticPlot: false
+        };
+
+        Plotly.newPlot(container, traces, layout, config);
       }
-    };
-  });
-  
-  const layout = {
-    title: `${yColumn} by ${xColumn} (grouped by ${groupColumn})`,
-    paper_bgcolor: '#2d2d30',
-    plot_bgcolor: '#1a1a1a',
-    font: { color: '#cccccc' },
-    xaxis: { 
-      title: xColumn,
-      color: '#cccccc',
-      gridcolor: '#404040'
-    },
-    yaxis: { 
-      title: yColumn,
-      color: '#cccccc',
-      gridcolor: '#404040'
-    },
-    legend: {
-      font: { color: '#cccccc' },
-      bgcolor: 'rgba(45, 45, 48, 0.8)',
-      bordercolor: '#333',
-      borderwidth: 1
-    }
-  };
-  
-  const config = {
-    responsive: true,
-    displayModeBar: true,
-    modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
-    // Add these to prevent interference with GridStack
-    scrollZoom: false,
-    doubleClick: false,
-    showTips: false,
-    staticPlot: false
-  };
-  
-  Plotly.newPlot(container, traces, layout, config);
-}
 
-function createSimpleLineChart(results, xColumn, yColumn, container) {
-  // Sort data by x-axis
-  const sortedResults = [...results].sort((a, b) => {
-    if (typeof a[xColumn] === 'string' && typeof b[xColumn] === 'string') {
-      return a[xColumn].localeCompare(b[xColumn]);
-    }
-    return a[xColumn] - b[xColumn];
-  });
-  
-  const trace = {
-    x: sortedResults.map(row => row[xColumn]),
-    y: sortedResults.map(row => parseFloat(row[yColumn]) || 0),
-    type: 'scatter',
-    mode: 'lines+markers',
-    name: yColumn,
-    line: {
-      color: '#6366f1',
-      width: 2
-    },
-    marker: {
-      size: 6,
-      color: '#6366f1'
-    }
-  };
-  
-  const layout = {
-    title: `${yColumn} by ${xColumn}`,
-    paper_bgcolor: '#2d2d30',
-    plot_bgcolor: '#1a1a1a',
-    font: { color: '#cccccc' },
-    xaxis: { 
-      title: xColumn,
-      color: '#cccccc',
-      gridcolor: '#404040'
-    },
-    yaxis: { 
-      title: yColumn,
-      color: '#cccccc',
-      gridcolor: '#404040'
-    }
-  };
-  
-  const config = {
-    responsive: true,
-    displayModeBar: true,
-    // Add these to prevent interference with GridStack
-    scrollZoom: false,
-    doubleClick: false,
-    showTips: false,
-    staticPlot: false
-  };
-  
-  Plotly.newPlot(container, [trace], layout, config);
-}
+      function createSimpleLineChart(results, xColumn, yColumn, container) {
+        // Sort data by x-axis
+        const sortedResults = [...results].sort((a, b) => {
+          if (typeof a[xColumn] === 'string' && typeof b[xColumn] === 'string') {
+            return a[xColumn].localeCompare(b[xColumn]);
+          }
+          return a[xColumn] - b[xColumn];
+        });
 
-// Helper function to get different colors for each line
-function getLineColor(index) {
-  const colors = [
-    '#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b',
-    '#ef4444', '#ec4899', '#84cc16', '#f97316', '#6b7280'
-  ];
-  return colors[index % colors.length];
-}
+        const trace = {
+          x: sortedResults.map(row => row[xColumn]),
+          y: sortedResults.map(row => parseFloat(row[yColumn]) || 0),
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: yColumn,
+          line: {
+            color: '#6366f1',
+            width: 2
+          },
+          marker: {
+            size: 6,
+            color: '#6366f1'
+          }
+        };
 
-function clearChart() {
-  const chartContainer = document.getElementById('chart-container');
-  const chartPlaceholder = document.getElementById('chart-placeholder');
-  
-  if (chartPlaceholder) chartPlaceholder.style.display = 'block';
-  if (chartContainer) Plotly.purge(chartContainer);
-}
-  });
+        const layout = {
+          title: `${yColumn} by ${xColumn}`,
+          paper_bgcolor: '#2d2d30',
+          plot_bgcolor: '#1a1a1a',
+          font: { color: '#cccccc' },
+          xaxis: {
+            title: xColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+          },
+          yaxis: {
+            title: yColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+          }
+        };
+
+        const config = {
+          responsive: true,
+          displayModeBar: true,
+          // Add these to prevent interference with GridStack
+          scrollZoom: false,
+          doubleClick: false,
+          showTips: false,
+          staticPlot: false
+        };
+
+        Plotly.newPlot(container, [trace], layout, config);
+      }
+
+      // Helper function to get different colors for each line
+      function getLineColor(index) {
+        const colors = [
+          '#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b',
+          '#ef4444', '#ec4899', '#84cc16', '#f97316', '#6b7280'
+        ];
+        return colors[index % colors.length];
+      }
+
+      function clearChart() {
+        const chartContainer = document.getElementById('chart-container');
+        const chartPlaceholder = document.getElementById('chart-placeholder');
+
+        if (chartPlaceholder) chartPlaceholder.style.display = 'block';
+        if (chartContainer) Plotly.purge(chartContainer);
+      }
+    });
 
 
-</script>
+  </script>
 
 
 </body>
+
 </html>
