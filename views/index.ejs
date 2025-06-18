@@ -603,6 +603,27 @@
         if (chartPlaceholder) chartPlaceholder.style.display = 'block';
         if (chartContainer) Plotly.purge(chartContainer);
       }
+      
+// Simple and direct chart resize handling
+grid.on('change', function(event, items) {
+    // 'change' fires when any grid item is moved or resized
+    items.forEach(item => {
+      if (item.el && item.el.id === 'data-analysis-section') {
+        const chartContainer = document.getElementById('chart-container');
+        if (chartContainer) {
+          // Force chart resize after a brief delay
+          setTimeout(() => {
+            try {
+              Plotly.Plots.resize(chartContainer);
+            } catch (e) {
+              console.log('Chart resize failed:', e);
+            }
+          }, 200);
+        }
+      }
+    });
+  });
+      
     });
 
 

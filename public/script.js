@@ -90,3 +90,36 @@
               this.selectionStart = this.selectionEnd = start + 1;
             }
           });
+
+          // Monitor sidebar state changes for chart resize
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+        const target = mutation.target;
+        
+        // Check if sidebar container class changed
+        if (target.classList.contains('sidebar-container')) {
+          // Sidebar state changed, resize chart after transition
+          setTimeout(() => {
+            const chartContainer = document.getElementById('chart-container');
+            if (chartContainer && chartContainer.querySelector('.plotly-graph-div')) {
+              try {
+                Plotly.Plots.resize('chart-container');
+              } catch (e) {
+                console.log('Chart resize after sidebar change failed:', e);
+              }
+            }
+          }, 350);
+        }
+      }
+    });
+  });
+  
+  // Start observing sidebar container for class changes
+  const sidebarContainer = document.querySelector('.sidebar-container');
+  if (sidebarContainer) {
+    observer.observe(sidebarContainer, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+  }
