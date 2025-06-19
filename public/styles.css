@@ -292,7 +292,7 @@ body {
 #sql-query-section,
 #data-table-section,
 #data-analysis-section {
-  /* Make inner sections fill the available width of the main-content padding */
+  /* Make inner sections fill the available width of the main-content padding - if not it will grow infinitely */
   box-sizing: border-box;
   /* Include padding in the element's total width */
 }
@@ -312,7 +312,7 @@ body {
   height: 100%; /* Make it fill the GridStack item's height */
   box-sizing: border-box; /* Include padding in height calculation */
   padding: 15px; /* Consistent internal padding for all widgets */
-  overflow: hidden; /* Prevent content overflowing rounded corners, especially for charts/tables */
+  
 }
 
 .text-input {
