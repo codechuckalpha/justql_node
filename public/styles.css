@@ -463,3 +463,8 @@ body {
 .grid-stack.grid-stack-animate .plotly-graph-div {
   pointer-events: none;
 }
+
+/* NEW: Class to forcefully disable pointer events */
+.plotly-no-pointer-events {
+  pointer-events: none !important;
+}

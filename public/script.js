@@ -51,6 +51,7 @@ document.addEventListener('click', function(e) {
         // document.querySelectorAll('.icon-item').forEach(i => i.classList.remove('active'));
     }
 });
+
 // run query from textarea
 const runButton = document.getElementById('run-button');
 const sqlTextarea = document.getElementById('sql-textarea');
@@ -169,11 +170,13 @@ sqlTextarea.addEventListener('keydown', function(event) {
 });
 
 // Charting Functions
+const chartTypeDropdown = document.getElementById('chart-type-dropdown'); // Get dropdown reference
+
 function generateChart(results) {
     const chartContainer = document.getElementById('chart-container');
     const chartPlaceholder = document.getElementById('chart-placeholder');
     const chartDiv = document.querySelector('.chart-div');
-    const selectedChartType = document.getElementById('chart-type-dropdown').value;
+    const selectedChartType = chartTypeDropdown ? chartTypeDropdown.value : 'line'; // Get selected type
 
     if (!results || results.length === 0) {
         clearChart();
@@ -188,14 +191,33 @@ function generateChart(results) {
         Plotly.purge(chartContainer);
     }
 
-    if (columns.length === 3) {
+    if (selectedChartType === 'timeseries') {
+        // For time series, we ideally need at least 2 columns (date, value)
+        // If 3, it can be date, group, value for multi-series
+        if (columns.length >= 2) {
+            if (chartPlaceholder) chartPlaceholder.style.display = 'none';
+            if (chartDiv) {
+                chartDiv.style.minHeight = '350px';
+            }
+            // Determine if it's single or multi-series time series
+            if (columns.length === 3) {
+                createTimeSeriesChart(results, columns[0], columns[2], columns[1], chartContainer); // x, y, group
+            } else { // Assume 2 columns for a simple time series
+                createTimeSeriesChart(results, columns[0], columns[1], null, chartContainer); // x, y, no group
+            }
+        } else {
+            clearChart();
+            errorMessageParagraph.textContent = 'Time series chart requires at least 2 columns (date, value).';
+            errorMessageParagraph.style.color = '#dc2626';
+        }
+    } else if (columns.length === 3) {
         if (chartPlaceholder) chartPlaceholder.style.display = 'none';
         if (chartDiv) {
             chartDiv.style.minHeight = '350px';
         }
         if (selectedChartType === 'column') {
             createMultiStackedColumnChart(results, columns[0], columns[1], columns[2], chartContainer); // New function for stacked
-        } else {
+        } else { // Default to multi-line if 'line' or unhandled type
             createMultiLineChart(results, columns[0], columns[1], columns[2], chartContainer);
         }
     } else if (columns.length === 2) {
@@ -212,6 +234,8 @@ function generateChart(results) {
         }
     } else {
         clearChart();
+        errorMessageParagraph.textContent = 'Charts require 2 or 3 columns for current visualization types.';
+        errorMessageParagraph.style.color = '#dc2626';
     }
 }
 
@@ -470,6 +494,103 @@ function createSimpleColumnChart(results, xColumn, yColumn, container) {
     Plotly.newPlot(container, [trace], layout, config);
 }
 
+// NEW: Function to create a time series chart
+// Handles 2 columns (x-date, y-value) or 3 columns (x-date, y-value, group-series)
+function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container) {
+    let traces = [];
+    let sortedResults = [];
+
+    // Determine if it's single series or multi series
+    if (groupColumn && results.some(row => row[groupColumn] !== results[0][groupColumn])) {
+        // Multi-series time series
+        const groupedData = {};
+        results.forEach(row => {
+            const groupValue = row[groupColumn];
+            if (!groupedData[groupValue]) {
+                groupedData[groupValue] = [];
+            }
+            groupedData[groupValue].push({
+                x: row[xColumn],
+                y: parseFloat(row[yColumn]) || 0
+            });
+        });
+
+        traces = Object.keys(groupedData).map((groupName, index) => {
+            const dataForGroup = groupedData[groupName].sort((a, b) => new Date(a.x) - new Date(b.x));
+            return {
+                x: dataForGroup.map(d => d.x),
+                y: dataForGroup.map(d => d.y),
+                type: 'scatter',
+                mode: 'lines',
+                name: groupName,
+                line: { color: getLineColor(index), width: 2 }
+            };
+        });
+    } else {
+        // Single series time series (or 3 columns but all same group value)
+        sortedResults = [...results].sort((a, b) => new Date(a[xColumn]) - new Date(b[xColumn]));
+        traces.push({
+            x: sortedResults.map(row => row[xColumn]),
+            y: sortedResults.map(row => parseFloat(row[yColumn]) || 0),
+            type: 'scatter',
+            mode: 'lines',
+            name: yColumn,
+            line: { color: '#6366f1', width: 2 }
+        });
+    }
+
+    const layout = {
+        title: `${yColumn} over Time${groupColumn ? ` (grouped by ${groupColumn})` : ''}`,
+        paper_bgcolor: '#2d2d30',
+        plot_bgcolor: '#1a1a1a',
+        font: { color: '#cccccc' },
+        xaxis: {
+            title: xColumn,
+            type: 'date', // Crucial for time series
+            color: '#cccccc',
+            gridcolor: '#404040',
+            rangeslider: { // Modify range slider visibility
+                visible: false, // Set to false to hide the slider
+                // Remove other rangeslider properties if not visible to clean up
+            },
+            // Hide the rangeselector buttons as well for a cleaner look
+            rangeselector: { 
+                visible: false 
+            }
+        },
+        yaxis: {
+            title: yColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+        },
+        legend: {
+            font: { color: '#cccccc' },
+            bgcolor: 'rgba(45, 45, 48, 0.8)',
+            bordercolor: '#333',
+            borderwidth: 1
+        },
+        // Adjusted bottom margin:
+        // Set to a value that comfortably fits the x-axis title and labels,
+        // without the slider/selector taking extra space.
+        margin: { t: 50, b: 80, l: 50, r: 50 } // Reduced from 100
+    };
+
+    const config = {
+        responsive: true,
+        displayModeBar: false,
+        displaylogo: false,
+        // Crucial for disabling click-and-drag selection in time series:
+        dragmode: false, // Set dragmode to false to disable all drag interactions
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d'], // These are less relevant if dragmode is false, but good to keep.
+        scrollZoom: true, // Allow zoom with scroll for time series
+        doubleClick: 'reset', // Double click to reset zoom
+        showTips: false,
+        staticPlot: false
+    };
+
+    Plotly.newPlot(container, traces, layout, config);
+}
+
 
 function getLineColor(index) {
     const colors = [
@@ -497,36 +618,40 @@ document.addEventListener('DOMContentLoaded', function () {
         disableResize: false
     });
 
-    grid.on('resizestart', function (event, el) {
-        const plotlyDiv = el.querySelector('.plotly-graph-div');
-        if (plotlyDiv) {
-            plotlyDiv.style.pointerEvents = 'none';
+    // Modified GridStack event listeners to use a blocking overlay
+    grid.on('resizestart dragstart', function (event, el) {
+        // Find the specific chart container within the dragged/resized element
+        const chartContainer = el.querySelector('#chart-container');
+        if (chartContainer) {
+            // Create and append a transparent overlay to block events
+            const overlay = document.createElement('div');
+            overlay.className = 'plotly-event-overlay';
+            // Position the overlay exactly over the chart
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.zIndex = '10'; // Ensure it's above the chart
+            overlay.style.background = 'rgba(0,0,0,0)'; // Transparent
+            overlay.style.cursor = 'grab'; // Indicate drag action
+            
+            // Append to the grid-stack-item-content to cover only its area
+            el.querySelector('.grid-stack-item-content').appendChild(overlay);
         }
     });
 
-    grid.on('resizestop', function (event, el) {
-        const plotlyDiv = el.querySelector('.plotly-graph-div');
-        if (plotlyDiv) {
-            plotlyDiv.style.pointerEvents = 'auto';
-            if (el.id === 'data-analysis-section') {
-                setTimeout(() => {
-                    Plotly.Plots.resize('chart-container');
-                }, 100);
-            }
+    grid.on('resizestop dragstop', function (event, el) {
+        // Remove the overlay after drag/resize stops
+        const overlay = el.querySelector('.plotly-event-overlay');
+        if (overlay) {
+            overlay.remove();
         }
-    });
-
-    grid.on('dragstart', function (event, el) {
-        const plotlyDiv = el.querySelector('.plotly-graph-div');
-        if (plotlyDiv) {
-            plotlyDiv.style.pointerEvents = 'none';
-        }
-    });
-
-    grid.on('dragstop', function (event, el) {
-        const plotlyDiv = el.querySelector('.plotly-graph-div');
-        if (plotlyDiv) {
-            plotlyDiv.style.pointerEvents = 'auto';
+        // Trigger Plotly resize after operations
+        if (el.id === 'data-analysis-section') {
+            setTimeout(() => {
+                Plotly.Plots.resize('chart-container');
+            }, 100);
         }
     });
 
