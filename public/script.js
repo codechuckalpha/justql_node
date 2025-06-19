@@ -115,8 +115,8 @@ if (runButton && sqlTextarea) {
                 tableHTML += '</tbody>';
                 resultsTable.innerHTML = tableHTML;
 
-                // *** THIS IS THE LINE TO ADD/UPDATE ***
-                window.lastQueryResults = data.results; // Store the results globally
+                // Store results globally for chart type switching
+                window.lastQueryResults = data.results;
 
                 // Generate chart with the same data
                 generateChart(data.results);
@@ -186,24 +186,20 @@ function generateChart(results) {
     const columns = Object.keys(results[0]);
 
     // Clear any existing chart before drawing a new one
-    // This is important for redraws without purging the container
     if (chartContainer.data) {
         Plotly.purge(chartContainer);
     }
 
     if (selectedChartType === 'timeseries') {
-        // For time series, we ideally need at least 2 columns (date, value)
-        // If 3, it can be date, group, value for multi-series
         if (columns.length >= 2) {
             if (chartPlaceholder) chartPlaceholder.style.display = 'none';
             if (chartDiv) {
                 chartDiv.style.minHeight = '350px';
             }
-            // Determine if it's single or multi-series time series
             if (columns.length === 3) {
-                createTimeSeriesChart(results, columns[0], columns[2], columns[1], chartContainer); // x, y, group
-            } else { // Assume 2 columns for a simple time series
-                createTimeSeriesChart(results, columns[0], columns[1], null, chartContainer); // x, y, no group
+                createTimeSeriesChart(results, columns[0], columns[2], columns[1], chartContainer);
+            } else {
+                createTimeSeriesChart(results, columns[0], columns[1], null, chartContainer);
             }
         } else {
             clearChart();
@@ -216,8 +212,8 @@ function generateChart(results) {
             chartDiv.style.minHeight = '350px';
         }
         if (selectedChartType === 'column') {
-            createMultiStackedColumnChart(results, columns[0], columns[1], columns[2], chartContainer); // New function for stacked
-        } else { // Default to multi-line if 'line' or unhandled type
+            createMultiStackedColumnChart(results, columns[0], columns[1], columns[2], chartContainer);
+        } else {
             createMultiLineChart(results, columns[0], columns[1], columns[2], chartContainer);
         }
     } else if (columns.length === 2) {
@@ -225,8 +221,6 @@ function generateChart(results) {
         if (chartDiv) {
             chartDiv.style.minHeight = '350px';
         }
-        // For 2 columns, a stacked chart doesn't make sense as there's no 'group' dimension.
-        // It will just be a simple bar or line chart.
         if (selectedChartType === 'column') {
             createSimpleColumnChart(results, columns[0], columns[1], chartContainer);
         } else {
@@ -549,13 +543,24 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
             type: 'date', // Crucial for time series
             color: '#cccccc',
             gridcolor: '#404040',
-            rangeslider: { // Modify range slider visibility
-                visible: false, // Set to false to hide the slider
-                // Remove other rangeslider properties if not visible to clean up
+            rangeslider: { // Add the range slider
+                visible: true, // Set to true to show the slider
+                // Optionally style slider fill color
+                bgcolor: '#444444', 
+                bordercolor: '#555555',
+                thickness: 0.15 // Adjust slider height
             },
-            // Hide the rangeselector buttons as well for a cleaner look
             rangeselector: { 
-                visible: false 
+                buttons: [
+                    { count: 1, label: '1m', step: 'month', stepmode: 'backward' },
+                    { count: 6, label: '6m', step: 'month', stepmode: 'backward' },
+                    { count: 1, label: '1y', step: 'year', stepmode: 'backward' },
+                    { step: 'all' }
+                ],
+                bgcolor: '#333333',
+                activecolor: '#6366f1',
+                bordercolor: '#555555',
+                font: { color: '#cccccc' }
             }
         },
         yaxis: {
@@ -569,10 +574,7 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
             bordercolor: '#333',
             borderwidth: 1
         },
-        // Adjusted bottom margin:
-        // Set to a value that comfortably fits the x-axis title and labels,
-        // without the slider/selector taking extra space.
-        margin: { t: 50, b: 80, l: 50, r: 50 } // Reduced from 100
+        margin: { t: 50, b: 100, l: 50, r: 50 } 
     };
 
     const config = {
@@ -581,7 +583,7 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
         displaylogo: false,
         // Crucial for disabling click-and-drag selection in time series:
         dragmode: false, // Set dragmode to false to disable all drag interactions
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d'], // These are less relevant if dragmode is false, but good to keep.
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d'], 
         scrollZoom: true, // Allow zoom with scroll for time series
         doubleClick: 'reset', // Double click to reset zoom
         showTips: false,
@@ -615,7 +617,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const grid = GridStack.init({
         alwaysShowResizeHandle: true,
         float: true,
-        disableResize: false
+        disableResize: false,
+        // *** NEW: Designate the drag handle for GridStack items ***
+        // Only elements with this class will initiate a GridStack drag.
+        handle: '.grid-drag-handle',
+        // *** NEW: Filter out specific elements from being draggable ***
+        // Plotly chart area (its internal <canvas> or <svg> for interaction)
+        // This targets the main interactive area of a Plotly chart
+        filter: '.js-plotly-plot .plotly, .js-plotly-plot .svg-container, .plotly-event-overlay' 
     });
 
     // Modified GridStack event listeners to use a blocking overlay
@@ -634,7 +643,7 @@ document.addEventListener('DOMContentLoaded', function () {
             overlay.style.height = '100%';
             overlay.style.zIndex = '10'; // Ensure it's above the chart
             overlay.style.background = 'rgba(0,0,0,0)'; // Transparent
-            overlay.style.cursor = 'grab'; // Indicate drag action
+            overlay.style.cursor = 'grab'; // Indicate drag action (optional)
             
             // Append to the grid-stack-item-content to cover only its area
             el.querySelector('.grid-stack-item-content').appendChild(overlay);
