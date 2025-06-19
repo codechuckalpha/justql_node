@@ -323,7 +323,7 @@ body {
 
 .text-input h3 {
   /* Add padding to the header */
-  padding: 1rem; /* Adjust as needed, corresponds to your p-4 class */
+  padding-bottom: 10px; /* Adjust as needed, corresponds to your p-4 class */
   box-sizing: border-box; /* Include padding in height calculation */
 }
 
@@ -367,8 +367,7 @@ body {
 
 /* Apply padding to the header inside .grid-stack-item-content */
 .data-table h3 {
-  padding: 1rem; /* Equivalent to p-4, adjust as needed */
-  margin-bottom: 0; /* Remove default margin from h3 */
+  padding-bottom: 10px; /* Adjust as needed, corresponds to your p-4 class */
   flex-shrink: 0; /* Prevent header from shrinking */
   box-sizing: border-box;
 }
@@ -385,7 +384,7 @@ body {
 /* Table Placeholder */
 #table-placeholder {
   /* Make sure placeholder respects parent padding */
-  padding: 20px; /* Internal padding */
+
   margin-top: 0; /* Reset margin, as padding on wrapper handles space */
   box-sizing: border-box;
 }
@@ -402,9 +401,9 @@ body {
 .data-table th {
   text-align: left;
   background-color: #0f0f0f;
-  border: 1px solid #333;
-  padding: 8px 10px; /* Adjust padding for headers */
-  box-sizing: border-box;
+  padding-left: 10px;
+
+  border-spacing: 0;
   position: sticky; /* Make header sticky */
   top: 0; /* Stick to the top of its scrollable container */
   z-index: 10; /* Ensure header stays on top of content when scrolling */
@@ -412,10 +411,11 @@ body {
 
 .data-table td {
   text-align: left;
-  background-color: #1a1a1a; /* Darker background for cells than header for contrast */
-  border: 1px solid #333;
-  padding: 8px 10px; /* Adjust padding for cells */
-  box-sizing: border-box;
+  background-color: #0f0f0f;
+  padding-left: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1); /* Add a top border */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Add a top border */
+  border-spacing: 0;
 }
 
 /* Optional: Add hover state for table rows */
