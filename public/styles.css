@@ -341,6 +341,7 @@ body {
   box-sizing: border-box; /* Ensure padding is included in width/height calculations */
 }
 
+
 .text-input #sql-textarea:focus {
   outline: none;
   border-color: #6366f1;
