@@ -303,21 +303,16 @@ body {
 .grid-stack-item-content {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 2px;
-  
-  font-size: 13px;
   background-color: #2d2d30;
-  position: absolute;
-   
+  font-size: 13px;
 
-  /* Add these for flexbox layout */
+  /* Crucial Flexbox properties for vertical layout */
   display: flex;
   flex-direction: column;
-  height: 100%; /* Ensure content fills the grid-stack-item's height */
-
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  background-color: #2d2d30;
-  font-size: 13px;
+  height: 100%; /* Make it fill the GridStack item's height */
+  box-sizing: border-box; /* Include padding in height calculation */
+  padding: 15px; /* Consistent internal padding for all widgets */
+  overflow: hidden; /* Prevent content overflowing rounded corners, especially for charts/tables */
 }
 
 .text-input {

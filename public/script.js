@@ -494,7 +494,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const grid = GridStack.init({
         alwaysShowResizeHandle: true,
         float: true,
-        cellHeight: 80,
         disableResize: false
     });
 
