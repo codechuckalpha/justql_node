@@ -298,66 +298,134 @@ body {
 }
 
 /* grid-stack elements */
+
+/* Ensure the .grid-stack-item-content fills the .grid-stack-item */
 .grid-stack-item-content {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 2px;
-  padding: 0px;
+  
   font-size: 13px;
   background-color: #2d2d30;
+  position: absolute;
+   
+
+  /* Add these for flexbox layout */
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensure content fills the grid-stack-item's height */
+
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  background-color: #2d2d30;
+  font-size: 13px;
 }
 
 .text-input {
   background-color: #2d2d30;
   color: #cccccc;
+  /* Remove gs-w and gs-h here, as they are on the parent grid-stack-item */
 }
 
-.text-input textarea {
+.text-input h3 {
+  /* Add padding to the header */
+  padding: 1rem; /* Adjust as needed, corresponds to your p-4 class */
+  box-sizing: border-box; /* Include padding in height calculation */
+}
+
+.text-input #sql-textarea {
   background-color: #1a1a1a;
-  padding: 4px;
+  
   border-radius: 2px;
-  width: 100%;
-  margin-top: 4px;
+  width: calc(100% - 20px); /* 100% width minus 2x horizontal padding */
+  flex-grow: 1; /* Make textarea grow to fill available space */
+  
+  resize: none; /* Disable default browser resize handle */
+  font-family: monospace; /* Common for code editors */
   font-size: 13px;
-  height: 150px; /* Set your desired initial height */
+  /* height: 150px; -- REMOVE THIS LINE -- we will control height dynamically */
+  box-sizing: border-box; /* Ensure padding is included in width/height calculations */
 }
 
-.text-input textarea:focus {
+.text-input #sql-textarea:focus {
   outline: none;
   border-color: #6366f1;
   box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
 }
 
-.data-table {
-  background-color: #2d2d30;
-  color: #cccccc;
-  flex: 1;
+.text-input #error-details {
+  /* Adjust padding and margin for error details */
+  padding: 10px; /* Equal padding as textarea's horizontal margin */
+  margin-top: 10px; /* Space between textarea and error details */
+  box-sizing: border-box;
 }
 
+/* Add a style for the grid-stack-item itself to handle padding */
+.grid-stack-item {
+    padding: 0; /* Remove default grid-stack-item padding if any, the content handles it */
+}
+
+
+.data-table {
+  color: #cccccc;
+  /* flex: 1; -- This was on .data-table, but it's more specific now for .table-wrapper */
+}
+
+/* Apply padding to the header inside .grid-stack-item-content */
 .data-table h3 {
-  margin-bottom: 10px;
+  padding: 1rem; /* Equivalent to p-4, adjust as needed */
+  margin-bottom: 0; /* Remove default margin from h3 */
+  flex-shrink: 0; /* Prevent header from shrinking */
+  box-sizing: border-box;
+}
+
+/* Table Wrapper for scrolling */
+.table-wrapper {
+  flex-grow: 1; /* Make the table wrapper fill remaining space */
+  overflow-y: auto; /* Enable vertical scrolling */
+  position: relative; /* Needed for sticky positioning */
+  padding: 0 10px 10px; /* Padding for left, right, and bottom within the wrapper */
+  /* This 10px bottom margin will act as the 20px bottom anchor total, as 10px will be within the wrapper and 10px will be from the content */
+}
+
+/* Table Placeholder */
+#table-placeholder {
+  /* Make sure placeholder respects parent padding */
+  padding: 20px; /* Internal padding */
+  margin-top: 0; /* Reset margin, as padding on wrapper handles space */
+  box-sizing: border-box;
 }
 
 .data-table table {
   color: #cccccc;
   border-spacing: 0;
   width: 100%;
-  table-layout: fixed;
+  table-layout: fixed; /* Ensures columns maintain width */
   border-collapse: collapse;
+  margin-top: 0; /* Remove default table top margin */
 }
 
 .data-table th {
   text-align: left;
   background-color: #0f0f0f;
   border: 1px solid #333;
-  padding-left: 10px;
+  padding: 8px 10px; /* Adjust padding for headers */
   box-sizing: border-box;
+  position: sticky; /* Make header sticky */
+  top: 0; /* Stick to the top of its scrollable container */
+  z-index: 10; /* Ensure header stays on top of content when scrolling */
 }
 
 .data-table td {
   text-align: left;
-  background-color: #0f0f0f;
+  background-color: #1a1a1a; /* Darker background for cells than header for contrast */
   border: 1px solid #333;
-  padding-left: 10px;
+  padding: 8px 10px; /* Adjust padding for cells */
+  box-sizing: border-box;
+}
+
+/* Optional: Add hover state for table rows */
+.data-table tbody tr:hover {
+    background-color: #2a2a2a; /* Slightly lighter on hover */
 }
 
 .chart-div {
