@@ -85,7 +85,7 @@ if (runButton && sqlTextarea) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || errorData.details || 'Unknown server error');
             }
-            
+
             const data = await response.json();
             console.log(data); // Log the response from the server
 
@@ -114,6 +114,9 @@ if (runButton && sqlTextarea) {
                 tableHTML += '</tbody>';
                 resultsTable.innerHTML = tableHTML;
 
+                // *** THIS IS THE LINE TO ADD/UPDATE ***
+                window.lastQueryResults = data.results; // Store the results globally
+
                 // Generate chart with the same data
                 generateChart(data.results);
 
@@ -125,6 +128,7 @@ if (runButton && sqlTextarea) {
                 tablePlaceholder.querySelector('p:nth-child(2)').textContent = ''; // Clear sub-message
 
                 clearChart();
+                window.lastQueryResults = []; // Clear global results if no data
             }
         } catch (error) {
             console.error('Error executing SQL:', error);
@@ -132,6 +136,7 @@ if (runButton && sqlTextarea) {
             errorMessageParagraph.style.color = '#dc2626'; // Red for errors
 
             clearChart();
+            window.lastQueryResults = []; // Clear global results on error
             // Show placeholder on error
             if (tablePlaceholder) tablePlaceholder.style.display = 'block';
             resultsTable.style.display = 'none';
@@ -163,12 +168,12 @@ sqlTextarea.addEventListener('keydown', function(event) {
     }
 });
 
-
-// Charting Functions 
+// Charting Functions
 function generateChart(results) {
     const chartContainer = document.getElementById('chart-container');
     const chartPlaceholder = document.getElementById('chart-placeholder');
     const chartDiv = document.querySelector('.chart-div');
+    const selectedChartType = document.getElementById('chart-type-dropdown').value;
 
     if (!results || results.length === 0) {
         clearChart();
@@ -177,18 +182,34 @@ function generateChart(results) {
 
     const columns = Object.keys(results[0]);
 
+    // Clear any existing chart before drawing a new one
+    // This is important for redraws without purging the container
+    if (chartContainer.data) {
+        Plotly.purge(chartContainer);
+    }
+
     if (columns.length === 3) {
         if (chartPlaceholder) chartPlaceholder.style.display = 'none';
         if (chartDiv) {
             chartDiv.style.minHeight = '350px';
         }
-        createMultiLineChart(results, columns[0], columns[1], columns[2], chartContainer);
-    } else if (columns.length === 2) { // Handle 2 columns for a simple line chart
+        if (selectedChartType === 'column') {
+            createMultiStackedColumnChart(results, columns[0], columns[1], columns[2], chartContainer); // New function for stacked
+        } else {
+            createMultiLineChart(results, columns[0], columns[1], columns[2], chartContainer);
+        }
+    } else if (columns.length === 2) {
         if (chartPlaceholder) chartPlaceholder.style.display = 'none';
         if (chartDiv) {
             chartDiv.style.minHeight = '350px';
         }
-        createSimpleLineChart(results, columns[0], columns[1], chartContainer);
+        // For 2 columns, a stacked chart doesn't make sense as there's no 'group' dimension.
+        // It will just be a simple bar or line chart.
+        if (selectedChartType === 'column') {
+            createSimpleColumnChart(results, columns[0], columns[1], chartContainer);
+        } else {
+            createSimpleLineChart(results, columns[0], columns[1], chartContainer);
+        }
     } else {
         clearChart();
     }
@@ -258,8 +279,8 @@ function createMultiLineChart(results, xColumn, groupColumn, yColumn, container)
 
     const config = {
         responsive: true,
-        displayModeBar: false, // Hide the mode bar
-        displaylogo: false,   // Hide the Plotly logo
+        displayModeBar: false,
+        displaylogo: false,
         modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
         scrollZoom: false,
         doubleClick: false,
@@ -275,7 +296,6 @@ function createSimpleLineChart(results, xColumn, yColumn, container) {
         if (typeof a[xColumn] === 'string' && typeof b[xColumn] === 'string') {
             return a[xColumn].localeCompare(b[xColumn]);
         }
-        // Fix: Corrected sorting for numerical columns
         return (parseFloat(a[xColumn]) || 0) - (parseFloat(b[xColumn]) || 0);
     });
 
@@ -315,8 +335,8 @@ function createSimpleLineChart(results, xColumn, yColumn, container) {
 
     const config = {
         responsive: true,
-        displayModeBar: false, // Hide the mode bar
-        displaylogo: false,   // Hide the Plotly logo
+        displayModeBar: false,
+        displaylogo: false,
         modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
         scrollZoom: false,
         doubleClick: false,
@@ -326,6 +346,130 @@ function createSimpleLineChart(results, xColumn, yColumn, container) {
 
     Plotly.newPlot(container, [trace], layout, config);
 }
+
+// NEW: Function to create a multi-stacked column chart
+function createMultiStackedColumnChart(results, xColumn, groupColumn, yColumn, container) {
+    const groupedData = {};
+    results.forEach(row => {
+        const groupValue = row[groupColumn];
+        if (!groupedData[groupValue]) {
+            groupedData[groupValue] = [];
+        }
+        groupedData[groupValue].push({
+            x: row[xColumn],
+            y: parseFloat(row[yColumn]) || 0
+        });
+    });
+
+    const traces = Object.keys(groupedData).map((groupName, index) => {
+        const sortedData = groupedData[groupName].sort((a, b) => {
+            if (typeof a.x === 'string' && typeof b.x === 'string') {
+                return a.x.localeCompare(b.x);
+            }
+            return a.x - b.x;
+        });
+
+        return {
+            x: sortedData.map(d => d.x),
+            y: sortedData.map(d => d.y),
+            type: 'bar',
+            name: groupName,
+            marker: {
+                color: getLineColor(index)
+            }
+        };
+    });
+
+    const layout = {
+        title: `${yColumn} by ${xColumn} (grouped by ${groupColumn})`,
+        barmode: 'stack', // Key change: 'stack' for stacked column chart
+        paper_bgcolor: '#2d2d30',
+        plot_bgcolor: '#1a1a1a',
+        font: { color: '#cccccc' },
+        xaxis: {
+            title: xColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+        },
+        yaxis: {
+            title: yColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+        },
+        legend: {
+            font: { color: '#cccccc' },
+            bgcolor: 'rgba(45, 45, 48, 0.8)',
+            bordercolor: '#333',
+            borderwidth: 1
+        },
+        margin: { t: 50, b: 50, l: 50, r: 50 }
+    };
+
+    const config = {
+        responsive: true,
+        displayModeBar: false,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
+        scrollZoom: false,
+        doubleClick: false,
+        showTips: false,
+        staticPlot: false
+    };
+
+    Plotly.newPlot(container, traces, layout, config);
+}
+
+// Function to create a simple column chart (for 2 columns) - no changes needed for stacking here
+function createSimpleColumnChart(results, xColumn, yColumn, container) {
+    const sortedResults = [...results].sort((a, b) => {
+        if (typeof a[xColumn] === 'string' && typeof b[xColumn] === 'string') {
+            return a[xColumn].localeCompare(b[xColumn]);
+        }
+        return (parseFloat(a[xColumn]) || 0) - (parseFloat(b[xColumn]) || 0);
+    });
+
+    const trace = {
+        x: sortedResults.map(row => row[xColumn]),
+        y: sortedResults.map(row => parseFloat(row[yColumn]) || 0),
+        type: 'bar',
+        name: yColumn,
+        marker: {
+            color: '#6366f1'
+        }
+    };
+
+    const layout = {
+        title: `${yColumn} by ${xColumn}`,
+        paper_bgcolor: '#2d2d30',
+        plot_bgcolor: '#1a1a1a',
+        font: { color: '#cccccc' },
+        xaxis: {
+            title: xColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+        },
+        yaxis: {
+            title: yColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+        },
+        margin: { t: 50, b: 50, l: 50, r: 50 }
+    };
+
+    const config = {
+        responsive: true,
+        displayModeBar: false,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
+        scrollZoom: false,
+        doubleClick: false,
+        showTips: false,
+        staticPlot: false
+    };
+
+    Plotly.newPlot(container, [trace], layout, config);
+}
+
 
 function getLineColor(index) {
     const colors = [
@@ -341,7 +485,7 @@ function clearChart() {
     const chartDiv = document.querySelector('.chart-div');
 
     if (chartPlaceholder) chartPlaceholder.style.display = 'block';
-    if (chartContainer && chartContainer.data) Plotly.purge(chartContainer);
+    if (chartContainer && chartContainer.data) Plotly.purge(chartContainer); // Ensure purge for a clean slate
     if (chartDiv) chartDiv.style.minHeight = 'auto';
 }
 
@@ -545,4 +689,24 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+});
+
+// IMPORTANT: Event listener to re-draw chart on dropdown change
+// Ensure this runs after the DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const chartTypeDropdown = document.getElementById('chart-type-dropdown');
+    if (chartTypeDropdown) {
+        chartTypeDropdown.addEventListener('change', () => {
+            // Re-run the generateChart function with the last known data
+            // This assumes your data is stored in a globally accessible variable like window.lastQueryResults
+            // OR that your 'run' button logic also stores the results here.
+            if (window.lastQueryResults) { // Make sure results exist before trying to chart
+                generateChart(window.lastQueryResults);
+            } else {
+                // If no results yet, clear the chart or show a message
+                clearChart();
+                console.warn("No data available to re-draw chart. Run a query first.");
+            }
+        });
+    }
 });
