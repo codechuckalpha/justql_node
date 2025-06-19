@@ -309,7 +309,7 @@ body {
   /* Crucial Flexbox properties for vertical layout */
   display: flex;
   flex-direction: column;
-  height: 100%; /* Make it fill the GridStack item's height */
+  /* height: 100%;  Make it fill the GridStack item's height */
   box-sizing: border-box; /* Include padding in height calculation */
   padding: 15px; /* Consistent internal padding for all widgets */
   
