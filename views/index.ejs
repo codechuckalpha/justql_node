@@ -26,7 +26,13 @@
       </div>
     </div>
     <div class="header-right">
-
+    </button>
+    <!-- NEW: Change Layout Button - Moved to the left of the user icon -->
+    <button class="header-button" id="change-layout-btn" title="Change Layout">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+          <path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM48,80h160V176H48ZM208,80h-72v96h72Zm-144,0v96H48V80Z"/>
+      </svg>
+  </button>
       <button class="header-button">
         <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
           <path
@@ -35,6 +41,11 @@
       </button>
     </div>
   </header>
+  <!-- The layout-selector-popup should remain positioned after the header -->
+<div id="layout-selector-popup" class="hidden absolute z-20 bg-gray-800 p-2 rounded-md shadow-lg border border-gray-700 flex flex-col space-y-2"
+style="top: 60px; right: 10px;"> <!-- Positioning will be adjusted by JS on click -->
+<!-- ... layout option buttons ... -->
+</div>
   <div class="sidebar-container collapsed">
     <!-- Icon Bar -->
     <div class="icon-bar">
