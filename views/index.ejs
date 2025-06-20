@@ -42,9 +42,27 @@
     </div>
   </header>
   <!-- The layout-selector-popup should remain positioned after the header -->
-<div id="layout-selector-popup" class="hidden absolute z-20 bg-gray-800 p-2 rounded-md shadow-lg border border-gray-700 flex flex-col space-y-2"
-style="top: 60px; right: 10px;"> <!-- Positioning will be adjusted by JS on click -->
-<!-- ... layout option buttons ... -->
+<!-- NEW: Layout Selector Popup - POSITION THIS DIRECTLY AFTER THE HEADER -->
+<div id="layout-selector-popup" class="hidden absolute z-20 bg-gray-800 p-2 rounded-md shadow-lg border border-gray-700 flex flex-col space-y-2">
+  <!-- These styles will be overridden by JS for precise positioning -->
+  <!-- Layout 1 Button (Stacked Rows) -->
+  <button class="layout-option-btn" data-layout="layout1" title="Stacked Layout">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" width="24" height="24">
+          <path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM48,80H208V112H48ZM48,128H208v32H48ZM48,184H208v16H48Z"/>
+      </svg>
+  </button>
+  <!-- Layout 2 Button (Three Even Columns) -->
+  <button class="layout-option-btn" data-layout="layout2" title="Three Columns">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" width="24" height="24">
+          <path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM48,80h48V176H48ZM104,80h48V176h-48ZM160,80h48V176h-48Z"/>
+      </svg>
+  </button>
+  <!-- Layout 3 Button (Left 1/3 & Stacked Right 2/3) -->
+  <button class="layout-option-btn" data-layout="layout3" title="Left 1/3, Stacked Right 2/3">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" width="24" height="24">
+          <path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM48,80h48V176H48ZM112,80h96V120h-96ZM112,136h96v40h-96Z"/>
+      </svg>
+  </button>
 </div>
   <div class="sidebar-container collapsed">
     <!-- Icon Bar -->
@@ -154,7 +172,7 @@ style="top: 60px; right: 10px;"> <!-- Positioning will be adjusted by JS on clic
     <div class="grid-stack">
 <!-- For the SQL Editor Item -->
 <div class="grid-stack-item" gs-w="12" gs-h="3" id="sql-editor-item">
-  <div class="grid-stack-item-content p-4 shadow-md text-input" gs-w="8" gs-h="3">
+  <div class="grid-stack-item-content p-4 shadow-md text-input">
     <h3 class="flex items-center justify-between grid-drag-handle"> <!-- ADD THIS CLASS -->
       📝 Query Editor
       <div class="flex space-x-2">
@@ -173,7 +191,7 @@ style="top: 60px; right: 10px;"> <!-- Positioning will be adjusted by JS on clic
 
 <!-- For the Data Table Section -->
 <div class="grid-stack-item" gs-w="12" gs-h="3" id="data-table-section">
-  <div class="grid-stack-item-content p-4 shadow-md data-table" gs-w="3" gs-h="3" 　id="data-table">
+  <div class="grid-stack-item-content p-4 shadow-md data-table" 　id="data-table">
     <h3 class="flex items-center justify-between grid-drag-handle">📑 Data Table</h3> <!-- ADD THIS CLASS -->
     <div class="table-wrapper data-table" id="table-wrapper">
       <div
@@ -190,7 +208,7 @@ style="top: 60px; right: 10px;"> <!-- Positioning will be adjusted by JS on clic
 
 <!-- For the Data Visualization Section (Chart) -->
 <div class="grid-stack-item" gs-w="12" gs-h="5" id="data-analysis-section">
-  <div class="grid-stack-item-content p-4 shadow-md chart-div" gs-w="3" gs-h="5">
+  <div class="grid-stack-item-content p-4 shadow-md chart-div" >
     <h3 class="flex items-center justify-between grid-drag-handle"> <!-- ADD THIS CLASS -->
       📊 Data Visualization
       <div class="flex space-x-2">

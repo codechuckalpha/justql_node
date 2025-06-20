@@ -1,180 +1,92 @@
-// Charting Functions 
-function generateChart(results) {
-    const chartContainer = document.getElementById('chart-container');
-    const chartPlaceholder = document.getElementById('chart-placeholder');
-    const chartDiv = document.querySelector('.chart-div');
 
-    if (!results || results.length === 0) {
-        clearChart();
+// --- Layout Change Logic ---
+const changeLayoutBtn = document.getElementById('change-layout-btn');
+const layoutSelectorPopup = document.getElementById('layout-selector-popup');
+const layoutOptionButtons = document.querySelectorAll('.layout-option-btn');
+const gridElement = document.querySelector('.grid-stack'); // Get the grid element directly
+const grid = gridElement ? gridElement.gridstack : null; // Get the grid instance
+
+// Ensure grid instance is available before defining layouts
+if (!grid) {
+    console.error("GridStack instance not found. Layout change functionality disabled.");
+    if (changeLayoutBtn) {
+        changeLayoutBtn.disabled = true;
+        changeLayoutBtn.title = "GridStack not initialized.";
+    }
+    return; // Exit if grid is not found
+}
+
+// Define the predefined layouts
+// gs-w: Grid width (out of 12 columns), gs-h: Grid height (in units of cellHeight)
+// gs-x, gs-y: Grid x, y positions
+const predefinedLayouts = {
+    layout1: [ // Default: Stacked in three rows
+        { id: 'sql-editor-item', x: 0, y: 0, w: 12, h: 3 },
+        { id: 'data-table-section', x: 0, y: 3, w: 12, h: 3 },
+        { id: 'data-analysis-section', x: 0, y: 6, w: 12, h: 5 } // Adjusted h for chart
+    ],
+    layout2: [ // Three Even Columns
+        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 11 }, // Total height for all 3: 3+3+5 = 11
+        { id: 'data-table-section', x: 4, y: 0, w: 4, h: 11 },
+        { id: 'data-analysis-section', x: 8, y: 0, w: 4, h: 11 }
+    ],
+    layout3: [ // Left 1/3 (SQL Editor) & Stacked Right 2/3 (Data Table, Data Visualization)
+        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 11 }, // Full height 1/3 on left
+        { id: 'data-table-section', x: 4, y: 0, w: 8, h: 5 }, // Top 2/3 right
+        { id: 'data-analysis-section', x: 4, y: 5, w: 8, h: 6 }  // Bottom 2/3 right
+    ]
+};
+
+function applyLayout(layoutName) {
+    const layoutConfig = predefinedLayouts[layoutName];
+    if (!layoutConfig) {
+        console.error(`Layout '${layoutName}' not found.`);
         return;
     }
 
-    const columns = Object.keys(results[0]);
-
-    if (columns.length === 3) {
-        if (chartPlaceholder) chartPlaceholder.style.display = 'none';
-        if (chartDiv) {
-            chartDiv.style.minHeight = '350px';
-        }
-        createMultiLineChart(results, columns[0], columns[1], columns[2], chartContainer);
-    } else if (columns.length === 2) { // Handle 2 columns for a simple line chart
-        if (chartPlaceholder) chartPlaceholder.style.display = 'none';
-        if (chartDiv) {
-            chartDiv.style.minHeight = '350px';
-        }
-        createSimpleLineChart(results, columns[0], columns[1], chartContainer);
-    } else {
-        clearChart();
+    // Use grid.load to update positions and sizes of existing items
+    // It's important to pass a clone of the array as grid.load might modify it
+    grid.load([...layoutConfig], true); 
+    
+    // After loading layout, force chart resize to adapt to new container dimensions
+    const chartContainer = document.getElementById('chart-container');
+    if (chartContainer && chartContainer.data) {
+        window.requestAnimationFrame(() => {
+            Plotly.Plots.resize(chartContainer);
+        });
     }
 }
 
-function createMultiLineChart(results, xColumn, groupColumn, yColumn, container) {
-    const groupedData = {};
-    results.forEach(row => {
-        const groupValue = row[groupColumn];
-        if (!groupedData[groupValue]) {
-            groupedData[groupValue] = [];
-        }
-        groupedData[groupValue].push({
-            x: row[xColumn],
-            y: parseFloat(row[yColumn]) || 0
+if (changeLayoutBtn && layoutSelectorPopup) {
+    changeLayoutBtn.addEventListener('click', (event) => {
+        event.stopPropagation(); // Prevent click from bubbling to document and closing immediately
+        layoutSelectorPopup.classList.toggle('hidden');
+
+        // Position the popup precisely below the button
+        const btnRect = changeLayoutBtn.getBoundingClientRect();
+        layoutSelectorPopup.style.top = `${btnRect.bottom + 5}px`; // 5px below button
+        // To align with the right edge of the button:
+        layoutSelectorPopup.style.left = `${btnRect.left}px`; // Align left edge of popup with button left edge
+    });
+
+    // Event listeners for each layout option button inside the popup
+    layoutOptionButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent click from bubbling
+            const layoutName = button.dataset.layout;
+            applyLayout(layoutName);
+            layoutSelectorPopup.classList.add('hidden'); // Hide popup after selection
         });
     });
 
-    const traces = Object.keys(groupedData).map((groupName, index) => {
-        const sortedData = groupedData[groupName].sort((a, b) => {
-            if (typeof a.x === 'string' && typeof b.x === 'string') {
-                return a.x.localeCompare(b.x);
-            }
-            return a.x - b.x;
-        });
-
-        return {
-            x: sortedData.map(d => d.x),
-            y: sortedData.map(d => d.y),
-            type: 'scatter',
-            mode: 'lines+markers',
-            name: groupName,
-            line: {
-                color: getLineColor(index),
-                width: 2
-            },
-            marker: {
-                size: 6,
-                color: getLineColor(index)
-            }
-        };
-    });
-
-    const layout = {
-        title: `${yColumn} by ${xColumn} (grouped by ${groupColumn})`,
-        paper_bgcolor: '#2d2d30',
-        plot_bgcolor: '#1a1a1a',
-        font: { color: '#cccccc' },
-        xaxis: {
-            title: xColumn,
-            color: '#cccccc',
-            gridcolor: '#404040'
-        },
-        yaxis: {
-            title: yColumn,
-            color: '#cccccc',
-            gridcolor: '#404040'
-        },
-        legend: {
-            font: { color: '#cccccc' },
-            bgcolor: 'rgba(45, 45, 48, 0.8)',
-            bordercolor: '#333',
-            borderwidth: 1
-        },
-        margin: { t: 50, b: 50, l: 50, r: 50 }
-    };
-
-    const config = {
-        responsive: true,
-        displayModeBar: false, // Hide the mode bar
-        displaylogo: false,   // Hide the Plotly logo
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
-        scrollZoom: false,
-        doubleClick: false,
-        showTips: false,
-        staticPlot: false
-    };
-
-    Plotly.newPlot(container, traces, layout, config);
-}
-
-function createSimpleLineChart(results, xColumn, yColumn, container) {
-    const sortedResults = [...results].sort((a, b) => {
-        if (typeof a[xColumn] === 'string' && typeof b[xColumn] === 'string') {
-            return a[xColumn].localeCompare(b[xColumn]);
+    // Close popup if clicked outside
+    document.addEventListener('click', (event) => {
+        // Check if click is outside the popup AND not on the toggle button itself
+        if (!layoutSelectorPopup.contains(event.target) && !changeLayoutBtn.contains(event.target)) {
+            layoutSelectorPopup.classList.add('hidden');
         }
-        // Fix: Corrected sorting for numerical columns
-        return (parseFloat(a[xColumn]) || 0) - (parseFloat(b[xColumn]) || 0);
     });
-
-    const trace = {
-        x: sortedResults.map(row => row[xColumn]),
-        y: sortedResults.map(row => parseFloat(row[yColumn]) || 0),
-        type: 'scatter',
-        mode: 'lines+markers',
-        name: yColumn,
-        line: {
-            color: '#6366f1',
-            width: 2
-        },
-        marker: {
-            size: 6,
-            color: '#6366f1'
-        }
-    };
-
-    const layout = {
-        title: `${yColumn} by ${xColumn}`,
-        paper_bgcolor: '#2d2d30',
-        plot_bgcolor: '#1a1a1a',
-        font: { color: '#cccccc' },
-        xaxis: {
-            title: xColumn,
-            color: '#cccccc',
-            gridcolor: '#404040'
-        },
-        yaxis: {
-            title: yColumn,
-            color: '#cccccc',
-            gridcolor: '#404040'
-        },
-        margin: { t: 50, b: 50, l: 50, r: 50 }
-    };
-
-    const config = {
-        responsive: true,
-        displayModeBar: false, // Hide the mode bar
-        displaylogo: false,   // Hide the Plotly logo
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
-        scrollZoom: false,
-        doubleClick: false,
-        showTips: false,
-        staticPlot: false
-    };
-
-    Plotly.newPlot(container, [trace], layout, config);
 }
 
-function getLineColor(index) {
-    const colors = [
-        '#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b',
-        '#ef4444', '#ec4899', '#84cc16', '#f97316', '#6b7280'
-    ];
-    return colors[index % colors.length];
-}
-
-function clearChart() {
-    const chartContainer = document.getElementById('chart-container');
-    const chartPlaceholder = document.getElementById('chart-placeholder');
-    const chartDiv = document.querySelector('.chart-div');
-
-    if (chartPlaceholder) chartPlaceholder.style.display = 'block';
-    if (chartContainer && chartContainer.data) Plotly.purge(chartContainer);
-    if (chartDiv) chartDiv.style.minHeight = 'auto';
-}
+// Apply the default layout on initial load (Layout 1)
+applyLayout('layout1');
