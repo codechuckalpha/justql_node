@@ -664,74 +664,28 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Add textarea resize functionality (keeping user's original logic)
-    const textarea = document.getElementById('sql-textarea');
-    const sqlEditorItem = document.getElementById('sql-editor-item'); 
+    // Remove the complex textarea resize logic since grid-stack handles it
+const textarea = document.getElementById('sql-textarea');
+const sqlEditorItem = document.getElementById('sql-editor-item'); 
 
-    if (textarea && sqlEditorItem) {
-        let originalHeight = textarea.offsetHeight;
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                const newHeight = entry.contentRect.height;
-                const heightDiff = newHeight - originalHeight;
-                const gridUnitsToAdd = Math.floor(heightDiff / 80);
-
-                if (gridUnitsToAdd > 0) {
-                    const currentGridHeight = parseInt(sqlEditorItem.getAttribute('gs-h')) || 3;
-                    const newGridHeight = currentGridHeight + gridUnitsToAdd;
-                    grid.update(sqlEditorItem, { h: newGridHeight });
-                    originalHeight = newHeight;
-                } else if (gridUnitsToAdd < 0 && heightDiff < -40) {
-                    const currentGridHeight = parseInt(sqlEditorItem.getAttribute('gs-h')) || 3;
-                    const newGridHeight = Math.max(2, currentGridHeight + gridUnitsToAdd);
-                    if (newGridHeight !== currentGridHeight) {
-                        grid.update(sqlEditorItem, { h: newGridHeight }); 
-                        originalHeight = newHeight;
-                    }
-                }
-            }
-        });
-        resizeObserver.observe(textarea);
-
-        let isResizing = false;
-        let startHeight = 0;
-        let startGridHeight = 0;
-
-        textarea.addEventListener('mousedown', function (e) {
-            const rect = textarea.getBoundingClientRect();
-            const isNearBottomRight = (
-                e.clientX > rect.right - 20 &&
-                e.clientY > rect.bottom - 20
-            );
-
-            if (isNearBottomRight) {
-                isResizing = true;
-                startHeight = textarea.offsetHeight;
-                startGridHeight = parseInt(sqlEditorItem.getAttribute('gs-h')) || 3;
-
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', handleMouseUp);
-            }
-        });
-
-        function handleMouseMove(e) {
-            if (!isResizing) return;
-            const currentHeight = textarea.offsetHeight;
-            const heightDiff = currentHeight - startHeight;
-            const gridUnitsToAdd = Math.floor(heightDiff / 60);
-
-            if (Math.abs(gridUnitsToAdd) > 0) {
-                const newGridHeight = Math.max(2, startGridHeight + gridUnitsToAdd);
-                grid.update(sqlEditorItem, { h: newGridHeight });
-            }
+if (textarea && sqlEditorItem) {
+    // Only keep the tab and Ctrl+Enter functionality
+    textarea.addEventListener('keydown', function(event) {
+        if (event.key === 'Tab') {
+            event.preventDefault();
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            const value = this.value;
+            this.value = value.substring(0, start) + '\t' + value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 1;
+        } 
+        else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            document.getElementById('run-button').click();
         }
+    });
+}
 
-        function handleMouseUp() {
-            isResizing = false;
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        }
-    }
 
     // New: ResizeObserver for the chart container's parent
     const dataAnalysisSection = document.getElementById('data-analysis-section');

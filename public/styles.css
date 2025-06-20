@@ -334,11 +334,15 @@ body {
   width: calc(100% - 20px); /* 100% width minus 2x horizontal padding */
   flex-grow: 1; /* Make textarea grow to fill available space */
   
-  resize: none; /* Disable default browser resize handle */
+  resize: none; /* Allow manual resize */
   font-family: monospace; /* Common for code editors */
   font-size: 13px;
   /* height: 150px; -- REMOVE THIS LINE -- we will control height dynamically */
   box-sizing: border-box; /* Ensure padding is included in width/height calculations */
+  /* CRITICAL: Prevent infinite expansion */
+  max-height: calc(100% - 60px); /* Leave space for header and error div */
+  min-height: 80px; /* Minimum usable height */
+  overflow-y: auto; /* Add scrollbar if content exceeds height */
 }
 
 
