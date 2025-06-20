@@ -63,10 +63,22 @@ const errorMessageParagraph = errorDetailsDiv.querySelector('.error-message');
 
 if (runButton && sqlTextarea) {
     runButton.addEventListener('click', async () => {
-        const query = sqlTextarea.value.trim();
+        let query;
+        // Check if text is selected
+        const selectionStart = sqlTextarea.selectionStart;
+        const selectionEnd = sqlTextarea.selectionEnd;
+        const textareaValue = sqlTextarea.value;
 
+        if (selectionStart !== selectionEnd) {
+            // If text is selected, use only the selected text
+            query = textareaValue.substring(selectionStart, selectionEnd).trim();
+        } else {
+            // If no text is selected, use the entire content of the textarea
+            query = textareaValue.trim();
+        }
+        
         if (!query) {
-            errorMessageParagraph.textContent = 'Please enter a SQL query';
+            errorMessageParagraph.textContent = 'Please enter a SQL query or select text to run.';
             errorMessageParagraph.style.color = '#dc2626'; // Red for errors
             return;
         }
@@ -165,6 +177,7 @@ if (runButton && sqlTextarea) {
     });
 }
 
+
 // To handle tab presses when typing sql queries and Ctrl + Enter to run query 
 sqlTextarea.addEventListener('keydown', function(event) {
     if (event.key === 'Tab') {
@@ -246,8 +259,8 @@ function generateChart(results) {
         }
     } else {
         clearChart();
-        errorMessageParagraph.textContent = 'Charts require 2 or 3 columns for current visualization types.';
-        errorMessageParagraph.style.color = '#dc2626';
+        //errorMessageParagraph.textContent = 'Charts require 2 or 3 columns for current visualization types.';
+        //errorMessageParagraph.style.color = '#dc2626';
     }
 }
 
