@@ -25,8 +25,55 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 1000;
 }
+
+/* --- NEW: Layout Selector Popup Styles (Append to end of file) --- */
+#layout-selector-popup {
+  position: absolute; /* Allows JS to position it precisely */
+  z-index: 1001;      /* Force it above the header (which is z-index: 100) */
+  background-color: #1a1a1a; /* Match your dark theme */
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  padding: 10px;
+  display: flex;       /* Layout buttons in a column */
+  flex-direction: column;
+  gap: 8px;            /* Space between buttons */
+  min-width: 50px;     /* Prevent it from being too narrow */
+  /* top and left will be set by JS */
+}
+
+/* Styles for individual layout option buttons inside the popup */
+.layout-option-btn {
+  background-color: #2d2d30; /* Darker button background */
+  color: #cccccc;            /* Light color for icons */
+  border: 1px solid #444;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;             /* To center the SVG icon */
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.layout-option-btn:hover {
+  background-color: #3e3e3e; /* Lighter background on hover */
+  border-color: #6366f1; /* Highlight with blue on hover */
+}
+
+.layout-option-btn svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor; /* SVG inherits color from parent button */
+}
+
+/* Class to hide elements (used by JS) */
+.hidden {
+  display: none !important; /* IMPORTANT: Ensures it's completely hidden */
+}
+
 
 .header-left {
   display: flex;

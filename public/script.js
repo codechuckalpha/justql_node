@@ -1,4 +1,4 @@
-// Handle icon clicks (sidebar icon items)
+// Handle icon clicks
 document.querySelectorAll('.icon-item').forEach(icon => {
     icon.addEventListener('click', function() {
         const panel = this.dataset.panel;
@@ -31,7 +31,7 @@ document.querySelectorAll('.icon-item').forEach(icon => {
     });
 });
 
-// Handle section collapse/expand in sidebar
+// Handle section collapse/expand
 document.querySelectorAll('.section-header').forEach(header => {
     header.addEventListener('click', function() {
         this.classList.toggle('collapsed');
@@ -40,7 +40,7 @@ document.querySelectorAll('.section-header').forEach(header => {
     });
 });
 
-// Handle clicking outside to collapse sidebar (optional)
+// Handle clicking outside to collapse (optional)
 document.addEventListener('click', function(e) {
     const sidebar = document.querySelector('.sidebar-container');
     const contentPanel = document.getElementById('contentPanel');
@@ -52,7 +52,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Query Execution Logic
+// run query from textarea
 const runButton = document.getElementById('run-button');
 const sqlTextarea = document.getElementById('sql-textarea');
 const tableWrapper = document.getElementById('table-wrapper');
@@ -64,26 +64,30 @@ const errorMessageParagraph = errorDetailsDiv.querySelector('.error-message');
 if (runButton && sqlTextarea) {
     runButton.addEventListener('click', async () => {
         let query;
+        // Check if text is selected
         const selectionStart = sqlTextarea.selectionStart;
         const selectionEnd = sqlTextarea.selectionEnd;
         const textareaValue = sqlTextarea.value;
 
         if (selectionStart !== selectionEnd) {
+            // If text is selected, use only the selected text
             query = textareaValue.substring(selectionStart, selectionEnd).trim();
         } else {
+            // If no text is selected, use the entire content of the textarea
             query = textareaValue.trim();
         }
         
         if (!query) {
             errorMessageParagraph.textContent = 'Please enter a SQL query or select text to run.';
-            errorMessageParagraph.style.color = '#dc2626';
+            errorMessageParagraph.style.color = '#dc2626'; // Red for errors
             return;
         }
 
         errorMessageParagraph.textContent = 'Executing query...';
-        errorMessageParagraph.style.color = '#3b82f6';
+        errorMessageParagraph.style.color = '#3b82f6'; /* Blue for loading */
 
         try {
+            // Assuming a backend endpoint '/run-query' for the actual query execution
             const response = await fetch('/run-query', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -92,16 +96,18 @@ if (runButton && sqlTextarea) {
 
             if (!response.ok) {
                 const errorData = await response.json();
+                // *** FIX HERE: Throw the entire errorData object to retain all details ***
                 throw errorData; 
             }
 
             const data = await response.json();
-            console.log(data);
+            console.log(data); // Log the response from the server
 
-            errorMessageParagraph.textContent = '';
-            errorMessageParagraph.style.color = '';
+            errorMessageParagraph.textContent = ''; // Clear error message
+            errorMessageParagraph.style.color = ''; // Reset color
 
             if (data.results && data.results.length > 0) {
+                // Hide placeholder and show table
                 if (tablePlaceholder) tablePlaceholder.style.display = 'none';
                 resultsTable.style.display = 'table';
 
@@ -122,22 +128,27 @@ if (runButton && sqlTextarea) {
                 tableHTML += '</tbody>';
                 resultsTable.innerHTML = tableHTML;
 
+                // Store results globally for chart type switching
                 window.lastQueryResults = data.results;
+
+                // Generate chart with the same data
                 generateChart(data.results);
 
             } else {
+                // Show placeholder if no results
                 if (tablePlaceholder) tablePlaceholder.style.display = 'block';
                 resultsTable.style.display = 'none';
                 tablePlaceholder.querySelector('p:first-child').textContent = 'Query executed successfully but returned no results.';
-                tablePlaceholder.querySelector('p:nth-child(2)').textContent = '';
+                tablePlaceholder.querySelector('p:nth-child(2)').textContent = ''; // Clear sub-message
 
                 clearChart();
-                window.lastQueryResults = [];
+                window.lastQueryResults = []; // Clear global results if no data
             }
         } catch (error) {
             console.error('Error executing SQL:', error);
             let displayMessage = 'Unknown error occurred';
 
+            // *** FIX HERE: Smarter error message extraction from the caught error object ***
             if (error && typeof error === 'object') {
                 if (error.error && error.details) {
                     displayMessage = `${error.error}: ${error.details}`;
@@ -145,18 +156,19 @@ if (runButton && sqlTextarea) {
                     displayMessage = error.error;
                 } else if (error.details) {
                     displayMessage = error.details;
-                } else if (error.message) {
+                } else if (error.message) { // Fallback for standard Error objects (e.g., network errors)
                     displayMessage = error.message;
                 }
-            } else {
+            } else { // Fallback for anything else that might be thrown
                 displayMessage = String(error);
             }
             
             errorMessageParagraph.textContent = `Error: ${displayMessage}`;
-            errorMessageParagraph.style.color = '#dc2626';
+            errorMessageParagraph.style.color = '#dc2626'; // Red for errors
 
             clearChart();
-            window.lastQueryResults = [];
+            window.lastQueryResults = []; // Clear global results on error
+            // Show placeholder on error
             if (tablePlaceholder) tablePlaceholder.style.display = 'block';
             resultsTable.style.display = 'none';
             tablePlaceholder.querySelector('p:first-child').textContent = 'Data table will appear here';
@@ -165,30 +177,37 @@ if (runButton && sqlTextarea) {
     });
 }
 
+
 // To handle tab presses when typing sql queries and Ctrl + Enter to run query 
 sqlTextarea.addEventListener('keydown', function(event) {
     if (event.key === 'Tab') {
-      event.preventDefault();
+      event.preventDefault(); // Prevent default tab behavior
+  
       const start = this.selectionStart;
       const end = this.selectionEnd;
       const value = this.value;
+  
+      // Insert a tab character at the current cursor position
       this.value = value.substring(0, start) + '\t' + value.substring(end);
+  
+      // Move the cursor to after the inserted tab
       this.selectionStart = this.selectionEnd = start + 1;
     } 
-    else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        runButton.click();
+    // New: Handle Ctrl + Enter to run query
+    else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { // Check for Ctrl or Cmd (for Mac)
+        event.preventDefault(); // Prevent new line
+        runButton.click(); // Programmatically click the run button
     }
 });
 
 // Charting Functions
-const chartTypeDropdown = document.getElementById('chart-type-dropdown'); 
+const chartTypeDropdown = document.getElementById('chart-type-dropdown'); // Get dropdown reference
 
 function generateChart(results) {
     const chartContainer = document.getElementById('chart-container');
     const chartPlaceholder = document.getElementById('chart-placeholder');
     const chartDiv = document.querySelector('.chart-div');
-    const selectedChartType = chartTypeDropdown ? chartTypeDropdown.value : 'line';
+    const selectedChartType = chartTypeDropdown ? chartTypeDropdown.value : 'line'; // Get selected type
 
     if (!results || results.length === 0) {
         clearChart();
@@ -197,6 +216,7 @@ function generateChart(results) {
 
     const columns = Object.keys(results[0]);
 
+    // Clear any existing chart before drawing a new one
     if (chartContainer.data) {
         Plotly.purge(chartContainer);
     }
@@ -635,7 +655,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // *** NEW: Filter out specific elements from being draggable ***
         // Plotly chart area (its internal <canvas> or <svg> for interaction)
         // This targets the main interactive area of a Plotly chart
-        filter: '.js-plotly-plot, .plotly .plot-container, .rangeslider-container, .range-selector' 
+        filter: '.js-plotly-plot .plotly, .js-plotly-plot .svg-container, .plotly-event-overlay' 
     });
 
     // Modified GridStack event listeners to use a blocking overlay
@@ -675,83 +695,40 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Add textarea resize functionality (keeping original logic)
-    const textarea = document.getElementById('sql-textarea');
-    const sqlEditorItem = document.getElementById('sql-editor-item'); 
+    // Remove the complex textarea resize logic since grid-stack handles it
+const textarea = document.getElementById('sql-textarea');
+const sqlEditorItem = document.getElementById('sql-editor-item'); 
 
-    if (textarea && sqlEditorItem) {
-        let originalHeight = textarea.offsetHeight;
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                const newHeight = entry.contentRect.height;
-                const heightDiff = newHeight - originalHeight;
-                const gridUnitsToAdd = Math.floor(heightDiff / 80);
-
-                if (gridUnitsToAdd > 0) {
-                    const currentGridHeight = parseInt(sqlEditorItem.getAttribute('gs-h')) || 3;
-                    const newGridHeight = currentGridHeight + gridUnitsToAdd;
-                    grid.update(sqlEditorItem, { h: newGridHeight });
-                    originalHeight = newHeight;
-                } else if (gridUnitsToAdd < 0 && heightDiff < -40) {
-                    const currentGridHeight = parseInt(sqlEditorItem.getAttribute('gs-h')) || 3;
-                    const newGridHeight = Math.max(2, currentGridHeight + gridUnitsToAdd);
-                    if (newGridHeight !== currentGridHeight) {
-                        grid.update(sqlEditorItem, { h: newGridHeight }); 
-                        originalHeight = newHeight;
-                    }
-                }
-            }
-        });
-        resizeObserver.observe(textarea);
-
-        let isResizing = false;
-        let startHeight = 0;
-        let startGridHeight = 0;
-
-        textarea.addEventListener('mousedown', function (e) {
-            const rect = textarea.getBoundingClientRect();
-            const isNearBottomRight = (
-                e.clientX > rect.right - 20 &&
-                e.clientY > rect.bottom - 20
-            );
-
-            if (isNearBottomRight) {
-                isResizing = true;
-                startHeight = textarea.offsetHeight;
-                startGridHeight = parseInt(sqlEditorItem.getAttribute('gs-h')) || 3;
-
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', handleMouseUp);
-            }
-        });
-
-        function handleMouseMove(e) {
-            if (!isResizing) return;
-            const currentHeight = textarea.offsetHeight;
-            const heightDiff = currentHeight - startHeight;
-            const gridUnitsToAdd = Math.floor(heightDiff / 60);
-
-            if (Math.abs(gridUnitsToAdd) > 0) {
-                const newGridHeight = Math.max(2, startGridHeight + gridUnitsToAdd);
-                grid.update(sqlEditorItem, { h: newGridHeight });
-            }
+if (textarea && sqlEditorItem) {
+    // Only keep the tab and Ctrl+Enter functionality
+    textarea.addEventListener('keydown', function(event) {
+        if (event.key === 'Tab') {
+            event.preventDefault();
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            const value = this.value;
+            this.value = value.substring(0, start) + '\t' + value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 1;
+        } 
+        else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            document.getElementById('run-button').click();
         }
+    });
+}
 
-        function handleMouseUp() {
-            isResizing = false;
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        }
-    }
 
-    // Chart ResizeObserver for data-analysis-section
+    // New: ResizeObserver for the chart container's parent
     const dataAnalysisSection = document.getElementById('data-analysis-section');
     if (dataAnalysisSection) {
         const chartResizeObserver = new ResizeObserver(entries => {
             for (const entry of entries) {
+                // Check if the content box size has changed
                 if (entry.contentBoxSize) {
                     const chartContainer = document.getElementById('chart-container');
+                    // Ensure a chart has actually been plotted before attempting to resize
                     if (chartContainer && chartContainer.data) {
+                        // Use requestAnimationFrame for smooth resizing
                         window.requestAnimationFrame(() => {
                             try {
                                 Plotly.Plots.resize(chartContainer);
@@ -764,42 +741,46 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+        // Observe the parent container that changes size
         chartResizeObserver.observe(dataAnalysisSection);
     }
 
-    // Grid change listener for overall layout adjustments
+
     grid.on('change', function (event, items) {
         items.forEach(item => {
             if (item.el && item.el.id === 'data-analysis-section') {
                 const chartContainer = document.getElementById('chart-container');
                 if (chartContainer && chartContainer.data) {
-                    // Let the ResizeObserver handle this primarily
+                    // This is now redundant as ResizeObserver on dataAnalysisSection handles it.
+                    // setTimeout(() => { Plotly.Plots.resize('chart-container'); }, 100);
                 }
             }
         });
     });
 
-    // Sidebar toggle logic
     const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
     const sidebarContainer = document.getElementById('sidebar-container');
 
     toggleSidebarBtn.addEventListener('click', () => {
         sidebarContainer.classList.toggle('collapsed');
-        // Let ResizeObserver handle chart resize when sidebar changes width
+        // Let the ResizeObserver on data-analysis-section handle the chart resize.
+        // The sidebar's class change will affect .main-content's width, which affects data-analysis-section's width.
     });
 
-    // Sidebar icon clicks to switch panels
+    // Removed the MutationObserver that was previously here attempting to handle chart resize.
+    // This simplifies the logic and relies on ResizeObserver being the single source of truth.
+
     const iconItems = document.querySelectorAll('.icon-item');
     const panelSections = document.querySelectorAll('.panel-section');
 
     iconItems.forEach(item => {
-        item.addEventListener('click', function() {
-            const panelId = this.dataset.panel + '-panel'; 
+        item.addEventListener('click', () => {
+            const panelId = item.dataset.panel + '-panel'; 
 
             iconItems.forEach(i => i.classList.remove('active'));
             panelSections.forEach(p => p.style.display = 'none');
 
-            this.classList.add('active');
+            item.classList.add('active');
             const targetPanel = document.getElementById(panelId);
             if (targetPanel) {
                 targetPanel.style.display = 'block';
@@ -846,5 +827,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
 });
