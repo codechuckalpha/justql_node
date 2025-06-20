@@ -84,7 +84,8 @@ if (runButton && sqlTextarea) {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || errorData.details || 'Unknown server error');
+                // *** FIX HERE: Throw the entire errorData object to retain all details ***
+                throw errorData; 
             }
 
             const data = await response.json();
@@ -133,7 +134,24 @@ if (runButton && sqlTextarea) {
             }
         } catch (error) {
             console.error('Error executing SQL:', error);
-            errorMessageParagraph.textContent = `Error: ${error.message || 'Unknown error occurred'}`;
+            let displayMessage = 'Unknown error occurred';
+
+            // *** FIX HERE: Smarter error message extraction from the caught error object ***
+            if (error && typeof error === 'object') {
+                if (error.error && error.details) {
+                    displayMessage = `${error.error}: ${error.details}`;
+                } else if (error.error) {
+                    displayMessage = error.error;
+                } else if (error.details) {
+                    displayMessage = error.details;
+                } else if (error.message) { // Fallback for standard Error objects (e.g., network errors)
+                    displayMessage = error.message;
+                }
+            } else { // Fallback for anything else that might be thrown
+                displayMessage = String(error);
+            }
+            
+            errorMessageParagraph.textContent = `Error: ${displayMessage}`;
             errorMessageParagraph.style.color = '#dc2626'; // Red for errors
 
             clearChart();
