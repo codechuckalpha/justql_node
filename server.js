@@ -35,6 +35,40 @@ if (isProduction) {
 }
 const pool = mysql.createPool(dbConfig);
 
+app.get('/schema', (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting database connection:', err);
+      return res.status(500).json({ error: 'Database connection error', details: err.message });
+    }
+
+    // Get tables and views
+    const schemaQueries = {
+      tables: `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '${process.env.DB_NAME}' AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME`,
+      views: `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '${process.env.DB_NAME}' AND TABLE_TYPE = 'VIEW' ORDER BY TABLE_NAME`
+    };
+
+    let results = { tables: [], views: [] };
+    let completed = 0;
+
+    Object.keys(schemaQueries).forEach(type => {
+      connection.query(schemaQueries[type], (error, queryResults) => {
+        if (error) {
+          console.error(`Error fetching ${type}:`, error);
+        } else {
+          results[type] = queryResults.map(row => row.TABLE_NAME);
+        }
+        
+        completed++;
+        if (completed === 2) {
+          connection.release();
+          res.json(results);
+        }
+      });
+    });
+  });
+});
+
 app.post('/run-query', (req, res) => {
   const query = req.body.sql; // This is correct
   

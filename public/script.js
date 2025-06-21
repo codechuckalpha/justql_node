@@ -1018,6 +1018,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize layout functionality after GridStack is ready
     initializeLayoutFunctionality();
+    
+    // Load database schema when page loads
+    loadDatabaseSchema();
+    
+    // Prevent grid-stack scrolling when scrolling over schema panel
+    const schemaPanelItems = document.querySelectorAll('.section-items');
+    schemaPanelItems.forEach(items => {
+        items.addEventListener('wheel', function(e) {
+            e.stopPropagation();
+        }, { passive: true });
+    });
 });
 
 // IMPORTANT: Event listener to re-draw chart on dropdown change
@@ -1039,6 +1050,53 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Schema loading function
+async function loadDatabaseSchema() {
+    try {
+        console.log('Loading database schema...');
+        const response = await fetch('/schema');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const schema = await response.json();
+        console.log('Schema loaded:', schema);
+        
+        // Update tables section
+        const tablesSection = document.querySelector('[data-section="tables"]').nextElementSibling;
+        if (tablesSection && schema.tables) {
+            tablesSection.innerHTML = schema.tables.length > 0 
+                ? schema.tables.map(table => `<div class="section-item">${table}</div>`).join('')
+                : '<div class="section-item no-items">No tables found</div>';
+        }
+        
+        // Update views section
+        const viewsSection = document.querySelector('[data-section="views"]').nextElementSibling;
+        if (viewsSection && schema.views) {
+            viewsSection.innerHTML = schema.views.length > 0
+                ? schema.views.map(view => `<div class="section-item">${view}</div>`).join('')
+                : '<div class="section-item no-items">No views found</div>';
+        }
+        
+        console.log('Schema panel updated successfully');
+        
+    } catch (error) {
+        console.error('Error loading database schema:', error);
+        
+        // Show error in both sections
+        const tablesSection = document.querySelector('[data-section="tables"]').nextElementSibling;
+        const viewsSection = document.querySelector('[data-section="views"]').nextElementSibling;
+        
+        if (tablesSection) {
+            tablesSection.innerHTML = '<div class="section-item error">Error loading tables</div>';
+        }
+        if (viewsSection) {
+            viewsSection.innerHTML = '<div class="section-item error">Error loading views</div>';
+        }
+    }
+}
 
 // Add CSS for proper viewport sizing and GridStack height constraints
 const layoutCSS = `
@@ -1087,6 +1145,17 @@ const layoutCSS = `
         height: calc(100vh - 80px) !important;
         max-height: 600px;
     }
+}
+
+/* Schema panel styles */
+.section-item.no-items {
+    font-style: italic;
+    color: #888;
+}
+
+.section-item.error {
+    color: #dc2626;
+    font-style: italic;
 }
 `;
 

@@ -280,13 +280,32 @@ body {
 
 .section-items {
   padding-left: 32px;
-  max-height: 200px;
-  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: max-height 0.3s ease;
 }
 
 .section-items.collapsed {
   max-height: 0;
+}
+
+/* Scrollbar styling for schema panel */
+.section-items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.section-items::-webkit-scrollbar-track {
+  background: #2d2d30;
+}
+
+.section-items::-webkit-scrollbar-thumb {
+  background: #666;
+  border-radius: 3px;
+}
+
+.section-items::-webkit-scrollbar-thumb:hover {
+  background: #888;
 }
 
 .section-item {
