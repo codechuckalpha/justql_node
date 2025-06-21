@@ -1161,6 +1161,7 @@ function updateSavedQueriesUI() {
     const menuButtons = savedQueriesSection.querySelectorAll('.query-menu-button');
     menuButtons.forEach(button => {
         button.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
             showQueryMenu(e, button.dataset.queryId);
         });
@@ -1201,6 +1202,7 @@ function showQueryMenu(event, queryId) {
     const menuItems = menu.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
         item.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
             handleMenuAction(item.dataset.action, item.dataset.queryId);
             menu.remove();
@@ -1229,9 +1231,8 @@ async function handleMenuAction(action, queryId) {
             break;
         case 'run':
             loadQueryIntoTextarea(query.query);
-            // Simulate clicking the run button
             setTimeout(() => {
-                runButton.click();
+                if (runButton) runButton.click();
             }, 100);
             break;
         case 'delete':
@@ -1258,7 +1259,7 @@ async function renameQuery(queryId, currentName) {
             throw errorData;
         }
         
-        await loadSavedQueries(); // Refresh the list
+        await loadSavedQueries();
         
     } catch (error) {
         console.error('Error renaming query:', error);
@@ -1277,7 +1278,7 @@ async function deleteQuery(queryId) {
             throw errorData;
         }
         
-        await loadSavedQueries(); // Refresh the list
+        await loadSavedQueries();
         
     } catch (error) {
         console.error('Error deleting query:', error);
