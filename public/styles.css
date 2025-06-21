@@ -40,7 +40,7 @@ body {
   display: flex;       /* Layout buttons in a column */
   flex-direction: column;
   gap: 8px;            /* Space between buttons */
-  min-width: 50px;     /* Prevent it from being too narrow */
+
   /* top and left will be set by JS */
 }
 
@@ -53,15 +53,23 @@ body {
   border-radius: 6px;
   cursor: pointer;
   display: flex;             /* To center the SVG icon */
-  justify-content: center;
-  align-items: center;
+  justify-content: left;
+  align-items: left;
   transition: background-color 0.2s ease, border-color 0.2s ease;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .layout-option-btn:hover {
   background-color: #3e3e3e; /* Lighter background on hover */
   border-color: #6366f1; /* Highlight with blue on hover */
 }
+
 
 .layout-option-btn svg {
   width: 24px;
@@ -137,8 +145,8 @@ body {
 }
 
 .header-button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  background-color: #3e3e3e; /* Lighter background on hover */
+  border-color: #6366f1; /* Highlight with blue on hover */
 }
 
 .header-button svg {

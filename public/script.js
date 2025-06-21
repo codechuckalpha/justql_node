@@ -827,4 +827,133 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    // --- Layout Change Logic ---
+    const changeLayoutBtn = document.getElementById('change-layout-btn');
+    const layoutSelectorPopup = document.getElementById('layout-selector-popup');
+    const layoutOptionButtons = document.querySelectorAll('.layout-option-btn');
+    const gridElement = document.querySelector('.grid-stack'); 
+    const grid = gridElement ? gridElement.gridstack : null; 
+
+    // Ensure grid instance is available before defining layouts
+    if (!grid) {
+        console.error("GridStack instance not found. Layout change functionality disabled.");
+        if (changeLayoutBtn) {
+            changeLayoutBtn.disabled = true;
+            changeLayoutBtn.title = "GridStack not initialized.";
+        }
+        return; 
+    }
+
+    // Define the predefined layouts
+    const predefinedLayouts = {
+        layout1: [ // Default: Stacked in three rows
+            { id: 'sql-editor-item', x: 0, y: 0, w: 12, h: 3 },
+            { id: 'data-table-section', x: 0, y: 3, w: 12, h: 3 },
+            { id: 'data-analysis-section', x: 0, y: 6, w: 12, h: 5 }
+        ],
+        layout2: [ // Three Even Columns
+            { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 11 }, // Total height for all 3: 3+3+5 = 11
+            { id: 'data-table-section', x: 4, y: 0, w: 4, h: 11 },
+            { id: 'data-analysis-section', x: 8, y: 0, w: 4, h: 11 }
+        ],
+        layout3: [ // Left 1/3 (SQL Editor) & Stacked Right 2/3 (Data Table, Data Visualization)
+            { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 11 }, // Full height 1/3 on left
+            { id: 'data-table-section', x: 4, y: 0, w: 8, h: 5 }, // Top 2/3 right
+            { id: 'data-analysis-section', x: 4, y: 5, w: 8, h: 6 }  // Bottom 2/3 right
+        ]
+    };
+
+    function applyLayout(layoutName) {
+        const layoutConfig = predefinedLayouts[layoutName];
+        if (!layoutConfig) {
+            console.error(`Layout '${layoutName}' not found.`);
+            return;
+        }
+
+        // --- CRITICAL FIX FOR BLANK DIVS / GRID.LOAD ---
+        // Option 1: Remove all current items and then load (clean slate)
+        // This is safest if items are getting blanked due to conflicts
+        // Use GridStack's removeAll and addWidgets
+        // First, get the IDs of all current items to remove them cleanly
+        const currentItemIds = grid.engine.nodes.map(node => node.id);
+        if (currentItemIds.length > 0) {
+            grid.removeWidgets(currentItemIds, false); // Remove but don't detach from DOM
+        }
+        
+        // Then, add the new layout widgets. GridStack will pick up the existing HTML elements by ID.
+        // The `true` parameter in `addWidgets` means 'do not make them draggable/resizable' initially, which we want GridStack to handle.
+        // We need to pass the actual DOM elements if they already exist, not just the config.
+        const widgetsToAdd = layoutConfig.map(config => {
+            const el = document.getElementById(config.id);
+            if (el) {
+                return { el: el, ...config }; // Pass the DOM element and its new config
+            }
+            return null; // Should not happen if HTML is consistent
+        }).filter(Boolean); // Filter out any nulls
+
+        if (widgetsToAdd.length > 0) {
+             grid.addWidgets(widgetsToAdd);
+        }
+
+        // Apply compact to ensure the layout settles correctly
+        grid.compact();
+
+        // After loading layout, force chart resize to adapt to new container dimensions
+        const chartContainer = document.getElementById('chart-container');
+        if (chartContainer && chartContainer.data) {
+            window.requestAnimationFrame(() => {
+                Plotly.Plots.resize(chartContainer);
+            });
+        }
+        // IMPORTANT: After layout change, sometimes manual content refresh is needed
+        // For textarea: ensure its content is still there and visible
+        // For tables: ensure placeholder or table is correct based on whether data exists
+        // Re-check visibility of placeholders after layout
+        const resultsTableDisplay = resultsTable.style.display;
+        if (resultsTableDisplay === 'none' || resultsTable.innerHTML.trim() === '') {
+            if (tablePlaceholder) tablePlaceholder.style.display = 'block';
+        } else {
+            if (tablePlaceholder) tablePlaceholder.style.display = 'none';
+        }
+
+        const chartContainerData = chartContainer ? chartContainer.data : null;
+        const chartPlaceholderDisplay = chartPlaceholder.style.display;
+        if (!chartContainerData && chartPlaceholderDisplay !== 'block') { // If no chart data and placeholder hidden
+            if (chartPlaceholder) chartPlaceholder.style.display = 'block';
+        } else if (chartContainerData && chartPlaceholderDisplay === 'block') { // If chart data and placeholder visible
+            if (chartPlaceholder) chartPlaceholder.style.display = 'none';
+        }
+    }
+
+    if (changeLayoutBtn && layoutSelectorPopup) {
+        changeLayoutBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent click from bubbling to document and closing immediately
+            layoutSelectorPopup.classList.toggle('hidden');
+
+            // Position the popup precisely below the button
+            const btnRect = changeLayoutBtn.getBoundingClientRect();
+            layoutSelectorPopup.style.top = `${btnRect.bottom + 5}px`; // 5px below button
+            layoutSelectorPopup.style.left = `${btnRect.left}px`; // Align left edge of popup with button left edge
+        });
+
+        // Event listeners for each layout option button inside the popup
+        layoutOptionButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.stopPropagation(); // Prevent click from bubbling
+                const layoutName = button.dataset.layout;
+                applyLayout(layoutName);
+                layoutSelectorPopup.classList.add('hidden'); // Hide popup after selection
+            });
+        });
+
+        // Close popup if clicked outside
+        document.addEventListener('click', (event) => {
+            if (!layoutSelectorPopup.contains(event.target) && !changeLayoutBtn.contains(event.target)) {
+                layoutSelectorPopup.classList.add('hidden');
+            }
+        });
+    }
+
+    // Apply the default layout on initial load (Layout 1)
+    applyLayout('layout1');
 });
