@@ -4,6 +4,7 @@ if (process.env.NODE_ENV !== 'production') {
 const express = require('express');
 const path = require('path');
 const mysql = require('mysql');
+const fs = require('fs');
 
 const app = express();
 
@@ -91,6 +92,115 @@ app.post('/run-query', (req, res) => {
       res.json({ results, fields }); // Include fields for table headers
     });
   });
+});
+
+// Saved Queries API endpoints
+const SAVED_QUERIES_FILE = path.join(__dirname, 'data', 'saved-queries.json');
+
+function readSavedQueries() {
+  try {
+    if (!fs.existsSync(SAVED_QUERIES_FILE)) {
+      return [];
+    }
+    const data = fs.readFileSync(SAVED_QUERIES_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error reading saved queries:', error);
+    return [];
+  }
+}
+
+function writeSavedQueries(queries) {
+  try {
+    fs.writeFileSync(SAVED_QUERIES_FILE, JSON.stringify(queries, null, 2));
+    return true;
+  } catch (error) {
+    console.error('Error writing saved queries:', error);
+    return false;
+  }
+}
+
+// Get all saved queries
+app.get('/api/saved-queries', (req, res) => {
+  const queries = readSavedQueries();
+  res.json(queries);
+});
+
+// Save a new query
+app.post('/api/saved-queries', (req, res) => {
+  const { query } = req.body;
+  
+  if (!query) {
+    return res.status(400).json({ error: 'Query text is required' });
+  }
+  
+  const queries = readSavedQueries();
+  
+  // Generate incremental name
+  const existingNumbers = queries
+    .map(q => q.name.match(/^Query (\d+)$/))
+    .filter(match => match)
+    .map(match => parseInt(match[1]));
+  
+  const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+  const newQuery = {
+    id: Date.now().toString(),
+    name: `Query ${nextNumber}`,
+    query: query,
+    createdAt: new Date().toISOString()
+  };
+  
+  queries.unshift(newQuery); // Add to beginning for most recent first
+  
+  if (writeSavedQueries(queries)) {
+    res.json(newQuery);
+  } else {
+    res.status(500).json({ error: 'Failed to save query' });
+  }
+});
+
+// Update a saved query (rename)
+app.put('/api/saved-queries/:id', (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+  
+  if (!name) {
+    return res.status(400).json({ error: 'Name is required' });
+  }
+  
+  const queries = readSavedQueries();
+  const queryIndex = queries.findIndex(q => q.id === id);
+  
+  if (queryIndex === -1) {
+    return res.status(404).json({ error: 'Query not found' });
+  }
+  
+  queries[queryIndex].name = name;
+  queries[queryIndex].updatedAt = new Date().toISOString();
+  
+  if (writeSavedQueries(queries)) {
+    res.json(queries[queryIndex]);
+  } else {
+    res.status(500).json({ error: 'Failed to update query' });
+  }
+});
+
+// Delete a saved query
+app.delete('/api/saved-queries/:id', (req, res) => {
+  const { id } = req.params;
+  
+  const queries = readSavedQueries();
+  const filteredQueries = queries.filter(q => q.id !== id);
+  
+  if (filteredQueries.length === queries.length) {
+    return res.status(404).json({ error: 'Query not found' });
+  }
+  
+  if (writeSavedQueries(filteredQueries)) {
+    res.json({ success: true });
+  } else {
+    res.status(500).json({ error: 'Failed to delete query' });
+  }
 });
 
 app.listen(port, () => {

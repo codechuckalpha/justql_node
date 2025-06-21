@@ -351,6 +351,90 @@ body {
   opacity: 1;
 }
 
+/* Saved Query Item Styles */
+.saved-query-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 16px;
+  color: #cccccc;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.saved-query-item:hover {
+  background: #37373d;
+}
+
+.saved-query-item .query-name {
+  flex: 1;
+  margin-right: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.query-menu-button {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.saved-query-item:hover .query-menu-button {
+  opacity: 1;
+}
+
+.query-menu-button:hover {
+  background: #4a4a4a;
+  color: #ffffff;
+}
+
+/* Query Context Menu */
+.query-context-menu {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  min-width: 120px;
+  z-index: 1000;
+}
+
+.query-context-menu .menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: #cccccc;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+  text-align: left;
+}
+
+.query-context-menu .menu-item:hover {
+  background: #37373d;
+}
+
+.query-context-menu .menu-item.delete {
+  color: #f87171;
+}
+
+.query-context-menu .menu-item.delete:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
 /* Main content area */
 .main-content {
   margin-top: 60px;

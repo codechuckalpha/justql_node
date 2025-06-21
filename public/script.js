@@ -59,6 +59,7 @@ document.addEventListener('click', function(e) {
 
 // run query from textarea
 const runButton = document.getElementById('run-button');
+const saveButton = document.getElementById('save-button');
 const sqlTextarea = document.getElementById('sql-textarea');
 const tableWrapper = document.getElementById('table-wrapper');
 const tablePlaceholder = document.getElementById('table-placeholder');
@@ -178,6 +179,64 @@ if (runButton && sqlTextarea) {
             resultsTable.style.display = 'none';
             tablePlaceholder.querySelector('p:first-child').textContent = 'Data table will appear here';
             tablePlaceholder.querySelector('p:nth-child(2)').textContent = 'Data table will be generated based on your query results';
+        }
+    });
+}
+
+// Save query functionality
+if (saveButton && sqlTextarea) {
+    saveButton.addEventListener('click', async () => {
+        const query = sqlTextarea.value.trim();
+        
+        if (!query) {
+            errorMessageParagraph.textContent = 'Please enter a SQL query to save.';
+            errorMessageParagraph.style.color = '#dc2626';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/saved-queries', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ query: query })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw errorData;
+            }
+
+            const savedQuery = await response.json();
+            console.log('Query saved:', savedQuery);
+            
+            // Show success message briefly
+            const originalText = errorMessageParagraph.textContent;
+            const originalColor = errorMessageParagraph.style.color;
+            errorMessageParagraph.textContent = `Saved as "${savedQuery.name}"`;
+            errorMessageParagraph.style.color = '#10b981';
+            
+            setTimeout(() => {
+                errorMessageParagraph.textContent = originalText;
+                errorMessageParagraph.style.color = originalColor;
+            }, 2000);
+            
+            // Refresh the saved queries list
+            loadSavedQueries();
+            
+        } catch (error) {
+            console.error('Error saving query:', error);
+            let displayMessage = 'Failed to save query';
+            
+            if (error && typeof error === 'object') {
+                if (error.error) {
+                    displayMessage = error.error;
+                } else if (error.message) {
+                    displayMessage = error.message;
+                }
+            }
+            
+            errorMessageParagraph.textContent = `Error: ${displayMessage}`;
+            errorMessageParagraph.style.color = '#dc2626';
         }
     });
 }
@@ -1022,6 +1081,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Load database schema when page loads
     loadDatabaseSchema();
     
+    // Load saved queries when page loads
+    loadSavedQueries();
+    
     // Prevent grid-stack scrolling when scrolling over schema panel
     const schemaPanelItems = document.querySelectorAll('.section-items');
     schemaPanelItems.forEach(items => {
@@ -1050,6 +1112,191 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Saved queries functionality
+let savedQueries = [];
+
+async function loadSavedQueries() {
+    try {
+        console.log('Loading saved queries...');
+        const response = await fetch('/api/saved-queries');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        savedQueries = await response.json();
+        console.log('Saved queries loaded:', savedQueries);
+        
+        updateSavedQueriesUI();
+        
+    } catch (error) {
+        console.error('Error loading saved queries:', error);
+        savedQueries = [];
+        updateSavedQueriesUI();
+    }
+}
+
+function updateSavedQueriesUI() {
+    const savedQueriesSection = document.querySelector('[data-section="saved-queries"]').nextElementSibling;
+    
+    if (!savedQueriesSection) {
+        console.error('Saved queries section not found');
+        return;
+    }
+    
+    if (savedQueries.length === 0) {
+        savedQueriesSection.innerHTML = '<div class="section-item no-items">No saved queries yet</div>';
+        return;
+    }
+    
+    savedQueriesSection.innerHTML = savedQueries.map(query => `
+        <div class="section-item saved-query-item" data-query-id="${query.id}" title="${escapeHtml(query.name)}">
+            <span class="query-name">${escapeHtml(query.name)}</span>
+            <button class="query-menu-button" data-query-id="${query.id}">⋮</button>
+        </div>
+    `).join('');
+    
+    // Add event listeners for the menu buttons
+    const menuButtons = savedQueriesSection.querySelectorAll('.query-menu-button');
+    menuButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showQueryMenu(e, button.dataset.queryId);
+        });
+    });
+}
+
+function showQueryMenu(event, queryId) {
+    const query = savedQueries.find(q => q.id === queryId);
+    if (!query) return;
+    
+    // Remove any existing menu
+    const existingMenu = document.getElementById('query-context-menu');
+    if (existingMenu) {
+        existingMenu.remove();
+    }
+    
+    // Create menu popup
+    const menu = document.createElement('div');
+    menu.id = 'query-context-menu';
+    menu.className = 'query-context-menu';
+    menu.innerHTML = `
+        <button class="menu-item" data-action="rename" data-query-id="${queryId}">Rename</button>
+        <button class="menu-item" data-action="load" data-query-id="${queryId}">Load</button>
+        <button class="menu-item" data-action="run" data-query-id="${queryId}">Run</button>
+        <button class="menu-item delete" data-action="delete" data-query-id="${queryId}">Delete</button>
+    `;
+    
+    // Position the menu
+    const rect = event.target.getBoundingClientRect();
+    menu.style.position = 'absolute';
+    menu.style.top = `${rect.bottom + 5}px`;
+    menu.style.left = `${rect.left}px`;
+    menu.style.zIndex = '1000';
+    
+    document.body.appendChild(menu);
+    
+    // Add event listeners for menu items
+    const menuItems = menu.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleMenuAction(item.dataset.action, item.dataset.queryId);
+            menu.remove();
+        });
+    });
+    
+    // Close menu when clicking outside
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu() {
+            menu.remove();
+            document.removeEventListener('click', closeMenu);
+        });
+    }, 0);
+}
+
+async function handleMenuAction(action, queryId) {
+    const query = savedQueries.find(q => q.id === queryId);
+    if (!query) return;
+    
+    switch (action) {
+        case 'rename':
+            await renameQuery(queryId, query.name);
+            break;
+        case 'load':
+            loadQueryIntoTextarea(query.query);
+            break;
+        case 'run':
+            loadQueryIntoTextarea(query.query);
+            // Simulate clicking the run button
+            setTimeout(() => {
+                runButton.click();
+            }, 100);
+            break;
+        case 'delete':
+            if (confirm(`Are you sure you want to delete "${query.name}"?`)) {
+                await deleteQuery(queryId);
+            }
+            break;
+    }
+}
+
+async function renameQuery(queryId, currentName) {
+    const newName = prompt('Enter new name for the query:', currentName);
+    if (!newName || newName === currentName) return;
+    
+    try {
+        const response = await fetch(`/api/saved-queries/${queryId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name: newName })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw errorData;
+        }
+        
+        await loadSavedQueries(); // Refresh the list
+        
+    } catch (error) {
+        console.error('Error renaming query:', error);
+        alert('Failed to rename query: ' + (error.error || error.message || 'Unknown error'));
+    }
+}
+
+async function deleteQuery(queryId) {
+    try {
+        const response = await fetch(`/api/saved-queries/${queryId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw errorData;
+        }
+        
+        await loadSavedQueries(); // Refresh the list
+        
+    } catch (error) {
+        console.error('Error deleting query:', error);
+        alert('Failed to delete query: ' + (error.error || error.message || 'Unknown error'));
+    }
+}
+
+function loadQueryIntoTextarea(queryText) {
+    if (sqlTextarea) {
+        sqlTextarea.value = queryText;
+        sqlTextarea.focus();
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
 // Schema loading function
 async function loadDatabaseSchema() {
