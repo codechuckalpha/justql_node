@@ -244,7 +244,7 @@ function generateChart(results) {
     } else if (columns.length === 3) {
         if (chartPlaceholder) chartPlaceholder.style.display = 'none';
         if (chartDiv) {
-            chartDiv.style.minHeight = '350px';
+            chartDiv.style.minHeight = '300px';
         }
         if (selectedChartType === 'column') {
             createMultiStackedColumnChart(results, columns[0], columns[1], columns[2], chartContainer);
@@ -650,18 +650,18 @@ function clearChart() {
 const predefinedLayouts = {
     layout1: [ // Default: Stacked in three rows (total: ~360px)
         { id: 'sql-editor-item', x: 0, y: 0, w: 12, h: 3 },      // 3 * 90px = 270px
-        { id: 'data-table-section', x: 0, y: 3, w: 12, h: 2 },   // 2 * 90px = 180px  
-        { id: 'data-analysis-section', x: 0, y: 5, w: 12, h: 3 } // 3 * 90px = 270px
+        { id: 'data-analysis-section', x: 0, y: 5, w: 12, h: 3 }, // 3 * 90px = 270px
+        { id: 'data-table-section', x: 0, y: 5, w: 12, h: 3 },  // 2 * 90px = 180px  
     ],
     layout2: [ // Three Even Columns (total: ~720px)
-        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 8 },       // 8 * 90px = 720px
-        { id: 'data-table-section', x: 4, y: 0, w: 4, h: 8 },    // 8 * 90px = 720px
-        { id: 'data-analysis-section', x: 8, y: 0, w: 4, h: 8 }  // 8 * 90px = 720px
+        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 9 },       // 8 * 90px = 720px
+        { id: 'data-table-section', x: 4, y: 0, w: 4, h: 9},    // 8 * 90px = 720px
+        { id: 'data-analysis-section', x: 8, y: 0, w: 4, h: 9 }  // 8 * 90px = 720px
     ],
     layout3: [ // Left 1/3 & Stacked Right 2/3 (total: ~720px)
-        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 8 },       // 8 * 90px = 720px
+        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 9 },       // 8 * 90px = 720px
         { id: 'data-table-section', x: 4, y: 0, w: 8, h: 4 },    // 4 * 90px = 360px
-        { id: 'data-analysis-section', x: 4, y: 4, w: 8, h: 4 }  // 4 * 90px = 360px
+        { id: 'data-analysis-section', x: 4, y: 4, w: 8, h: 5 }  // 4 * 90px = 360px
     ]
 };
 
@@ -1042,28 +1042,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Add CSS for proper viewport sizing and GridStack height constraints
 const layoutCSS = `
-.layout-option-btn.active {
-    background-color: #6366f1 !important;
-    border-color: #6366f1 !important;
-    color: #ffffff !important;
-}
 
-/* Ensure GridStack container fits viewport with explicit height */
+
+
 .grid-stack {
-    height: calc(100vh - 120px) !important; /* Account for header + margins */
-    max-height: 800px; /* Cap maximum height */
-    overflow-y: auto;
-    overflow-x: hidden;
+    
 }
 
-/* Ensure grid items content fills properly */
-.grid-stack-item-content {
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-}
 
 /* Make content areas fill available space */
 .grid-stack-item-content h3 {

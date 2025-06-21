@@ -70,11 +70,16 @@ body {
   border-color: #6366f1; /* Highlight with blue on hover */
 }
 
-
 .layout-option-btn svg {
   width: 24px;
   height: 24px;
   fill: currentColor; /* SVG inherits color from parent button */
+}
+
+.layout-option-btn.active {
+  background-color: #6366f1 !important;
+  border-color: #6366f1 !important;
+  color: #ffffff !important;
 }
 
 /* Class to hide elements (used by JS) */
@@ -334,9 +339,11 @@ body {
   height: 100vh;
 }
 
+/* Ensure GridStack container fits viewport with explicit height */
 .grid-stack {
   margin-top: 80px;
-  height: calc(100vh - 80px) !important; /* Subtract header height */
+  height: calc(100vh - 120px) !important; /* Account for header + margins */
+    max-height: 800px; /* Cap maximum height */
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -370,7 +377,10 @@ body {
   /* height: 100%;  Make it fill the GridStack item's height */
   box-sizing: border-box; /* Include padding in height calculation */
   padding: 15px; /* Consistent internal padding for all widgets */
-  
+  overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .text-input {
