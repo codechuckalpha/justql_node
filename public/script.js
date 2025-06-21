@@ -646,22 +646,22 @@ function clearChart() {
     if (chartDiv) chartDiv.style.minHeight = 'auto';
 }
 
-// Define the predefined layouts
+// Define the predefined layouts - calculated for 80px row height + 10px margin
 const predefinedLayouts = {
-    layout1: [ // Default: Stacked in three rows
-        { id: 'sql-editor-item', x: 0, y: 0, w: 12, h: 3 },
-        { id: 'data-table-section', x: 0, y: 3, w: 12, h: 3 },
-        { id: 'data-analysis-section', x: 0, y: 6, w: 12, h: 5 }
+    layout1: [ // Default: Stacked in three rows (total: ~360px)
+        { id: 'sql-editor-item', x: 0, y: 0, w: 12, h: 3 },      // 3 * 90px = 270px
+        { id: 'data-table-section', x: 0, y: 3, w: 12, h: 2 },   // 2 * 90px = 180px  
+        { id: 'data-analysis-section', x: 0, y: 5, w: 12, h: 3 } // 3 * 90px = 270px
     ],
-    layout2: [ // Three Even Columns
-        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 11 },
-        { id: 'data-table-section', x: 4, y: 0, w: 4, h: 11 },
-        { id: 'data-analysis-section', x: 8, y: 0, w: 4, h: 11 }
+    layout2: [ // Three Even Columns (total: ~720px)
+        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 8 },       // 8 * 90px = 720px
+        { id: 'data-table-section', x: 4, y: 0, w: 4, h: 8 },    // 8 * 90px = 720px
+        { id: 'data-analysis-section', x: 8, y: 0, w: 4, h: 8 }  // 8 * 90px = 720px
     ],
-    layout3: [ // Left 1/3 & Stacked Right 2/3
-        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 11 },
-        { id: 'data-table-section', x: 4, y: 0, w: 8, h: 5 },
-        { id: 'data-analysis-section', x: 4, y: 5, w: 8, h: 6 }
+    layout3: [ // Left 1/3 & Stacked Right 2/3 (total: ~720px)
+        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 8 },       // 8 * 90px = 720px
+        { id: 'data-table-section', x: 4, y: 0, w: 8, h: 4 },    // 4 * 90px = 360px
+        { id: 'data-analysis-section', x: 4, y: 4, w: 8, h: 4 }  // 4 * 90px = 360px
     ]
 };
 
@@ -852,6 +852,8 @@ document.addEventListener('DOMContentLoaded', function () {
         alwaysShowResizeHandle: true,
         float: true,
         disableResize: false,
+        cellHeight: 80, // Set explicit row height in pixels
+        verticalMargin: 10, // Gap between rows
         // *** NEW: Designate the drag handle for GridStack items ***
         // Only elements with this class will initiate a GridStack drag.
         handle: '.grid-drag-handle',
@@ -1038,12 +1040,68 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Add CSS for active layout button
+// Add CSS for proper viewport sizing and GridStack height constraints
 const layoutCSS = `
 .layout-option-btn.active {
     background-color: #6366f1 !important;
     border-color: #6366f1 !important;
     color: #ffffff !important;
+}
+
+/* Ensure GridStack container fits viewport with explicit height */
+.grid-stack {
+    height: calc(100vh - 120px) !important; /* Account for header + margins */
+    max-height: 800px; /* Cap maximum height */
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Ensure grid items content fills properly */
+.grid-stack-item-content {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+/* Make content areas fill available space */
+.grid-stack-item-content h3 {
+    flex-shrink: 0; /* Header doesn't shrink */
+    margin-bottom: 10px;
+}
+
+#sql-textarea {
+    flex: 1;
+    min-height: 100px;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.table-wrapper {
+    flex: 1;
+    overflow: auto;
+    min-height: 120px;
+}
+
+#chart-container {
+    flex: 1;
+    min-height: 200px;
+    overflow: hidden;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-height: 900px) {
+    .grid-stack {
+        height: calc(100vh - 100px) !important;
+    }
+}
+
+@media (max-height: 700px) {
+    .grid-stack {
+        height: calc(100vh - 80px) !important;
+        max-height: 600px;
+    }
 }
 `;
 

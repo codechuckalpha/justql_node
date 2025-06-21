@@ -336,6 +336,9 @@ body {
 
 .grid-stack {
   margin-top: 80px;
+  height: calc(100vh - 80px) !important; /* Subtract header height */
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* Adjust main content when sidebar is expanded */
@@ -527,3 +530,7 @@ body {
 .plotly-no-pointer-events {
   pointer-events: none !important;
 }
+
+
+
+
