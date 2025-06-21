@@ -1,3 +1,8 @@
+// Complete corrected script.js with layout functionality
+
+// Global variable to store the grid instance
+let gridInstance = null;
+
 // Handle icon clicks
 document.querySelectorAll('.icon-item').forEach(icon => {
     icon.addEventListener('click', function() {
@@ -176,7 +181,6 @@ if (runButton && sqlTextarea) {
         }
     });
 }
-
 
 // To handle tab presses when typing sql queries and Ctrl + Enter to run query 
 sqlTextarea.addEventListener('keydown', function(event) {
@@ -624,7 +628,6 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
     Plotly.newPlot(container, traces, layout, config);
 }
 
-
 function getLineColor(index) {
     const colors = [
         '#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b',
@@ -643,9 +646,209 @@ function clearChart() {
     if (chartDiv) chartDiv.style.minHeight = 'auto';
 }
 
+// Define the predefined layouts
+const predefinedLayouts = {
+    layout1: [ // Default: Stacked in three rows
+        { id: 'sql-editor-item', x: 0, y: 0, w: 12, h: 3 },
+        { id: 'data-table-section', x: 0, y: 3, w: 12, h: 3 },
+        { id: 'data-analysis-section', x: 0, y: 6, w: 12, h: 5 }
+    ],
+    layout2: [ // Three Even Columns
+        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 11 },
+        { id: 'data-table-section', x: 4, y: 0, w: 4, h: 11 },
+        { id: 'data-analysis-section', x: 8, y: 0, w: 4, h: 11 }
+    ],
+    layout3: [ // Left 1/3 & Stacked Right 2/3
+        { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 11 },
+        { id: 'data-table-section', x: 4, y: 0, w: 8, h: 5 },
+        { id: 'data-analysis-section', x: 4, y: 5, w: 8, h: 6 }
+    ]
+};
+
+function initializeLayoutFunctionality() {
+    const changeLayoutBtn = document.getElementById('change-layout-btn');
+    const layoutSelectorPopup = document.getElementById('layout-selector-popup');
+    const layoutOptionButtons = document.querySelectorAll('.layout-option-btn');
+
+    if (!gridInstance) {
+        console.error("GridStack instance not found. Layout change functionality disabled.");
+        if (changeLayoutBtn) {
+            changeLayoutBtn.disabled = true;
+            changeLayoutBtn.title = "GridStack not initialized.";
+        }
+        return;
+    }
+
+    console.log("Initializing layout functionality with GridStack instance:", gridInstance);
+
+    // Layout button click handler
+    if (changeLayoutBtn && layoutSelectorPopup) {
+        changeLayoutBtn.addEventListener('click', (event) => {
+            console.log('Layout button clicked');
+            event.stopPropagation();
+            layoutSelectorPopup.classList.toggle('hidden');
+
+            // Position the popup below the button
+            const btnRect = changeLayoutBtn.getBoundingClientRect();
+            layoutSelectorPopup.style.top = `${btnRect.bottom + 5}px`;
+            layoutSelectorPopup.style.left = `${btnRect.left}px`;
+        });
+
+        // Layout option button handlers
+        layoutOptionButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                console.log('Layout option clicked:', button.dataset.layout);
+                event.stopPropagation();
+                const layoutName = button.dataset.layout;
+                applyLayout(layoutName);
+                layoutSelectorPopup.classList.add('hidden');
+                
+                // Visual feedback - highlight selected layout
+                layoutOptionButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+            });
+        });
+
+        // Close popup when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!layoutSelectorPopup.contains(event.target) && !changeLayoutBtn.contains(event.target)) {
+                layoutSelectorPopup.classList.add('hidden');
+            }
+        });
+    }
+
+    // Apply default layout
+    setTimeout(() => {
+        applyLayout('layout1');
+        // Set first layout button as active
+        const firstLayoutBtn = document.querySelector('.layout-option-btn[data-layout="layout1"]');
+        if (firstLayoutBtn) {
+            firstLayoutBtn.classList.add('active');
+        }
+    }, 100);
+}
+
+function applyLayout(layoutName) {
+    if (!gridInstance) {
+        console.error('GridStack instance not available');
+        return;
+    }
+
+    console.log('Applying layout:', layoutName);
+    
+    const layoutConfig = predefinedLayouts[layoutName];
+    if (!layoutConfig) {
+        console.error(`Layout '${layoutName}' not found.`);
+        return;
+    }
+
+    try {
+        // Method 1: Use GridStack's update method for each item
+        layoutConfig.forEach(itemConfig => {
+            const element = document.getElementById(itemConfig.id);
+            if (element) {
+                console.log(`Updating ${itemConfig.id}:`, itemConfig);
+                gridInstance.update(element, {
+                    x: itemConfig.x,
+                    y: itemConfig.y,
+                    w: itemConfig.w,
+                    h: itemConfig.h
+                });
+            } else {
+                console.warn(`Element with id ${itemConfig.id} not found`);
+            }
+        });
+
+        // Compact the grid to ensure proper positioning
+        gridInstance.compact();
+
+        console.log('Layout applied successfully:', layoutName);
+
+        // Force chart resize after layout change
+        setTimeout(() => {
+            const chartContainer = document.getElementById('chart-container');
+            if (chartContainer && chartContainer.data && window.Plotly) {
+                window.requestAnimationFrame(() => {
+                    try {
+                        Plotly.Plots.resize(chartContainer);
+                        console.log('Chart resized after layout change');
+                    } catch (e) {
+                        console.log('Chart resize failed:', e);
+                    }
+                });
+            }
+
+            // Ensure content visibility is correct after layout change
+            refreshContentVisibility();
+        }, 200);
+
+    } catch (error) {
+        console.error('Error applying layout:', error);
+        
+        // Fallback method: Use GridStack's load method
+        try {
+            console.log('Trying fallback method with grid.load()');
+            const serializedLayout = layoutConfig.map(item => ({
+                id: item.id,
+                x: item.x,
+                y: item.y,
+                w: item.w,
+                h: item.h
+            }));
+            
+            gridInstance.load(serializedLayout, false); // false = don't add missing items
+            gridInstance.compact();
+            
+            setTimeout(() => {
+                refreshContentVisibility();
+                const chartContainer = document.getElementById('chart-container');
+                if (chartContainer && chartContainer.data && window.Plotly) {
+                    Plotly.Plots.resize(chartContainer);
+                }
+            }, 200);
+            
+        } catch (fallbackError) {
+            console.error('Fallback layout method also failed:', fallbackError);
+        }
+    }
+}
+
+function refreshContentVisibility() {
+    // Ensure placeholders and content are properly visible after layout changes
+    const resultsTable = document.getElementById('results-table');
+    const tablePlaceholder = document.getElementById('table-placeholder');
+    const chartContainer = document.getElementById('chart-container');
+    const chartPlaceholder = document.getElementById('chart-placeholder');
+
+    // Fix table visibility
+    if (resultsTable && tablePlaceholder) {
+        const hasTableData = resultsTable.style.display !== 'none' && resultsTable.innerHTML.trim() !== '';
+        if (hasTableData) {
+            tablePlaceholder.style.display = 'none';
+            resultsTable.style.display = 'table';
+        } else {
+            tablePlaceholder.style.display = 'block';
+            resultsTable.style.display = 'none';
+        }
+    }
+
+    // Fix chart visibility
+    if (chartContainer && chartPlaceholder) {
+        const hasChartData = chartContainer.data && Object.keys(chartContainer.data).length > 0;
+        if (hasChartData) {
+            chartPlaceholder.style.display = 'none';
+        } else {
+            chartPlaceholder.style.display = 'block';
+        }
+    }
+
+    console.log('Content visibility refreshed after layout change');
+}
+
 // Ensure GridStack and Plotly are aware of each other's resizing
 document.addEventListener('DOMContentLoaded', function () {
-    const grid = GridStack.init({
+    // Initialize GridStack with the global variable
+    gridInstance = GridStack.init({
         alwaysShowResizeHandle: true,
         float: true,
         disableResize: false,
@@ -658,8 +861,11 @@ document.addEventListener('DOMContentLoaded', function () {
         filter: '.js-plotly-plot .plotly, .js-plotly-plot .svg-container, .plotly-event-overlay' 
     });
 
+    // Store the grid instance globally for layout functions
+    window.gridStackInstance = gridInstance;
+
     // Modified GridStack event listeners to use a blocking overlay
-    grid.on('resizestart dragstart', function (event, el) {
+    gridInstance.on('resizestart dragstart', function (event, el) {
         // Find the specific chart container within the dragged/resized element
         const chartContainer = el.querySelector('#chart-container');
         if (chartContainer) {
@@ -681,7 +887,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    grid.on('resizestop dragstop', function (event, el) {
+    gridInstance.on('resizestop dragstop', function (event, el) {
         // Remove the overlay after drag/resize stops
         const overlay = el.querySelector('.plotly-event-overlay');
         if (overlay) {
@@ -696,27 +902,26 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Remove the complex textarea resize logic since grid-stack handles it
-const textarea = document.getElementById('sql-textarea');
-const sqlEditorItem = document.getElementById('sql-editor-item'); 
+    const textarea = document.getElementById('sql-textarea');
+    const sqlEditorItem = document.getElementById('sql-editor-item'); 
 
-if (textarea && sqlEditorItem) {
-    // Only keep the tab and Ctrl+Enter functionality
-    textarea.addEventListener('keydown', function(event) {
-        if (event.key === 'Tab') {
-            event.preventDefault();
-            const start = this.selectionStart;
-            const end = this.selectionEnd;
-            const value = this.value;
-            this.value = value.substring(0, start) + '\t' + value.substring(end);
-            this.selectionStart = this.selectionEnd = start + 1;
-        } 
-        else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-            event.preventDefault();
-            document.getElementById('run-button').click();
-        }
-    });
-}
-
+    if (textarea && sqlEditorItem) {
+        // Only keep the tab and Ctrl+Enter functionality
+        textarea.addEventListener('keydown', function(event) {
+            if (event.key === 'Tab') {
+                event.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const value = this.value;
+                this.value = value.substring(0, start) + '\t' + value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 1;
+            } 
+            else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                document.getElementById('run-button').click();
+            }
+        });
+    }
 
     // New: ResizeObserver for the chart container's parent
     const dataAnalysisSection = document.getElementById('data-analysis-section');
@@ -745,8 +950,7 @@ if (textarea && sqlEditorItem) {
         chartResizeObserver.observe(dataAnalysisSection);
     }
 
-
-    grid.on('change', function (event, items) {
+    gridInstance.on('change', function (event, items) {
         items.forEach(item => {
             if (item.el && item.el.id === 'data-analysis-section') {
                 const chartContainer = document.getElementById('chart-container');
@@ -761,14 +965,13 @@ if (textarea && sqlEditorItem) {
     const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
     const sidebarContainer = document.getElementById('sidebar-container');
 
-    toggleSidebarBtn.addEventListener('click', () => {
-        sidebarContainer.classList.toggle('collapsed');
-        // Let the ResizeObserver on data-analysis-section handle the chart resize.
-        // The sidebar's class change will affect .main-content's width, which affects data-analysis-section's width.
-    });
-
-    // Removed the MutationObserver that was previously here attempting to handle chart resize.
-    // This simplifies the logic and relies on ResizeObserver being the single source of truth.
+    if (toggleSidebarBtn && sidebarContainer) {
+        toggleSidebarBtn.addEventListener('click', () => {
+            sidebarContainer.classList.toggle('collapsed');
+            // Let the ResizeObserver on data-analysis-section handle the chart resize.
+            // The sidebar's class change will affect .main-content's width, which affects data-analysis-section's width.
+        });
+    }
 
     const iconItems = document.querySelectorAll('.icon-item');
     const panelSections = document.querySelectorAll('.panel-section');
@@ -785,7 +988,7 @@ if (textarea && sqlEditorItem) {
             if (targetPanel) {
                 targetPanel.style.display = 'block';
             }
-            if (sidebarContainer.classList.contains('collapsed')) {
+            if (sidebarContainer && sidebarContainer.classList.contains('collapsed')) {
                 sidebarContainer.classList.remove('collapsed');
             }
         });
@@ -794,7 +997,10 @@ if (textarea && sqlEditorItem) {
     const initialActiveIcon = document.querySelector('.icon-item[data-panel="connections"]');
     if (initialActiveIcon) {
         initialActiveIcon.classList.add('active');
-        document.getElementById('connections-panel').style.display = 'block';
+        const connectionsPanel = document.getElementById('connections-panel');
+        if (connectionsPanel) {
+            connectionsPanel.style.display = 'block';
+        }
     }
 
     const sectionHeaders = document.querySelectorAll('.section-header');
@@ -807,6 +1013,9 @@ if (textarea && sqlEditorItem) {
             }
         });
     });
+
+    // Initialize layout functionality after GridStack is ready
+    initializeLayoutFunctionality();
 });
 
 // IMPORTANT: Event listener to re-draw chart on dropdown change
@@ -827,133 +1036,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    // --- Layout Change Logic ---
-    const changeLayoutBtn = document.getElementById('change-layout-btn');
-    const layoutSelectorPopup = document.getElementById('layout-selector-popup');
-    const layoutOptionButtons = document.querySelectorAll('.layout-option-btn');
-    const gridElement = document.querySelector('.grid-stack'); 
-    const grid = gridElement ? gridElement.gridstack : null; 
-
-    // Ensure grid instance is available before defining layouts
-    if (!grid) {
-        console.error("GridStack instance not found. Layout change functionality disabled.");
-        if (changeLayoutBtn) {
-            changeLayoutBtn.disabled = true;
-            changeLayoutBtn.title = "GridStack not initialized.";
-        }
-        return; 
-    }
-
-    // Define the predefined layouts
-    const predefinedLayouts = {
-        layout1: [ // Default: Stacked in three rows
-            { id: 'sql-editor-item', x: 0, y: 0, w: 12, h: 3 },
-            { id: 'data-table-section', x: 0, y: 3, w: 12, h: 3 },
-            { id: 'data-analysis-section', x: 0, y: 6, w: 12, h: 5 }
-        ],
-        layout2: [ // Three Even Columns
-            { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 11 }, // Total height for all 3: 3+3+5 = 11
-            { id: 'data-table-section', x: 4, y: 0, w: 4, h: 11 },
-            { id: 'data-analysis-section', x: 8, y: 0, w: 4, h: 11 }
-        ],
-        layout3: [ // Left 1/3 (SQL Editor) & Stacked Right 2/3 (Data Table, Data Visualization)
-            { id: 'sql-editor-item', x: 0, y: 0, w: 4, h: 11 }, // Full height 1/3 on left
-            { id: 'data-table-section', x: 4, y: 0, w: 8, h: 5 }, // Top 2/3 right
-            { id: 'data-analysis-section', x: 4, y: 5, w: 8, h: 6 }  // Bottom 2/3 right
-        ]
-    };
-
-    function applyLayout(layoutName) {
-        const layoutConfig = predefinedLayouts[layoutName];
-        if (!layoutConfig) {
-            console.error(`Layout '${layoutName}' not found.`);
-            return;
-        }
-
-        // --- CRITICAL FIX FOR BLANK DIVS / GRID.LOAD ---
-        // Option 1: Remove all current items and then load (clean slate)
-        // This is safest if items are getting blanked due to conflicts
-        // Use GridStack's removeAll and addWidgets
-        // First, get the IDs of all current items to remove them cleanly
-        const currentItemIds = grid.engine.nodes.map(node => node.id);
-        if (currentItemIds.length > 0) {
-            grid.removeWidgets(currentItemIds, false); // Remove but don't detach from DOM
-        }
-        
-        // Then, add the new layout widgets. GridStack will pick up the existing HTML elements by ID.
-        // The `true` parameter in `addWidgets` means 'do not make them draggable/resizable' initially, which we want GridStack to handle.
-        // We need to pass the actual DOM elements if they already exist, not just the config.
-        const widgetsToAdd = layoutConfig.map(config => {
-            const el = document.getElementById(config.id);
-            if (el) {
-                return { el: el, ...config }; // Pass the DOM element and its new config
-            }
-            return null; // Should not happen if HTML is consistent
-        }).filter(Boolean); // Filter out any nulls
-
-        if (widgetsToAdd.length > 0) {
-             grid.addWidgets(widgetsToAdd);
-        }
-
-        // Apply compact to ensure the layout settles correctly
-        grid.compact();
-
-        // After loading layout, force chart resize to adapt to new container dimensions
-        const chartContainer = document.getElementById('chart-container');
-        if (chartContainer && chartContainer.data) {
-            window.requestAnimationFrame(() => {
-                Plotly.Plots.resize(chartContainer);
-            });
-        }
-        // IMPORTANT: After layout change, sometimes manual content refresh is needed
-        // For textarea: ensure its content is still there and visible
-        // For tables: ensure placeholder or table is correct based on whether data exists
-        // Re-check visibility of placeholders after layout
-        const resultsTableDisplay = resultsTable.style.display;
-        if (resultsTableDisplay === 'none' || resultsTable.innerHTML.trim() === '') {
-            if (tablePlaceholder) tablePlaceholder.style.display = 'block';
-        } else {
-            if (tablePlaceholder) tablePlaceholder.style.display = 'none';
-        }
-
-        const chartContainerData = chartContainer ? chartContainer.data : null;
-        const chartPlaceholderDisplay = chartPlaceholder.style.display;
-        if (!chartContainerData && chartPlaceholderDisplay !== 'block') { // If no chart data and placeholder hidden
-            if (chartPlaceholder) chartPlaceholder.style.display = 'block';
-        } else if (chartContainerData && chartPlaceholderDisplay === 'block') { // If chart data and placeholder visible
-            if (chartPlaceholder) chartPlaceholder.style.display = 'none';
-        }
-    }
-
-    if (changeLayoutBtn && layoutSelectorPopup) {
-        changeLayoutBtn.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevent click from bubbling to document and closing immediately
-            layoutSelectorPopup.classList.toggle('hidden');
-
-            // Position the popup precisely below the button
-            const btnRect = changeLayoutBtn.getBoundingClientRect();
-            layoutSelectorPopup.style.top = `${btnRect.bottom + 5}px`; // 5px below button
-            layoutSelectorPopup.style.left = `${btnRect.left}px`; // Align left edge of popup with button left edge
-        });
-
-        // Event listeners for each layout option button inside the popup
-        layoutOptionButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                event.stopPropagation(); // Prevent click from bubbling
-                const layoutName = button.dataset.layout;
-                applyLayout(layoutName);
-                layoutSelectorPopup.classList.add('hidden'); // Hide popup after selection
-            });
-        });
-
-        // Close popup if clicked outside
-        document.addEventListener('click', (event) => {
-            if (!layoutSelectorPopup.contains(event.target) && !changeLayoutBtn.contains(event.target)) {
-                layoutSelectorPopup.classList.add('hidden');
-            }
-        });
-    }
-
-    // Apply the default layout on initial load (Layout 1)
-    applyLayout('layout1');
 });
+
+// Add CSS for active layout button
+const layoutCSS = `
+.layout-option-btn.active {
+    background-color: #6366f1 !important;
+    border-color: #6366f1 !important;
+    color: #ffffff !important;
+}
+`;
+
+// Inject CSS
+const style = document.createElement('style');
+style.textContent = layoutCSS;
+document.head.appendChild(style);
