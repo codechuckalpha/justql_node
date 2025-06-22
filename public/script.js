@@ -65,6 +65,7 @@ const tableWrapper = document.getElementById('table-wrapper');
 const tablePlaceholder = document.getElementById('table-placeholder');
 const resultsTable = document.getElementById('results-table');
 const downloadCsvButton = document.getElementById('download-csv-button');
+const downloadChartButton = document.getElementById('download-chart-button');
 
 // Sorting state
 let currentSortColumn = null;
@@ -176,6 +177,77 @@ function downloadCSV() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+}
+
+function downloadChart() {
+    const chartContainer = document.getElementById('chart-container');
+    
+    // Check if chart exists
+    if (!chartContainer || !chartContainer.data || chartContainer.data.length === 0) {
+        alert('No chart to download');
+        return;
+    }
+
+    // Create a temporary container with larger dimensions for full chart export
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.top = '-9999px';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.width = '1200px';  // Larger width for full legend
+    tempContainer.style.height = '800px';  // Larger height for full chart
+    tempContainer.id = 'temp-chart-container';
+    document.body.appendChild(tempContainer);
+
+    try {
+        // Clone the chart data and layout
+        const chartData = JSON.parse(JSON.stringify(chartContainer.data));
+        const chartLayout = JSON.parse(JSON.stringify(chartContainer.layout));
+        
+        // Adjust layout for larger export size
+        chartLayout.width = 1200;
+        chartLayout.height = 800;
+        chartLayout.margin = { l: 80, r: 150, t: 80, b: 80 }; // More space for legend
+        
+        // Ensure legend is fully visible
+        if (chartLayout.legend) {
+            chartLayout.legend.orientation = 'v';
+            chartLayout.legend.x = 1.02;
+            chartLayout.legend.y = 1;
+            chartLayout.legend.xanchor = 'left';
+            chartLayout.legend.yanchor = 'top';
+        }
+
+        // Create the temporary chart
+        Plotly.newPlot(tempContainer, chartData, chartLayout, {
+            responsive: false,
+            displayModeBar: false,
+            staticPlot: true
+        }).then(() => {
+            // Download the chart as PNG
+            return Plotly.toImage(tempContainer, {
+                format: 'png',
+                width: 1200,
+                height: 800,
+                scale: 2 // Higher resolution
+            });
+        }).then((dataURL) => {
+            // Create download link
+            const link = document.createElement('a');
+            link.download = 'chart_visualization.png';
+            link.href = dataURL;
+            link.click();
+        }).finally(() => {
+            // Clean up temporary container
+            document.body.removeChild(tempContainer);
+        });
+    } catch (error) {
+        console.error('Error downloading chart:', error);
+        alert('Error downloading chart. Please try again.');
+        // Clean up temporary container in case of error
+        if (document.body.contains(tempContainer)) {
+            document.body.removeChild(tempContainer);
+        }
     }
 }
 const errorDetailsDiv = document.getElementById('error-details');
@@ -328,6 +400,11 @@ if (runButton && sqlTextarea) {
 // CSV download functionality
 if (downloadCsvButton) {
     downloadCsvButton.addEventListener('click', downloadCSV);
+}
+
+// Chart download functionality
+if (downloadChartButton) {
+    downloadChartButton.addEventListener('click', downloadChart);
 }
 
 // Save query functionality
