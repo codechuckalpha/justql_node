@@ -606,11 +606,15 @@ body {
   text-align: left;
   background-color: #0f0f0f;
   padding-left: 10px;
-
   border-spacing: 0;
   position: sticky; /* Make header sticky */
   top: 0; /* Stick to the top of its scrollable container */
   z-index: 10; /* Ensure header stays on top of content when scrolling */
+  transition: background-color 0.2s ease;
+}
+
+.data-table th:hover {
+  background-color: #1a1a1a;
 }
 
 .data-table td {

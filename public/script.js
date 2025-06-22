@@ -64,6 +64,78 @@ const sqlTextarea = document.getElementById('sql-textarea');
 const tableWrapper = document.getElementById('table-wrapper');
 const tablePlaceholder = document.getElementById('table-placeholder');
 const resultsTable = document.getElementById('results-table');
+
+// Sorting state
+let currentSortColumn = null;
+let currentSortDirection = null; // 'desc' for high to low, 'asc' for low to high
+
+// Sorting functions
+function sortTableData(data, column, direction) {
+    return [...data].sort((a, b) => {
+        let aVal = a[column];
+        let bVal = b[column];
+        
+        // Handle null/undefined values
+        if (aVal == null && bVal == null) return 0;
+        if (aVal == null) return direction === 'desc' ? 1 : -1;
+        if (bVal == null) return direction === 'desc' ? -1 : 1;
+        
+        // Try to parse as numbers if possible
+        const aNum = parseFloat(aVal);
+        const bNum = parseFloat(bVal);
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            return direction === 'desc' ? bNum - aNum : aNum - bNum;
+        }
+        
+        // String comparison
+        const aStr = String(aVal).toLowerCase();
+        const bStr = String(bVal).toLowerCase();
+        
+        if (direction === 'desc') {
+            return bStr.localeCompare(aStr);
+        } else {
+            return aStr.localeCompare(bStr);
+        }
+    });
+}
+
+function handleColumnHeaderClick(column) {
+    if (currentSortColumn === column) {
+        // Toggle direction
+        currentSortDirection = currentSortDirection === 'desc' ? 'asc' : 'desc';
+    } else {
+        // New column, start with high to low (desc)
+        currentSortColumn = column;
+        currentSortDirection = 'desc';
+    }
+    
+    // Re-render table with sorted data
+    if (window.lastQueryResults && window.lastQueryResults.length > 0) {
+        const sortedData = sortTableData(window.lastQueryResults, currentSortColumn, currentSortDirection);
+        renderTable(sortedData, Object.keys(window.lastQueryResults[0]));
+    }
+}
+
+function renderTable(data, headers) {
+    let tableHTML = '<thead><tr>';
+    headers.forEach(header => {
+        const isCurrentSort = currentSortColumn === header;
+        const arrow = isCurrentSort ? (currentSortDirection === 'desc' ? ' ▲' : ' ▼') : '';
+        tableHTML += `<th onclick="handleColumnHeaderClick('${header}')" style="cursor: pointer; user-select: none;">${header}${arrow}</th>`;
+    });
+    tableHTML += '</tr></thead><tbody>';
+
+    data.forEach(row => {
+        tableHTML += '<tr>';
+        headers.forEach(header => {
+            tableHTML += `<td>${row[header] || ''}</td>`;
+        });
+        tableHTML += '</tr>';
+    });
+    tableHTML += '</tbody>';
+    resultsTable.innerHTML = tableHTML;
+}
 const errorDetailsDiv = document.getElementById('error-details');
 const errorMessageParagraph = errorDetailsDiv.querySelector('.error-message');
 const lineNumbers = document.getElementById('line-numbers');
@@ -154,25 +226,16 @@ if (runButton && sqlTextarea) {
                 if (tablePlaceholder) tablePlaceholder.style.display = 'none';
                 resultsTable.style.display = 'table';
 
-                let tableHTML = '<thead><tr>';
-                const headers = Object.keys(data.results[0]);
-                headers.forEach(header => {
-                    tableHTML += `<th>${header}</th>`;
-                });
-                tableHTML += '</tr></thead><tbody>';
-
-                data.results.forEach(row => {
-                    tableHTML += '<tr>';
-                    headers.forEach(header => {
-                        tableHTML += `<td>${row[header] || ''}</td>`;
-                    });
-                    tableHTML += '</tr>';
-                });
-                tableHTML += '</tbody>';
-                resultsTable.innerHTML = tableHTML;
+                // Reset sorting when new data is loaded
+                currentSortColumn = null;
+                currentSortDirection = null;
 
                 // Store results globally for chart type switching
                 window.lastQueryResults = data.results;
+
+                // Render table with new data
+                const headers = Object.keys(data.results[0]);
+                renderTable(data.results, headers);
 
                 // Generate chart with the same data
                 generateChart(data.results);
