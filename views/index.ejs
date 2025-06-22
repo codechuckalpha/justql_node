@@ -180,8 +180,11 @@
         <button class="header-query" id="run-button">▶</button>
       </div>
     </h3>
-    <textarea id="sql-textarea"
-      placeholder="SELECT * FROM users WHERE...&#10;-- Write your SQL query here&#10;-- Use multiple lines for complex queries"></textarea>
+    <div class="textarea-wrapper">
+      <div class="line-numbers" id="line-numbers"></div>
+      <textarea id="sql-textarea"
+        placeholder="SELECT * FROM users WHERE...&#10;-- Write your SQL query here&#10;-- Use multiple lines for complex queries"></textarea>
+    </div>
     <div class="flex items-center justify-between" id="error-details">
       <div class="error-message"></div>
     </div>

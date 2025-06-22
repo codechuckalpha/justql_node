@@ -66,6 +66,43 @@ const tablePlaceholder = document.getElementById('table-placeholder');
 const resultsTable = document.getElementById('results-table');
 const errorDetailsDiv = document.getElementById('error-details');
 const errorMessageParagraph = errorDetailsDiv.querySelector('.error-message');
+const lineNumbers = document.getElementById('line-numbers');
+
+function updateLineNumbers() {
+    const lines = sqlTextarea.value.split('\n');
+    const lineCount = Math.max(lines.length, 20);
+    let numbers = '';
+    for (let i = 1; i <= lineCount; i++) {
+        numbers += i + '\n';
+    }
+    lineNumbers.textContent = numbers.slice(0, -1);
+    syncScroll();
+}
+
+function syncScroll() {
+    const scrollTop = sqlTextarea.scrollTop;
+    const lineHeight = parseFloat(getComputedStyle(sqlTextarea).lineHeight);
+    const scrollLines = Math.floor(scrollTop / lineHeight);
+    
+    const lines = sqlTextarea.value.split('\n');
+    const totalLines = Math.max(lines.length, 20);
+    
+    let visibleNumbers = '';
+    for (let i = scrollLines + 1; i <= totalLines; i++) {
+        visibleNumbers += i + '\n';
+    }
+    
+    lineNumbers.textContent = visibleNumbers.slice(0, -1);
+}
+
+if (sqlTextarea && lineNumbers) {
+    updateLineNumbers();
+    
+    sqlTextarea.addEventListener('input', updateLineNumbers);
+    sqlTextarea.addEventListener('scroll', syncScroll);
+    
+    window.addEventListener('resize', updateLineNumbers);
+}
 
 if (runButton && sqlTextarea) {
     runButton.addEventListener('click', async () => {
