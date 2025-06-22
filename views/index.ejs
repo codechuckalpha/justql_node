@@ -194,7 +194,12 @@
 <!-- For the Data Table Section -->
 <div class="grid-stack-item" gs-w="12" gs-h="1" id="data-table-section">
   <div class="grid-stack-item-content p-4 shadow-md data-table" gs-w="3" gs-h="3" 　id="data-table">
-    <h3 class="flex items-center justify-between grid-drag-handle">📑 Data Table</h3> <!-- ADD THIS CLASS -->
+    <h3 class="flex items-center justify-between grid-drag-handle">
+      📑 Data Table
+      <div class="flex space-x-2">
+        <button class="header-query" id="download-csv-button">📥</button>
+      </div>
+    </h3>
     <div class="table-wrapper data-table" id="table-wrapper">
       <div
         style="padding: 20px; text-align: center; border: 2px dashed #555; border-radius: 8px; margin-top: 10px;"

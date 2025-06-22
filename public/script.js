@@ -64,6 +64,7 @@ const sqlTextarea = document.getElementById('sql-textarea');
 const tableWrapper = document.getElementById('table-wrapper');
 const tablePlaceholder = document.getElementById('table-placeholder');
 const resultsTable = document.getElementById('results-table');
+const downloadCsvButton = document.getElementById('download-csv-button');
 
 // Sorting state
 let currentSortColumn = null;
@@ -135,6 +136,47 @@ function renderTable(data, headers) {
     });
     tableHTML += '</tbody>';
     resultsTable.innerHTML = tableHTML;
+}
+
+function downloadCSV() {
+    if (!window.lastQueryResults || window.lastQueryResults.length === 0) {
+        alert('No data to download');
+        return;
+    }
+
+    const data = window.lastQueryResults; // Use original unsorted data
+    const headers = Object.keys(data[0]);
+    
+    // Create CSV content
+    let csvContent = '';
+    
+    // Add headers
+    csvContent += headers.map(header => `"${header}"`).join(',') + '\n';
+    
+    // Add data rows
+    data.forEach(row => {
+        const rowData = headers.map(header => {
+            const value = row[header];
+            // Escape quotes and wrap in quotes
+            const escapedValue = value != null ? String(value).replace(/"/g, '""') : '';
+            return `"${escapedValue}"`;
+        });
+        csvContent += rowData.join(',') + '\n';
+    });
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'query_results.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 }
 const errorDetailsDiv = document.getElementById('error-details');
 const errorMessageParagraph = errorDetailsDiv.querySelector('.error-message');
@@ -281,6 +323,11 @@ if (runButton && sqlTextarea) {
             tablePlaceholder.querySelector('p:nth-child(2)').textContent = 'Data table will be generated based on your query results';
         }
     });
+}
+
+// CSV download functionality
+if (downloadCsvButton) {
+    downloadCsvButton.addEventListener('click', downloadCSV);
 }
 
 // Save query functionality
