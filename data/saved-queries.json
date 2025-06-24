@@ -1,5 +1,30 @@
 [
   {
+    "id": "1750775668158",
+    "name": "basic_usage_checker",
+    "query": "select concat(d.date, ' ', p.time_period) as date_time,\n\t\tconcat(d.region_id, '-', d.conn_type_id) as region_conn_type,\n\t\tsum(d.usage_amount) as usage_amount\n\t\tfrom data_intraday_agg d\n\t\tleft join ref_periods p on p.id = d.period_id\n\t\twhere d.data_code in(0110,1110)\n\t\tand d.date > current_date - interval 7 day\n\t\tgroup by concat(d.date, ' ', p.time_period), \t\t\t\tconcat(d.region_id, '-', d.conn_type_id)",
+    "createdAt": "2025-06-24T14:34:28.158Z",
+    "updatedAt": "2025-06-24T14:34:42.314Z"
+  },
+  {
+    "id": "1750775579281",
+    "name": "Query 3",
+    "query": "select concat(d.date, ' ', p.time_period) as date_time,\n\t\tconcat(d.region_id, '-', d.conn_type_id) as region_conn_type,\n\t\tsum(d.usage_amount) as usage_amount\n\t\tfrom data_intraday_agg d\n\t\tleft join ref_periods p on p.id = d.period_id\n\t\twhere d.data_code in(0110,1110)\n\t\tand d.date > current_date - interval 7 day\n\t\tgroup by concat(d.date, ' ', p.time_period), \t\t\t\tconcat(d.region_id, '-', d.conn_type_id)",
+    "createdAt": "2025-06-24T14:32:59.281Z"
+  },
+  {
+    "id": "1750774714351",
+    "name": "Query 2",
+    "query": "select * \n\t\tfrom data_intraday_agg d\n\t\tleft join ref_periods p on p.id = d.period_id\n\t\twhere date d.data_code in(0110,1110)\n\t\tgroup by",
+    "createdAt": "2025-06-24T14:18:34.351Z"
+  },
+  {
+    "id": "1750747101565",
+    "name": "Query 1",
+    "query": "select concat(j.date, ' ', p.time_period) as date_time,\n\t#j.region_id,\n    r.jp_name,\n\tj.spot_price\n\tfrom jepx_da_pivot j\n\tleft join ref_periods p on p.id = j.period_id\n    left join ref_regions r on r.id = j.region_id\n\twhere j.date > CURRENT_DATE - interval 10 day\n\tgroup by j.date, j.period_id, j.region_id\n\torder by j.date desc",
+    "createdAt": "2025-06-24T06:38:21.565Z"
+  },
+  {
     "id": "1750663727182",
     "name": "rank_anytime_vs_cons_8",
     "query": "WITH period_range_cons_8 AS (\n    SELECT\n        id AS start_period,\n        id + 8 AS end_period,\n        time_period\n    FROM\n        ref_periods\n    WHERE\n        id < 42 -- For cons_8, periods up to 40\n),\nperiod_range_anytime AS (\n    SELECT\n        id AS period_id,\n        time_period\n    FROM\n        ref_periods\n    WHERE\n        id <= 48 -- For anytime, all periods up to 48\n),\nspot AS (\n    SELECT\n        DATE,\n        period_id,\n        region_id,\n        spot_price\n    FROM\n        jepx_da_pivot\n    WHERE\n        DATE > '2024-12-31'\n        AND region_id = 3\n),\n-- Daily average prices for consecutive 8-period ranges\ndaily_avg_prices_cons_8 AS (\n    SELECT\n        s.DATE,\n        s.region_id,\n        pr.start_period,\n        pr.end_period,\n        pr.time_period,\n        ROUND(AVG(s.spot_price), 2) AS average_spot_price_for_range\n    FROM\n        spot s\n    JOIN\n        period_range_cons_8 pr ON s.period_id BETWEEN pr.start_period AND pr.end_period\n    GROUP BY\n        s.DATE,\n        s.region_id,\n        pr.start_period,\n        pr.end_period,\n        pr.time_period\n),\n-- Ranked daily average prices for consecutive 8-period ranges\nranked_daily_avg_prices_cons_8 AS (\n    SELECT\n        dap.DATE,\n        dap.region_id,\n        dap.start_period,\n        dap.end_period,\n        dap.time_period,\n        dap.average_spot_price_for_range,\n        RANK() OVER (\n            PARTITION BY dap.DATE, dap.region_id\n            ORDER BY dap.average_spot_price_for_range ASC\n        ) AS rank_lowest_avg_price_daily\n    FROM\n        daily_avg_prices_cons_8 dap\n),\n-- Overall rank for consecutive 8-period ranges (cons_8 metric)\noverall_rank_cons_8 AS (\n    SELECT\n        rdap.time_period,\n        'cons_8' AS metric,\n        CAST(RANK() OVER (\n            ORDER BY SUM(rdap.rank_lowest_avg_price_daily) ASC\n        ) AS CHAR) AS overall_rank -- Cast to CHAR directly here for UNION consistency\n    FROM\n        ranked_daily_avg_prices_cons_8 rdap\n    GROUP BY\n        rdap.time_period\n),\n-- Daily average prices for individual periods (anytime logic)\ndaily_avg_prices_anytime AS (\n    SELECT\n        s.DATE,\n        s.region_id,\n        pr.period_id,\n        pr.time_period,\n        ROUND(AVG(s.spot_price), 2) AS average_spot_price_for_period\n    FROM\n        spot s\n    JOIN\n        period_range_anytime pr ON s.period_id = pr.period_id\n    GROUP BY\n        s.DATE,\n        s.region_id,\n        pr.period_id,\n        pr.time_period\n),\n-- Ranked daily average prices for individual periods\nranked_daily_avg_prices_anytime AS (\n    SELECT\n        dap.DATE,\n        dap.region_id,\n        dap.period_id,\n        dap.time_period,\n        dap.average_spot_price_for_period,\n        RANK() OVER (\n            PARTITION BY dap.DATE, dap.region_id\n            ORDER BY dap.average_spot_price_for_period ASC\n        ) AS rank_lowest_avg_price_daily\n    FROM\n        daily_avg_prices_anytime dap\n),\n-- Overall rank for individual periods (anytime metric)\noverall_rank_anytime AS (\n    SELECT\n        rdap.time_period,\n        'anytime' AS metric,\n        CAST(RANK() OVER (\n            ORDER BY SUM(rdap.rank_lowest_avg_price_daily) ASC\n        ) AS CHAR) AS overall_rank -- Cast to CHAR directly here for UNION consistency\n    FROM\n        ranked_daily_avg_prices_anytime rdap\n    GROUP BY\n        rdap.time_period\n)\n-- Combine the results, excluding rows where cons_8 would be NULL\nSELECT\n    time_period,\n    metric,\n    overall_rank\nFROM\n    overall_rank_cons_8\n\nUNION ALL\n\nSELECT\n    time_period,\n    metric,\n    overall_rank\nFROM\n    overall_rank_anytime\nORDER BY\n    time_period ASC, metric DESC;",
