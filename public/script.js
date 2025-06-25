@@ -60,6 +60,7 @@ document.addEventListener('click', function(e) {
 // run query from textarea
 const runButton = document.getElementById('run-button');
 const saveButton = document.getElementById('save-button');
+const newQueryButton = document.getElementById('new-query-button');
 const sqlTextarea = document.getElementById('sql-textarea');
 const tableWrapper = document.getElementById('table-wrapper');
 const tablePlaceholder = document.getElementById('table-placeholder');
@@ -284,7 +285,12 @@ function syncScroll() {
 if (sqlTextarea && lineNumbers) {
     updateLineNumbers();
     
-    sqlTextarea.addEventListener('input', updateLineNumbers);
+    sqlTextarea.addEventListener('input', () => {
+        updateLineNumbers();
+        // Mark query as modified but keep the loaded query reference
+        isQueryModified = true;
+        updateQueryInfo();
+    });
     sqlTextarea.addEventListener('scroll', syncScroll);
     
     window.addEventListener('resize', updateLineNumbers);
@@ -432,24 +438,76 @@ if (saveButton && sqlTextarea) {
         }
 
         try {
-            const response = await fetch('/api/saved-queries', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ query: query })
-            });
+            let response, savedQuery;
+            let action = '';
+            
+            if (currentLoadedQuery) {
+                // Update existing loaded query
+                response = await fetch(`/api/saved-queries/${currentLoadedQuery.id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        name: currentLoadedQuery.name,
+                        query: query 
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw errorData;
+                }
+                
+                savedQuery = await response.json();
+                action = 'Updated';
+                console.log('Query updated:', savedQuery);
+                
+                // Update the current loaded query reference
+                currentLoadedQuery = savedQuery;
+            } else {
+                // Check if this query already exists
+                const existingQuery = checkForDuplicateQuery(query);
+                
+                if (existingQuery) {
+                    // Query already exists, don't create duplicate
+                    errorMessageParagraph.textContent = `Query already exists as "${existingQuery.name}"`;
+                    errorMessageParagraph.style.color = '#f59e0b';
+                    
+                    setTimeout(() => {
+                        errorMessageParagraph.textContent = '';
+                        errorMessageParagraph.style.color = '';
+                    }, 3000);
+                    
+                    return;
+                }
+                
+                // Create new query with unique name
+                const newQueryName = generateUniqueQueryName();
+                response = await fetch('/api/saved-queries', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ query: query, name: newQueryName })
+                });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw errorData;
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw errorData;
+                }
+
+                savedQuery = await response.json();
+                action = 'Saved as';
+                console.log('Query saved:', savedQuery);
+                
+                // Set as current loaded query
+                currentLoadedQuery = savedQuery;
             }
-
-            const savedQuery = await response.json();
-            console.log('Query saved:', savedQuery);
+            
+            // Reset modification flag after successful save
+            isQueryModified = false;
             
             // Show success message briefly
             const originalText = errorMessageParagraph.textContent;
             const originalColor = errorMessageParagraph.style.color;
-            errorMessageParagraph.textContent = `Saved as "${savedQuery.name}"`;
+            errorMessageParagraph.textContent = `${action} "${savedQuery.name}"`;
             errorMessageParagraph.style.color = '#10b981';
             
             setTimeout(() => {
@@ -457,8 +515,9 @@ if (saveButton && sqlTextarea) {
                 errorMessageParagraph.style.color = originalColor;
             }, 2000);
             
-            // Refresh the saved queries list
+            // Refresh the saved queries list and update query info
             loadSavedQueries();
+            updateQueryInfo();
             
         } catch (error) {
             console.error('Error saving query:', error);
@@ -476,6 +535,67 @@ if (saveButton && sqlTextarea) {
             errorMessageParagraph.style.color = '#dc2626';
         }
     });
+}
+
+// New query button functionality
+if (newQueryButton && sqlTextarea) {
+    newQueryButton.addEventListener('click', () => {
+        // If there's a loaded query, update it first, then switch to new mode
+        if (currentLoadedQuery && isQueryModified) {
+            updateCurrentLoadedQuery();
+        }
+        
+        // Clear textarea and switch to new query mode
+        sqlTextarea.value = '';
+        currentLoadedQuery = null;
+        isQueryModified = false;
+        updateQueryInfo();
+        sqlTextarea.focus();
+    });
+}
+
+async function updateCurrentLoadedQuery() {
+    if (!currentLoadedQuery || !sqlTextarea) return;
+    
+    const query = sqlTextarea.value.trim();
+    if (!query) return;
+    
+    try {
+        const response = await fetch(`/api/saved-queries/${currentLoadedQuery.id}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                name: currentLoadedQuery.name,
+                query: query 
+            })
+        });
+        
+        if (response.ok) {
+            const updatedQuery = await response.json();
+            console.log('Query updated:', updatedQuery);
+            loadSavedQueries(); // Refresh the list
+        }
+    } catch (error) {
+        console.error('Error updating query:', error);
+    }
+}
+
+function checkForDuplicateQuery(queryText) {
+    return savedQueries.find(q => q.query.trim() === queryText.trim());
+}
+
+function generateUniqueQueryName() {
+    const existingNames = new Set(savedQueries.map(q => q.name));
+    let queryNumber = 1;
+    let queryName = `Query ${queryNumber}`;
+    
+    // Find the next available query number
+    while (existingNames.has(queryName)) {
+        queryNumber++;
+        queryName = `Query ${queryNumber}`;
+    }
+    
+    return queryName;
 }
 
 // To handle tab presses when typing sql queries and Ctrl + Enter to run query 
@@ -1426,6 +1546,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Saved queries functionality
 let savedQueries = [];
+let currentLoadedQuery = null; // Track currently loaded query
+let isQueryModified = false; // Track if current query has been modified
 
 async function loadSavedQueries() {
     try {
@@ -1440,11 +1562,13 @@ async function loadSavedQueries() {
         console.log('Saved queries loaded:', savedQueries);
         
         updateSavedQueriesUI();
+        updateQueryInfo(); // Update query info after loading saved queries
         
     } catch (error) {
         console.error('Error loading saved queries:', error);
         savedQueries = [];
         updateSavedQueriesUI();
+        updateQueryInfo(); // Update query info even on error
     }
 }
 
@@ -1529,6 +1653,89 @@ function showQueryMenu(event, queryId) {
     }, 0);
 }
 
+function updateQueryInfo() {
+    const queryInfoElement = document.getElementById('query-info');
+    if (!queryInfoElement) return;
+    
+    if (currentLoadedQuery) {
+        // Show the name of the currently loaded query, with modification indicator
+        const modifiedIndicator = isQueryModified ? ' *' : '';
+        queryInfoElement.textContent = `- ${currentLoadedQuery.name}${modifiedIndicator}`;
+    } else {
+        // Calculate the next query number
+        const nextQueryNumber = getNextQueryNumber();
+        queryInfoElement.textContent = `- Query ${nextQueryNumber}`;
+    }
+}
+
+function getNextQueryNumber() {
+    if (savedQueries.length === 0) return 1;
+    
+    // Find the highest query number
+    let maxNumber = 0;
+    savedQueries.forEach(query => {
+        const match = query.name.match(/^Query (\d+)$/);
+        if (match) {
+            const number = parseInt(match[1], 10);
+            if (number > maxNumber) {
+                maxNumber = number;
+            }
+        }
+    });
+    
+    return maxNumber + 1;
+}
+
+function autoSaveCurrentQuery() {
+    if (!sqlTextarea) return;
+    
+    const query = sqlTextarea.value.trim();
+    // Check if there's any content besides spaces, tabs, and carriage returns
+    if (query.length === 0) return;
+    
+    // If there's a loaded query and it's been modified, update it
+    if (currentLoadedQuery && isQueryModified) {
+        updateCurrentLoadedQuery();
+        return;
+    }
+    
+    // If there's a loaded query and it hasn't been modified, don't save
+    if (currentLoadedQuery && !isQueryModified) {
+        return;
+    }
+    
+    // Only save as new query if there's no loaded query and it's not a duplicate
+    if (!currentLoadedQuery) {
+        const existingQuery = checkForDuplicateQuery(query);
+        if (!existingQuery) {
+            saveCurrentQueryContent(query);
+        }
+    }
+}
+
+async function saveCurrentQueryContent(query) {
+    try {
+        const response = await fetch('/api/saved-queries', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ query: query })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to auto-save query');
+        }
+
+        const savedQuery = await response.json();
+        console.log('Query auto-saved:', savedQuery);
+        
+        // Refresh the saved queries list
+        loadSavedQueries();
+        
+    } catch (error) {
+        console.error('Error auto-saving query:', error);
+    }
+}
+
 async function handleMenuAction(action, queryId) {
     const query = savedQueries.find(q => q.id === queryId);
     if (!query) return;
@@ -1538,10 +1745,20 @@ async function handleMenuAction(action, queryId) {
             await renameQuery(queryId, query.name);
             break;
         case 'load':
+            // Auto-save current query before loading new one
+            autoSaveCurrentQuery();
             loadQueryIntoTextarea(query.query);
+            currentLoadedQuery = query; // Track the loaded query
+            isQueryModified = false; // Reset modification flag
+            updateQueryInfo(); // Update the display
             break;
         case 'run':
+            // Auto-save current query before running new one
+            autoSaveCurrentQuery();
             loadQueryIntoTextarea(query.query);
+            currentLoadedQuery = query; // Track the loaded query
+            isQueryModified = false; // Reset modification flag
+            updateQueryInfo(); // Update the display
             setTimeout(() => {
                 if (runButton) runButton.click();
             }, 100);

@@ -128,7 +128,7 @@ app.get('/api/saved-queries', (req, res) => {
 
 // Save a new query
 app.post('/api/saved-queries', (req, res) => {
-  const { query } = req.body;
+  const { query, name } = req.body;
   
   if (!query) {
     return res.status(400).json({ error: 'Query text is required' });
@@ -136,16 +136,21 @@ app.post('/api/saved-queries', (req, res) => {
   
   const queries = readSavedQueries();
   
-  // Generate incremental name
-  const existingNumbers = queries
-    .map(q => q.name.match(/^Query (\d+)$/))
-    .filter(match => match)
-    .map(match => parseInt(match[1]));
+  // Use provided name or generate incremental name
+  let queryName = name;
+  if (!queryName) {
+    const existingNumbers = queries
+      .map(q => q.name.match(/^Query (\d+)$/))
+      .filter(match => match)
+      .map(match => parseInt(match[1]));
+    
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    queryName = `Query ${nextNumber}`;
+  }
   
-  const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
   const newQuery = {
     id: Date.now().toString(),
-    name: `Query ${nextNumber}`,
+    name: queryName,
     query: query,
     createdAt: new Date().toISOString()
   };
@@ -159,13 +164,13 @@ app.post('/api/saved-queries', (req, res) => {
   }
 });
 
-// Update a saved query (rename)
+// Update a saved query (rename or update content)
 app.put('/api/saved-queries/:id', (req, res) => {
   const { id } = req.params;
-  const { name } = req.body;
+  const { name, query } = req.body;
   
-  if (!name) {
-    return res.status(400).json({ error: 'Name is required' });
+  if (!name && !query) {
+    return res.status(400).json({ error: 'Name or query is required' });
   }
   
   const queries = readSavedQueries();
@@ -175,7 +180,12 @@ app.put('/api/saved-queries/:id', (req, res) => {
     return res.status(404).json({ error: 'Query not found' });
   }
   
-  queries[queryIndex].name = name;
+  if (name) {
+    queries[queryIndex].name = name;
+  }
+  if (query) {
+    queries[queryIndex].query = query;
+  }
   queries[queryIndex].updatedAt = new Date().toISOString();
   
   if (writeSavedQueries(queries)) {
