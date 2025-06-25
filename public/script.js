@@ -407,6 +407,19 @@ if (downloadChartButton) {
     downloadChartButton.addEventListener('click', downloadChart);
 }
 
+// Chart refresh functionality
+const refreshChartButton = document.getElementById('refresh-chart-button');
+if (refreshChartButton) {
+    refreshChartButton.addEventListener('click', () => {
+        // Re-generate chart with existing data without re-running query
+        if (window.lastQueryResults && window.lastQueryResults.length > 0) {
+            generateChart(window.lastQueryResults);
+        } else {
+            console.warn("No data available to refresh chart. Run a query first.");
+        }
+    });
+}
+
 // Save query functionality
 if (saveButton && sqlTextarea) {
     saveButton.addEventListener('click', async () => {
