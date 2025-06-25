@@ -531,6 +531,8 @@ function generateChart(results) {
         }
         if (selectedChartType === 'column') {
             createMultiStackedColumnChart(results, columns[0], columns[1], columns[2], chartContainer);
+        } else if (selectedChartType === 'grouped') {
+            createMultiGroupedColumnChart(results, columns[0], columns[1], columns[2], chartContainer);
         } else {
             createMultiLineChart(results, columns[0], columns[1], columns[2], chartContainer);
         }
@@ -683,7 +685,7 @@ function createSimpleLineChart(results, xColumn, yColumn, container) {
     Plotly.newPlot(container, [trace], layout, config);
 }
 
-// NEW: Function to create a multi-stacked column chart
+// Function to create a multi-stacked column chart
 function createMultiStackedColumnChart(results, xColumn, groupColumn, yColumn, container) {
     const groupedData = {};
     results.forEach(row => {
@@ -719,6 +721,78 @@ function createMultiStackedColumnChart(results, xColumn, groupColumn, yColumn, c
     const layout = {
         title: `${yColumn} by ${xColumn} (grouped by ${groupColumn})`,
         barmode: 'stack', // Key change: 'stack' for stacked column chart
+        paper_bgcolor: '#2d2d30',
+        plot_bgcolor: '#1a1a1a',
+        font: { color: '#cccccc' },
+        xaxis: {
+            title: xColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+        },
+        yaxis: {
+            title: yColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+        },
+        legend: {
+            font: { color: '#cccccc' },
+            bgcolor: 'rgba(45, 45, 48, 0.8)',
+            bordercolor: '#333',
+            borderwidth: 1
+        },
+        margin: { t: 50, b: 50, l: 50, r: 50 }
+    };
+
+    const config = {
+        responsive: true,
+        displayModeBar: false,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
+        scrollZoom: false,
+        doubleClick: false,
+        showTips: false,
+        staticPlot: false
+    };
+
+    Plotly.newPlot(container, traces, layout, config);
+}
+
+// Function to create a multi-grouped column chart
+function createMultiGroupedColumnChart(results, xColumn, groupColumn, yColumn, container) {
+    const groupedData = {};
+    results.forEach(row => {
+        const groupValue = row[groupColumn];
+        if (!groupedData[groupValue]) {
+            groupedData[groupValue] = [];
+        }
+        groupedData[groupValue].push({
+            x: row[xColumn],
+            y: parseFloat(row[yColumn]) || 0
+        });
+    });
+
+    const traces = Object.keys(groupedData).map((groupName, index) => {
+        const sortedData = groupedData[groupName].sort((a, b) => {
+            if (typeof a.x === 'string' && typeof b.x === 'string') {
+                return a.x.localeCompare(b.x);
+            }
+            return a.x - b.x;
+        });
+
+        return {
+            x: sortedData.map(d => d.x),
+            y: sortedData.map(d => d.y),
+            type: 'bar',
+            name: groupName,
+            marker: {
+                color: getLineColor(index)
+            }
+        };
+    });
+
+    const layout = {
+        title: `${yColumn} by ${xColumn} (grouped by ${groupColumn})`,
+        barmode: 'group', // Key change: 'group' for grouped column chart
         paper_bgcolor: '#2d2d30',
         plot_bgcolor: '#1a1a1a',
         font: { color: '#cccccc' },
