@@ -1,5 +1,12 @@
 [
   {
+    "id": "1750939860101",
+    "name": "Query 1",
+    "query": "select concat(d.date, ' ', p.time_period) as date_time,\n\t\tconcat(r.name, '-', d.data_code) as region_conn_type,\n\t\tsum(d.usage_amount) as usage_amount\n\t\tfrom data_intraday d\n\t\tleft join ref_periods p on p.id = d.period_id\n\t\tleft join ref_regions r on r.id = d.region_id\n\t\twhere d.data_code in(0110,1110)\n\t\tand d.date > current_date - interval 1 day\n\t\tgroup by concat(d.date, ' ', p.time_period),\n \t\tconcat(r.name, '-', d.data_code)",
+    "createdAt": "2025-06-26T12:11:00.101Z",
+    "updatedAt": "2025-06-26T12:14:21.417Z"
+  },
+  {
     "id": "1750860972031",
     "name": "test query",
     "query": "select * from ref_periods",
@@ -9,9 +16,9 @@
   {
     "id": "1750775668158",
     "name": "basic_usage_checker",
-    "query": "select concat(d.date, ' ', p.time_period) as date_time,\n\t\tconcat(r.name, '-', d.conn_type_id) as region_conn_type,\n\t\tsum(d.usage_amount) as usage_amount\n\t\tfrom data_intraday_agg d\n\t\tleft join ref_periods p on p.id = d.period_id\n\t\tleft join ref_regions r on r.id = d.region_id\n\t\twhere d.data_code in(0110,1110)\n\t\tand d.date > current_date - interval 1 day\n\t\tgroup by concat(d.date, ' ', p.time_period),\n \t\tconcat(r.name, '-', d.conn_type_id)",
+    "query": "select concat(d.date, ' ', p.time_period) as date_time,\n\t\tconcat(r.name, '-', d.data_code) as region_conn_type,\n\t\tsum(d.usage_amount) as usage_amount\n\t\tfrom data_intraday_agg d\n\t\tleft join ref_periods p on p.id = d.period_id\n\t\tleft join ref_regions r on r.id = d.region_id\n\t\twhere d.data_code in(0110,1110)\n\t\tand d.date > current_date - interval 1 day\n\t\tgroup by concat(d.date, ' ', p.time_period),\n \t\tconcat(r.name, '-', d.data_code)",
     "createdAt": "2025-06-24T14:34:28.158Z",
-    "updatedAt": "2025-06-26T12:00:21.370Z"
+    "updatedAt": "2025-06-26T12:19:10.110Z"
   },
   {
     "id": "1750663727182",
