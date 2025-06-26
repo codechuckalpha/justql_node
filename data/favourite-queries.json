@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1750775668158",
+    "name": "basic_usage_checker",
+    "query": "select concat(d.date, ' ', p.time_period) as date_time,\n\t\tconcat(r.name, '-', d.data_code) as region_conn_type,\n\t\tsum(d.usage_amount) as usage_amount\n\t\tfrom data_intraday_agg d\n\t\tleft join ref_periods p on p.id = d.period_id\n\t\tleft join ref_regions r on r.id = d.region_id\n\t\twhere d.data_code in(0110,1110)\n\t\tand d.date > current_date - interval 3 day\n\t\tgroup by concat(d.date, ' ', p.time_period),\n \t\tconcat(r.name, '-', d.data_code)",
+    "createdAt": "2025-06-24T14:34:28.158Z",
+    "updatedAt": "2025-06-26T14:26:55.862Z",
+    "addedToFavourites": "2025-06-26T14:20:08.122Z"
+  },
+  {
+    "id": "1750518267116",
+    "name": "basic jepx 30min",
+    "query": "select concat(j.date, ' ', p.time_period) as date_time,\n\t#j.region_id,\n    r.jp_name,\n\tj.spot_price\n\tfrom jepx_da_pivot j\n\tleft join ref_periods p on p.id = j.period_id\n    left join ref_regions r on r.id = j.region_id\n\twhere j.date > CURRENT_DATE - interval 1 day\n\tgroup by j.date, j.period_id, j.region_id\n\torder by j.date desc",
+    "createdAt": "2025-06-21T15:04:27.116Z",
+    "updatedAt": "2025-06-26T11:56:38.363Z",
+    "addedToFavourites": "2025-06-26T14:21:35.229Z"
+  },
+  {
+    "id": "1750518221967",
+    "name": "basic jepx daily",
+    "query": "select #concat(j.date, ' ', p.time_period) as date_time,\n    j.date,\n\tr.jp_name,\n\tavg(j.spot_price)\n\tfrom jepx_da_pivot j\n\tleft join ref_periods p on p.id = j.period_id\n    left join ref_regions r on r.id = j.region_id\n\twhere j.date > CURRENT_DATE - interval 30 day\n\tgroup by j.date, j.region_id\n\torder by j.date desc",
+    "createdAt": "2025-06-21T15:03:41.967Z",
+    "updatedAt": "2025-06-26T11:56:08.175Z",
+    "addedToFavourites": "2025-06-26T14:26:23.275Z"
+  }
+]

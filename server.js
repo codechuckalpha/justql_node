@@ -96,6 +96,7 @@ app.post('/run-query', (req, res) => {
 
 // Saved Queries API endpoints
 const SAVED_QUERIES_FILE = path.join(__dirname, 'data', 'saved-queries.json');
+const FAVOURITE_QUERIES_FILE = path.join(__dirname, 'data', 'favourite-queries.json');
 
 function readSavedQueries() {
   try {
@@ -116,6 +117,29 @@ function writeSavedQueries(queries) {
     return true;
   } catch (error) {
     console.error('Error writing saved queries:', error);
+    return false;
+  }
+}
+
+function readFavouriteQueries() {
+  try {
+    if (!fs.existsSync(FAVOURITE_QUERIES_FILE)) {
+      return [];
+    }
+    const data = fs.readFileSync(FAVOURITE_QUERIES_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error reading favourite queries:', error);
+    return [];
+  }
+}
+
+function writeFavouriteQueries(queries) {
+  try {
+    fs.writeFileSync(FAVOURITE_QUERIES_FILE, JSON.stringify(queries, null, 2));
+    return true;
+  } catch (error) {
+    console.error('Error writing favourite queries:', error);
     return false;
   }
 }
@@ -207,6 +231,98 @@ app.delete('/api/saved-queries/:id', (req, res) => {
   }
   
   if (writeSavedQueries(filteredQueries)) {
+    res.json({ success: true });
+  } else {
+    res.status(500).json({ error: 'Failed to delete query' });
+  }
+});
+
+// Add to favourites endpoint
+app.post('/api/saved-queries/:id/add-to-favourites', (req, res) => {
+  const { id } = req.params;
+  
+  const savedQueries = readSavedQueries();
+  const query = savedQueries.find(q => q.id === id);
+  
+  if (!query) {
+    return res.status(404).json({ error: 'Query not found' });
+  }
+  
+  const favouriteQueries = readFavouriteQueries();
+  
+  // Check if already in favourites
+  if (favouriteQueries.find(q => q.id === id)) {
+    return res.status(400).json({ error: 'Query already in favourites' });
+  }
+  
+  // Add to favourites
+  favouriteQueries.push({
+    ...query,
+    addedToFavourites: new Date().toISOString()
+  });
+  
+  // Remove from saved queries (move, not copy)
+  const updatedSavedQueries = savedQueries.filter(q => q.id !== id);
+  
+  // Write both files
+  if (!writeFavouriteQueries(favouriteQueries)) {
+    return res.status(500).json({ error: 'Failed to add to favourites' });
+  }
+  
+  if (!writeSavedQueries(updatedSavedQueries)) {
+    return res.status(500).json({ error: 'Failed to remove from saved queries' });
+  }
+  
+  res.json({ success: true });
+});
+
+// Favourite Queries API endpoints
+
+// Get all favourite queries
+app.get('/api/favourite-queries', (req, res) => {
+  const queries = readFavouriteQueries();
+  res.json(queries);
+});
+
+// Update a favourite query (rename or update content)
+app.put('/api/favourite-queries/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, query } = req.body;
+  
+  if (!name && !query) {
+    return res.status(400).json({ error: 'Name or query is required' });
+  }
+  
+  const queries = readFavouriteQueries();
+  const queryIndex = queries.findIndex(q => q.id === id);
+  
+  if (queryIndex === -1) {
+    return res.status(404).json({ error: 'Query not found' });
+  }
+  
+  if (name) queries[queryIndex].name = name;
+  if (query) queries[queryIndex].query = query;
+  queries[queryIndex].updatedAt = new Date().toISOString();
+  
+  if (writeFavouriteQueries(queries)) {
+    res.json({ success: true });
+  } else {
+    res.status(500).json({ error: 'Failed to update query' });
+  }
+});
+
+// Delete a favourite query
+app.delete('/api/favourite-queries/:id', (req, res) => {
+  const { id } = req.params;
+  
+  const queries = readFavouriteQueries();
+  const filteredQueries = queries.filter(q => q.id !== id);
+  
+  if (filteredQueries.length === queries.length) {
+    return res.status(404).json({ error: 'Query not found' });
+  }
+  
+  if (writeFavouriteQueries(filteredQueries)) {
     res.json({ success: true });
   } else {
     res.status(500).json({ error: 'Failed to delete query' });

@@ -110,6 +110,15 @@
         <!-- Queries Panel (hidden by default) -->
         <div class="panel-section" id="queries-panel" style="display: none;">
           <div class="panel-header">SAVED QUERIES</div>
+          <div class="section-header" data-section="favourites">
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+              <path
+                d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" />
+            </svg>
+            <span>Favourites</span>
+          </div>
+          <div class="section-items" id="favourites-list">
+          </div>
           <div class="section-header" data-section="saved-queries">
             <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
               <path
@@ -118,17 +127,14 @@
             <span>Saved Queries</span>
             <div class="add-button">+</div>
           </div>
-          <div class="section-items">
-            <div class="section-item">User Analytics Query</div>
-            <div class="section-item">Sales Report Query</div>
-            <div class="section-item">Performance Metrics</div>
+          <div class="section-items" id="saved-queries-list">
           </div>
-          <div class="section-header" data-section="favorites">
+          <div class="section-header" data-section="dashboards">
             <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
               <path
                 d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" />
             </svg>
-            <span>Favorites</span>
+            <span>Dashboards</span>
           </div>
           <div class="section-items">
             <div class="section-item">Daily Dashboard</div>

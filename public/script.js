@@ -560,8 +560,14 @@ async function updateCurrentLoadedQuery() {
     const query = sqlTextarea.value.trim();
     if (!query) return;
     
+    // Check if the current loaded query is from favorites
+    const isFromFavourites = favouriteQueries.find(q => q.id === currentLoadedQuery.id);
+    const endpoint = isFromFavourites ? 
+        `/api/favourite-queries/${currentLoadedQuery.id}` : 
+        `/api/saved-queries/${currentLoadedQuery.id}`;
+    
     try {
-        const response = await fetch(`/api/saved-queries/${currentLoadedQuery.id}`, {
+        const response = await fetch(endpoint, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ 
@@ -573,7 +579,13 @@ async function updateCurrentLoadedQuery() {
         if (response.ok) {
             const updatedQuery = await response.json();
             console.log('Query updated:', updatedQuery);
-            loadSavedQueries(); // Refresh the list
+            
+            // Refresh the appropriate list
+            if (isFromFavourites) {
+                loadFavouriteQueries();
+            } else {
+                loadSavedQueries();
+            }
         }
     } catch (error) {
         console.error('Error updating query:', error);
@@ -581,11 +593,18 @@ async function updateCurrentLoadedQuery() {
 }
 
 function checkForDuplicateQuery(queryText) {
-    return savedQueries.find(q => q.query.trim() === queryText.trim());
+    // Check both saved queries and favorites for duplicates
+    const foundInSaved = savedQueries.find(q => q.query.trim() === queryText.trim());
+    const foundInFavourites = favouriteQueries.find(q => q.query.trim() === queryText.trim());
+    return foundInSaved || foundInFavourites;
 }
 
 function generateUniqueQueryName() {
-    const existingNames = new Set(savedQueries.map(q => q.name));
+    // Check names in both saved queries and favorites
+    const savedNames = savedQueries.map(q => q.name);
+    const favouriteNames = favouriteQueries.map(q => q.name);
+    const existingNames = new Set([...savedNames, ...favouriteNames]);
+    
     let queryNumber = 1;
     let queryName = `Query ${queryNumber}`;
     
@@ -1546,6 +1565,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Saved queries functionality
 let savedQueries = [];
+let favouriteQueries = [];
 let currentLoadedQuery = null; // Track currently loaded query
 let isQueryModified = false; // Track if current query has been modified
 
@@ -1562,6 +1582,7 @@ async function loadSavedQueries() {
         console.log('Saved queries loaded:', savedQueries);
         
         updateSavedQueriesUI();
+        loadFavouriteQueries();
         updateQueryInfo(); // Update query info after loading saved queries
         
     } catch (error) {
@@ -1572,8 +1593,59 @@ async function loadSavedQueries() {
     }
 }
 
+async function loadFavouriteQueries() {
+    try {
+        const response = await fetch('/api/favourite-queries');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        favouriteQueries = await response.json();
+        console.log('Favourite queries loaded:', favouriteQueries);
+        
+        updateFavouritesUI();
+        
+    } catch (error) {
+        console.error('Error loading favourite queries:', error);
+        favouriteQueries = [];
+        updateFavouritesUI();
+    }
+}
+
+function updateFavouritesUI() {
+    const favouritesSection = document.getElementById('favourites-list');
+    
+    if (!favouritesSection) {
+        console.error('Favourites section not found');
+        return;
+    }
+    
+    if (favouriteQueries.length === 0) {
+        favouritesSection.innerHTML = '<div class="section-item no-items">No favourite queries yet</div>';
+        return;
+    }
+    
+    favouritesSection.innerHTML = favouriteQueries.map(query => `
+        <div class="section-item saved-query-item" data-query-id="${query.id}" title="${escapeHtml(query.name)}">
+            <span class="query-name">${escapeHtml(query.name)}</span>
+            <button class="query-menu-button" data-query-id="${query.id}" data-section="favourites">⋮</button>
+        </div>
+    `).join('');
+    
+    // Add event listeners for the menu buttons
+    const menuButtons = favouritesSection.querySelectorAll('.query-menu-button');
+    menuButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showQueryMenu(e, button.dataset.queryId, 'favourites');
+        });
+    });
+}
+
 function updateSavedQueriesUI() {
-    const savedQueriesSection = document.querySelector('[data-section="saved-queries"]').nextElementSibling;
+    const savedQueriesSection = document.getElementById('saved-queries-list');
     
     if (!savedQueriesSection) {
         console.error('Saved queries section not found');
@@ -1588,7 +1660,7 @@ function updateSavedQueriesUI() {
     savedQueriesSection.innerHTML = savedQueries.map(query => `
         <div class="section-item saved-query-item" data-query-id="${query.id}" title="${escapeHtml(query.name)}">
             <span class="query-name">${escapeHtml(query.name)}</span>
-            <button class="query-menu-button" data-query-id="${query.id}">⋮</button>
+            <button class="query-menu-button" data-query-id="${query.id}" data-section="saved-queries">⋮</button>
         </div>
     `).join('');
     
@@ -1598,13 +1670,20 @@ function updateSavedQueriesUI() {
         button.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            showQueryMenu(e, button.dataset.queryId);
+            showQueryMenu(e, button.dataset.queryId, 'saved-queries');
         });
     });
 }
 
-function showQueryMenu(event, queryId) {
-    const query = savedQueries.find(q => q.id === queryId);
+function showQueryMenu(event, queryId, section = 'saved-queries') {
+    // Find query in the appropriate array
+    let query;
+    if (section === 'favourites') {
+        query = favouriteQueries.find(q => q.id === queryId);
+    } else {
+        query = savedQueries.find(q => q.id === queryId);
+    }
+    
     if (!query) return;
     
     // Remove any existing menu
@@ -1617,12 +1696,24 @@ function showQueryMenu(event, queryId) {
     const menu = document.createElement('div');
     menu.id = 'query-context-menu';
     menu.className = 'query-context-menu';
-    menu.innerHTML = `
-        <button class="menu-item" data-action="rename" data-query-id="${queryId}">Rename</button>
-        <button class="menu-item" data-action="load" data-query-id="${queryId}">Load</button>
-        <button class="menu-item" data-action="run" data-query-id="${queryId}">Run</button>
-        <button class="menu-item delete" data-action="delete" data-query-id="${queryId}">Delete</button>
-    `;
+    
+    // Different menu options based on section
+    if (section === 'favourites') {
+        menu.innerHTML = `
+            <button class="menu-item" data-action="rename" data-query-id="${queryId}" data-section="favourites">Rename</button>
+            <button class="menu-item" data-action="load" data-query-id="${queryId}" data-section="favourites">Load</button>
+            <button class="menu-item" data-action="run" data-query-id="${queryId}" data-section="favourites">Run</button>
+            <button class="menu-item delete" data-action="delete" data-query-id="${queryId}" data-section="favourites">Delete</button>
+        `;
+    } else {
+        menu.innerHTML = `
+            <button class="menu-item" data-action="rename" data-query-id="${queryId}" data-section="saved-queries">Rename</button>
+            <button class="menu-item" data-action="load" data-query-id="${queryId}" data-section="saved-queries">Load</button>
+            <button class="menu-item" data-action="run" data-query-id="${queryId}" data-section="saved-queries">Run</button>
+            <button class="menu-item" data-action="add-to-favourites" data-query-id="${queryId}" data-section="saved-queries">Add to favourites</button>
+            <button class="menu-item delete" data-action="delete" data-query-id="${queryId}" data-section="saved-queries">Delete</button>
+        `;
+    }
     
     // Position the menu
     const rect = event.target.getBoundingClientRect();
@@ -1639,7 +1730,7 @@ function showQueryMenu(event, queryId) {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            handleMenuAction(item.dataset.action, item.dataset.queryId);
+            handleMenuAction(item.dataset.action, item.dataset.queryId, item.dataset.section);
             menu.remove();
         });
     });
@@ -1736,13 +1827,20 @@ async function saveCurrentQueryContent(query) {
     }
 }
 
-async function handleMenuAction(action, queryId) {
-    const query = savedQueries.find(q => q.id === queryId);
+async function handleMenuAction(action, queryId, section = 'saved-queries') {
+    // Find query in the appropriate array
+    let query;
+    if (section === 'favourites') {
+        query = favouriteQueries.find(q => q.id === queryId);
+    } else {
+        query = savedQueries.find(q => q.id === queryId);
+    }
+    
     if (!query) return;
     
     switch (action) {
         case 'rename':
-            await renameQuery(queryId, query.name);
+            await renameQuery(queryId, query.name, section);
             break;
         case 'load':
             // Auto-save current query before loading new one
@@ -1763,20 +1861,24 @@ async function handleMenuAction(action, queryId) {
                 if (runButton) runButton.click();
             }, 100);
             break;
+        case 'add-to-favourites':
+            await addToFavourites(queryId);
+            break;
         case 'delete':
             if (confirm(`Are you sure you want to delete "${query.name}"?`)) {
-                await deleteQuery(queryId);
+                await deleteQuery(queryId, section);
             }
             break;
     }
 }
 
-async function renameQuery(queryId, currentName) {
+async function renameQuery(queryId, currentName, section = 'saved-queries') {
     const newName = prompt('Enter new name for the query:', currentName);
     if (!newName || newName === currentName) return;
     
     try {
-        const response = await fetch(`/api/saved-queries/${queryId}`, {
+        const endpoint = section === 'favourites' ? `/api/favourite-queries/${queryId}` : `/api/saved-queries/${queryId}`;
+        const response = await fetch(endpoint, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ name: newName })
@@ -1787,7 +1889,12 @@ async function renameQuery(queryId, currentName) {
             throw errorData;
         }
         
-        await loadSavedQueries();
+        // Reload the appropriate list
+        if (section === 'favourites') {
+            await loadFavouriteQueries();
+        } else {
+            await loadSavedQueries();
+        }
         
     } catch (error) {
         console.error('Error renaming query:', error);
@@ -1795,9 +1902,10 @@ async function renameQuery(queryId, currentName) {
     }
 }
 
-async function deleteQuery(queryId) {
+async function deleteQuery(queryId, section = 'saved-queries') {
     try {
-        const response = await fetch(`/api/saved-queries/${queryId}`, {
+        const endpoint = section === 'favourites' ? `/api/favourite-queries/${queryId}` : `/api/saved-queries/${queryId}`;
+        const response = await fetch(endpoint, {
             method: 'DELETE'
         });
         
@@ -1806,11 +1914,37 @@ async function deleteQuery(queryId) {
             throw errorData;
         }
         
-        await loadSavedQueries();
+        // Reload the appropriate list
+        if (section === 'favourites') {
+            await loadFavouriteQueries();
+        } else {
+            await loadSavedQueries();
+        }
         
     } catch (error) {
         console.error('Error deleting query:', error);
         alert('Failed to delete query: ' + (error.error || error.message || 'Unknown error'));
+    }
+}
+
+async function addToFavourites(queryId) {
+    try {
+        const response = await fetch(`/api/saved-queries/${queryId}/add-to-favourites`, {
+            method: 'POST'
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw errorData;
+        }
+        
+        // Reload both lists to reflect the change
+        await loadSavedQueries();
+        await loadFavouriteQueries();
+        
+    } catch (error) {
+        console.error('Error adding to favourites:', error);
+        alert('Failed to add to favourites: ' + (error.error || error.message || 'Unknown error'));
     }
 }
 
