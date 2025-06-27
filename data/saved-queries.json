@@ -1,22 +1,10 @@
 [
   {
-    "id": "1751031211128",
-    "name": "Query 4",
-    "query": "SELECT * FROM jepx_intraday LIMIT 1000;",
-    "createdAt": "2025-06-27T13:33:31.129Z"
-  },
-  {
-    "id": "1751031183709",
-    "name": "Query 3",
-    "query": "SELECT * FROM news_scrape LIMIT 1000;",
-    "createdAt": "2025-06-27T13:33:03.709Z"
-  },
-  {
     "id": "1751023335788",
     "name": "Query 2",
-    "query": "with CTE as (select j.date,\n\t\tj.region_id,\n\t\ts.id as station_id,\n\t\tavg(j.spot_price) as price,\n\t\tavg(w.temp) as temp\n\tfrom\n\t\tjepx_da_pivot j\n\tleft join\n\t\tref_stations s \n\ton \n\t\ts.region_id = j.region_id\n\tand \n\t\ts.is_active = 1\n\tleft join\n\t\tweather_historicals w\n\ton\n\t\tw.station_id = s.id and w.date = j.date\n\twhere\n\t\tj.date > current_date - interval 170 day\n\tand \n\t\tj.region_id in (3,6)\n\tgroup by j.date,\n\t\tj.region_id,\n\t\ts.id\n)\nselect price, region_id, temp from CTE",
+    "query": "with CTE as (select j.date,\n\t\tj.region_id,\n\t\ts.id as station_id,\n\t\tavg(j.spot_price) as price,\n\t\tround(max(w.temp),2) as temp_max\n\tfrom\n\t\tjepx_da_pivot j\n\tleft join\n\t\tref_stations s \n\ton \n\t\ts.region_id = j.region_id\n\tand \n\t\ts.is_active = 1\n\tleft join\n\t\tweather_historicals w\n\ton\n\t\tw.station_id = s.id and w.date = j.date\n\twhere\n\t\tj.date > current_date - interval 365 day\n\tand \n\t\tj.region_id in (3,6)\n\tgroup by j.date,\n\t\tj.region_id,\n\t\ts.id\n)\nselect temp_max, region_id, price from CTE",
     "createdAt": "2025-06-27T11:22:15.788Z",
-    "updatedAt": "2025-06-27T11:57:21.241Z"
+    "updatedAt": "2025-06-27T14:29:44.137Z"
   },
   {
     "id": "1750939860101",

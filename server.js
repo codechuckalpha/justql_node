@@ -239,6 +239,87 @@ app.get('/schema/table/:tableName', (req, res) => {
   });
 });
 
+// Export table to CSV
+app.get('/export/csv/:tableName', (req, res) => {
+  const tableName = req.params.tableName;
+  
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting database connection:', err);
+      return res.status(500).json({ error: 'Database connection error', details: err.message });
+    }
+
+    // Sanitize table name to prevent SQL injection
+    const sanitizedTableName = tableName.replace(/[^a-zA-Z0-9_]/g, '');
+    
+    // Query to get all data from the table
+    const query = `SELECT * FROM \`${sanitizedTableName}\``;
+    
+    connection.query(query, (error, results) => {
+      connection.release();
+      
+      if (error) {
+        console.error(`Error exporting table ${tableName} to CSV:`, error);
+        return res.status(500).json({ error: 'Query execution error', details: error.message });
+      }
+
+      if (!results || results.length === 0) {
+        // Handle empty table
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${tableName}.csv"`);
+        return res.send('');
+      }
+
+      // Generate CSV content
+      const csvContent = generateCsvFromResults(results);
+      
+      // Set headers for CSV download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${tableName}.csv"`);
+      
+      res.send(csvContent);
+    });
+  });
+});
+
+// Helper function to generate CSV from query results
+function generateCsvFromResults(results) {
+  if (!results || results.length === 0) {
+    return '';
+  }
+  
+  // Get column names from the first row
+  const columns = Object.keys(results[0]);
+  
+  // Create CSV header
+  const csvHeader = columns.map(col => `"${col.replace(/"/g, '""')}"`).join(',');
+  
+  // Create CSV rows
+  const csvRows = results.map(row => {
+    return columns.map(col => {
+      let value = row[col];
+      
+      // Handle null/undefined values
+      if (value === null || value === undefined) {
+        return '';
+      }
+      
+      // Convert value to string and escape quotes
+      value = String(value).replace(/"/g, '""');
+      
+      // Wrap in quotes if contains comma, newline, or quote
+      if (value.includes(',') || value.includes('\n') || value.includes('"')) {
+        return `"${value}"`;
+      }
+      
+      return value;
+    }).join(',');
+  });
+  
+  // Combine header and rows
+  return [csvHeader, ...csvRows].join('\n');
+}
+
 // Store active connections for cancellation
 const activeConnections = new Map();
 

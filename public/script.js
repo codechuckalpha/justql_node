@@ -66,8 +66,10 @@ document.querySelectorAll('.table-header').forEach(header => {
 // Handle table context menu
 let currentTableName = null;
 const tableContextMenu = document.getElementById('tableContextMenu');
+const copyNameItem = document.getElementById('copyNameItem');
 const loadTableItem = document.getElementById('loadTableItem');
 const sqlCreateItem = document.getElementById('sqlCreateItem');
+const exportCsvItem = document.getElementById('exportCsvItem');
 
 // Handle table menu button clicks
 document.addEventListener('click', function(e) {
@@ -97,10 +99,26 @@ loadTableItem.addEventListener('click', function() {
     }
 });
 
+// Handle Copy Name menu item click
+copyNameItem.addEventListener('click', function() {
+    if (currentTableName) {
+        copyToClipboard(currentTableName);
+        tableContextMenu.style.display = 'none';
+    }
+});
+
 // Handle SQL Create menu item click
 sqlCreateItem.addEventListener('click', function() {
     if (currentTableName) {
         generateCreateScript(currentTableName);
+        tableContextMenu.style.display = 'none';
+    }
+});
+
+// Handle Export to CSV menu item click
+exportCsvItem.addEventListener('click', function() {
+    if (currentTableName) {
+        exportTableToCsv(currentTableName);
         tableContextMenu.style.display = 'none';
     }
 });
@@ -334,6 +352,55 @@ function groupForeignKeys(foreignKeys) {
     });
     
     return Object.values(grouped);
+}
+
+// Function to copy text to clipboard
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        console.log(`Copied to clipboard: ${text}`);
+        
+        // You could add a visual feedback here like a toast notification
+        // For now, just log success
+    } catch (error) {
+        console.error('Failed to copy to clipboard:', error);
+        
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            console.log(`Copied to clipboard (fallback): ${text}`);
+        } catch (fallbackError) {
+            console.error('Fallback copy also failed:', fallbackError);
+        }
+        document.body.removeChild(textArea);
+    }
+}
+
+// Function to export table to CSV
+async function exportTableToCsv(tableName) {
+    try {
+        console.log(`Exporting table to CSV: ${tableName}`);
+        
+        // Create a link to download the CSV
+        const downloadUrl = `/export/csv/${tableName}`;
+        
+        // Create a temporary link element and trigger download
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${tableName}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log(`CSV export initiated for: ${tableName}`);
+        
+    } catch (error) {
+        console.error('Error exporting table to CSV:', error);
+    }
 }
 
 // Handle clicking outside to collapse (optional)
