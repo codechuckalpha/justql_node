@@ -22,5 +22,13 @@
     "createdAt": "2025-06-21T15:03:41.967Z",
     "updatedAt": "2025-06-27T13:33:22.379Z",
     "addedToFavourites": "2025-06-26T14:26:23.275Z"
+  },
+  {
+    "id": "1751023335788",
+    "name": "Temp vs price",
+    "query": "with CTE as (select j.date,\n\t\tj.region_id,\n\t\ts.id as station_id,\n\t\tavg(j.spot_price) as price,\n\t\tround(max(w.temp),2) as temp_max\n\tfrom\n\t\tjepx_da_pivot j\n\tleft join\n\t\tref_stations s \n\ton \n\t\ts.region_id = j.region_id\n\tand \n\t\ts.is_active = 1\n\tleft join\n\t\tweather_historicals w\n\ton\n\t\tw.station_id = s.id and w.date = j.date\n\twhere\n\t\tj.date > current_date - interval 365 day\n\tand \n\t\tj.region_id in (3,6)\n\tgroup by j.date,\n\t\tj.region_id,\n\t\ts.id\n)\nselect temp_max, region_id, price from CTE",
+    "createdAt": "2025-06-27T11:22:15.788Z",
+    "updatedAt": "2025-06-27T14:49:51.253Z",
+    "addedToFavourites": "2025-06-27T14:49:03.056Z"
   }
 ]
