@@ -67,6 +67,7 @@ document.querySelectorAll('.table-header').forEach(header => {
 let currentTableName = null;
 const tableContextMenu = document.getElementById('tableContextMenu');
 const loadTableItem = document.getElementById('loadTableItem');
+const sqlCreateItem = document.getElementById('sqlCreateItem');
 
 // Handle table menu button clicks
 document.addEventListener('click', function(e) {
@@ -92,6 +93,14 @@ document.addEventListener('click', function(e) {
 loadTableItem.addEventListener('click', function() {
     if (currentTableName) {
         loadTableData(currentTableName);
+        tableContextMenu.style.display = 'none';
+    }
+});
+
+// Handle SQL Create menu item click
+sqlCreateItem.addEventListener('click', function() {
+    if (currentTableName) {
+        generateCreateScript(currentTableName);
         tableContextMenu.style.display = 'none';
     }
 });
@@ -128,6 +137,203 @@ async function loadTableData(tableName) {
         console.error('Error loading table data:', error);
         // You might want to show a user-friendly error message here
     }
+}
+
+// Function to generate CREATE TABLE script
+async function generateCreateScript(tableName) {
+    try {
+        // Auto-save current query if it exists and is modified
+        if (currentLoadedQuery || isQueryModified) {
+            await autoSaveCurrentQuery();
+        }
+        
+        console.log(`Fetching complete schema for table: ${tableName}`);
+        const response = await fetch(`/schema/table/${tableName}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const schema = await response.json();
+        console.log('Complete schema loaded:', schema);
+        
+        // Generate the CREATE TABLE script
+        const createScript = buildCreateTableScript(schema);
+        
+        // Set the script in the editor
+        const textarea = document.getElementById('sql-textarea');
+        textarea.value = createScript;
+        
+        // Reset query state
+        currentLoadedQuery = null;
+        isQueryModified = false;
+        updateQueryInfo();
+        
+        console.log(`Generated CREATE TABLE script for: ${tableName}`);
+        
+    } catch (error) {
+        console.error('Error generating CREATE script:', error);
+        // You might want to show a user-friendly error message here
+    }
+}
+
+// Function to build the CREATE TABLE script from schema data
+function buildCreateTableScript(schema) {
+    const { tableName, columns, indexes, foreignKeys, tableInfo } = schema;
+    
+    let script = `CREATE TABLE \`${tableName}\` (\n`;
+    
+    // Add columns
+    const columnDefinitions = columns.map(col => {
+        let definition = `  \`${col.COLUMN_NAME}\` ${formatDataType(col)}`;
+        
+        // Add NOT NULL
+        if (col.IS_NULLABLE === 'NO') {
+            definition += ' NOT NULL';
+        }
+        
+        // Add AUTO_INCREMENT
+        if (col.EXTRA && col.EXTRA.includes('auto_increment')) {
+            definition += ' AUTO_INCREMENT';
+        }
+        
+        // Add DEFAULT
+        if (col.COLUMN_DEFAULT !== null && col.COLUMN_DEFAULT !== undefined) {
+            if (col.COLUMN_DEFAULT === 'CURRENT_TIMESTAMP') {
+                definition += ` DEFAULT ${col.COLUMN_DEFAULT}`;
+            } else {
+                definition += ` DEFAULT '${col.COLUMN_DEFAULT}'`;
+            }
+        }
+        
+        // Add COMMENT
+        if (col.COLUMN_COMMENT) {
+            definition += ` COMMENT '${col.COLUMN_COMMENT.replace(/'/g, "''")}'`;
+        }
+        
+        return definition;
+    });
+    
+    script += columnDefinitions.join(',\n');
+    
+    // Add primary key
+    const primaryKeyColumns = columns.filter(col => col.COLUMN_KEY === 'PRI');
+    if (primaryKeyColumns.length > 0) {
+        const pkColumns = primaryKeyColumns.map(col => `\`${col.COLUMN_NAME}\``).join(', ');
+        script += `,\n  PRIMARY KEY (${pkColumns})`;
+    }
+    
+    // Add unique keys
+    const uniqueIndexes = groupIndexes(indexes).filter(idx => idx.name !== 'PRIMARY' && !idx.nonUnique);
+    uniqueIndexes.forEach(idx => {
+        const columns = idx.columns.map(col => `\`${col}\``).join(', ');
+        script += `,\n  UNIQUE KEY \`${idx.name}\` (${columns})`;
+    });
+    
+    // Add regular indexes
+    const regularIndexes = groupIndexes(indexes).filter(idx => idx.name !== 'PRIMARY' && idx.nonUnique);
+    regularIndexes.forEach(idx => {
+        const columns = idx.columns.map(col => `\`${col}\``).join(', ');
+        script += `,\n  KEY \`${idx.name}\` (${columns})`;
+    });
+    
+    // Add foreign keys
+    if (foreignKeys && foreignKeys.length > 0) {
+        const fkGroups = groupForeignKeys(foreignKeys);
+        fkGroups.forEach(fk => {
+            const localColumns = fk.columns.map(col => `\`${col.local}\``).join(', ');
+            const refColumns = fk.columns.map(col => `\`${col.referenced}\``).join(', ');
+            script += `,\n  CONSTRAINT \`${fk.name}\` FOREIGN KEY (${localColumns}) REFERENCES \`${fk.referencedTable}\` (${refColumns})`;
+            
+            if (fk.updateRule && fk.updateRule !== 'RESTRICT') {
+                script += ` ON UPDATE ${fk.updateRule}`;
+            }
+            if (fk.deleteRule && fk.deleteRule !== 'RESTRICT') {
+                script += ` ON DELETE ${fk.deleteRule}`;
+            }
+        });
+    }
+    
+    script += '\n)';
+    
+    // Add table options
+    if (tableInfo && tableInfo.length > 0) {
+        const info = tableInfo[0];
+        if (info.ENGINE) {
+            script += ` ENGINE=${info.ENGINE}`;
+        }
+        if (info.AUTO_INCREMENT && info.AUTO_INCREMENT > 1) {
+            script += ` AUTO_INCREMENT=${info.AUTO_INCREMENT}`;
+        }
+        if (info.TABLE_COLLATION) {
+            script += ` DEFAULT CHARSET=${info.TABLE_COLLATION.split('_')[0]} COLLATE=${info.TABLE_COLLATION}`;
+        }
+        if (info.TABLE_COMMENT) {
+            script += ` COMMENT='${info.TABLE_COMMENT.replace(/'/g, "''")}'`;
+        }
+    }
+    
+    script += ';';
+    
+    return script;
+}
+
+// Helper function to format data types
+function formatDataType(column) {
+    let dataType = column.DATA_TYPE.toUpperCase();
+    
+    if (column.CHARACTER_MAXIMUM_LENGTH) {
+        dataType += `(${column.CHARACTER_MAXIMUM_LENGTH})`;
+    } else if (column.NUMERIC_PRECISION) {
+        if (column.NUMERIC_SCALE) {
+            dataType += `(${column.NUMERIC_PRECISION},${column.NUMERIC_SCALE})`;
+        } else {
+            dataType += `(${column.NUMERIC_PRECISION})`;
+        }
+    }
+    
+    return dataType;
+}
+
+// Helper function to group indexes
+function groupIndexes(indexes) {
+    const grouped = {};
+    
+    indexes.forEach(idx => {
+        if (!grouped[idx.INDEX_NAME]) {
+            grouped[idx.INDEX_NAME] = {
+                name: idx.INDEX_NAME,
+                nonUnique: idx.NON_UNIQUE === 1,
+                columns: []
+            };
+        }
+        grouped[idx.INDEX_NAME].columns.push(idx.COLUMN_NAME);
+    });
+    
+    return Object.values(grouped);
+}
+
+// Helper function to group foreign keys
+function groupForeignKeys(foreignKeys) {
+    const grouped = {};
+    
+    foreignKeys.forEach(fk => {
+        if (!grouped[fk.CONSTRAINT_NAME]) {
+            grouped[fk.CONSTRAINT_NAME] = {
+                name: fk.CONSTRAINT_NAME,
+                referencedTable: fk.REFERENCED_TABLE_NAME,
+                updateRule: fk.UPDATE_RULE,
+                deleteRule: fk.DELETE_RULE,
+                columns: []
+            };
+        }
+        grouped[fk.CONSTRAINT_NAME].columns.push({
+            local: fk.COLUMN_NAME,
+            referenced: fk.REFERENCED_COLUMN_NAME
+        });
+    });
+    
+    return Object.values(grouped);
 }
 
 // Handle clicking outside to collapse (optional)
