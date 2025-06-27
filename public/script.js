@@ -126,6 +126,35 @@ function handleColumnHeaderClick(column) {
 }
 
 function renderTable(data, headers) {
+    // Use chunking only for large datasets (> 10,000 rows)
+    if (data.length > 10000) {
+        renderTableChunked(data, headers);
+    } else {
+        renderTableSync(data, headers);
+    }
+}
+
+function renderTableSync(data, headers) {
+    let tableHTML = '<thead><tr>';
+    headers.forEach(header => {
+        const isCurrentSort = currentSortColumn === header;
+        const arrow = isCurrentSort ? (currentSortDirection === 'desc' ? ' ▲' : ' ▼') : '';
+        tableHTML += `<th onclick="handleColumnHeaderClick('${header}')" style="cursor: pointer; user-select: none;">${header}${arrow}</th>`;
+    });
+    tableHTML += '</tr></thead><tbody>';
+
+    data.forEach(row => {
+        tableHTML += '<tr>';
+        headers.forEach(header => {
+            tableHTML += `<td>${row[header] || ''}</td>`;
+        });
+        tableHTML += '</tr>';
+    });
+    tableHTML += '</tbody>';
+    resultsTable.innerHTML = tableHTML;
+}
+
+function renderTableChunked(data, headers) {
     // Reset cancellation flag
     cancelRendering = false;
     
@@ -146,11 +175,11 @@ function renderTable(data, headers) {
     errorMessageParagraph.textContent = `Rendering table... (0/${data.length} rows)`;
     errorMessageParagraph.style.color = '#3b82f6';
     
-    // Chunked rendering for large datasets
-    renderTableChunked(data, headers, tbody, 0);
+    // Start chunked rendering
+    renderTableChunkedProcess(data, headers, tbody, 0);
 }
 
-function renderTableChunked(data, headers, tbody, startIndex) {
+function renderTableChunkedProcess(data, headers, tbody, startIndex) {
     if (cancelRendering || startIndex >= data.length) {
         if (!cancelRendering) {
             // Clear progress message when done
@@ -160,8 +189,8 @@ function renderTableChunked(data, headers, tbody, startIndex) {
         return;
     }
     
-    // Process in chunks of 100 rows to keep UI responsive
-    const CHUNK_SIZE = 100;
+    // Process in chunks of 1000 rows for large datasets
+    const CHUNK_SIZE = 1000;
     const endIndex = Math.min(startIndex + CHUNK_SIZE, data.length);
     
     // Create document fragment for efficient DOM updates
@@ -188,7 +217,7 @@ function renderTableChunked(data, headers, tbody, startIndex) {
     
     // Continue with next chunk using requestAnimationFrame to yield control
     requestAnimationFrame(() => {
-        renderTableChunked(data, headers, tbody, endIndex);
+        renderTableChunkedProcess(data, headers, tbody, endIndex);
     });
 }
 
