@@ -716,15 +716,66 @@ function syncScroll() {
     lineNumbers.textContent = visibleNumbers.slice(0, -1);
 }
 
+// SQL Keywords for auto-capitalization and highlighting
+const SQL_KEYWORDS = [
+    'SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER',
+    'TABLE', 'DATABASE', 'INDEX', 'VIEW', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'SCHEMA',
+    'JOIN', 'INNER', 'LEFT', 'RIGHT', 'FULL', 'OUTER', 'CROSS', 'ON', 'USING',
+    'GROUP', 'ORDER', 'HAVING', 'BY', 'AS', 'ASC', 'DESC', 'LIMIT', 'OFFSET',
+    'UNION', 'INTERSECT', 'EXCEPT', 'ALL', 'DISTINCT', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END',
+    'IF', 'EXISTS', 'NOT', 'NULL', 'IS', 'IN', 'BETWEEN', 'LIKE', 'AND', 'OR',
+    'TRUE', 'FALSE', 'PRIMARY', 'FOREIGN', 'KEY', 'REFERENCES', 'UNIQUE', 'CHECK',
+    'DEFAULT', 'AUTO_INCREMENT', 'IDENTITY', 'CONSTRAINT', 'CASCADE', 'RESTRICT',
+    'SET', 'VALUES', 'INTO', 'RETURNING', 'WITH', 'RECURSIVE', 'CTE',
+    'CAST', 'CONVERT', 'COALESCE', 'NULLIF', 'ISNULL',
+    'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'STDDEV', 'VARIANCE',
+    'SUBSTRING', 'LENGTH', 'UPPER', 'LOWER', 'TRIM', 'LTRIM', 'RTRIM',
+    'CONCAT', 'REPLACE', 'CHARINDEX', 'PATINDEX',
+    'DATEPART', 'DATEADD', 'DATEDIFF', 'GETDATE', 'NOW', 'CURRENT_TIMESTAMP',
+    'YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTE', 'SECOND', 'DATE', 'TIME', 'DATETIME',
+    'VARCHAR', 'CHAR', 'TEXT', 'NVARCHAR', 'NCHAR', 'NTEXT',
+    'INT', 'INTEGER', 'BIGINT', 'SMALLINT', 'TINYINT', 'DECIMAL', 'NUMERIC', 'FLOAT', 'REAL',
+    'BIT', 'BINARY', 'VARBINARY', 'IMAGE', 'MONEY', 'SMALLMONEY',
+    'GRANT', 'REVOKE', 'DENY', 'EXEC', 'EXECUTE', 'RETURN', 'BEGIN', 'END', 'COMMIT', 'ROLLBACK'
+];
+
+function handleSQLKeywords() {
+    const textarea = sqlTextarea;
+    const cursorPosition = textarea.selectionStart;
+    const textBeforeCursor = textarea.value.substring(0, cursorPosition);
+    const textAfterCursor = textarea.value.substring(cursorPosition);
+    
+    // Find the current word being typed
+    const words = textBeforeCursor.split(/\s+/);
+    const currentWord = words[words.length - 1];
+    
+    // Check if current word is a SQL keyword (case insensitive)
+    const upperCurrentWord = currentWord.toUpperCase();
+    if (SQL_KEYWORDS.includes(upperCurrentWord) && currentWord !== upperCurrentWord) {
+        // Replace the current word with uppercase version
+        const wordStartIndex = textBeforeCursor.lastIndexOf(currentWord);
+        const newValue = 
+            textarea.value.substring(0, wordStartIndex) + 
+            upperCurrentWord + 
+            textAfterCursor;
+        
+        textarea.value = newValue;
+        // Restore cursor position
+        textarea.setSelectionRange(cursorPosition, cursorPosition);
+    }
+}
+
 if (sqlTextarea && lineNumbers) {
     updateLineNumbers();
     
     sqlTextarea.addEventListener('input', () => {
+        handleSQLKeywords();
         updateLineNumbers();
         // Mark query as modified but keep the loaded query reference
         isQueryModified = true;
         updateQueryInfo();
     });
+    
     sqlTextarea.addEventListener('scroll', syncScroll);
     
     window.addEventListener('resize', updateLineNumbers);
