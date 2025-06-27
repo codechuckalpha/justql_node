@@ -52,12 +52,83 @@ document.querySelectorAll('.section-header').forEach(header => {
 
 // Handle table accordion functionality
 document.querySelectorAll('.table-header').forEach(header => {
-    header.addEventListener('click', function() {
+    header.addEventListener('click', function(e) {
+        // Don't toggle accordion if clicking on the menu button
+        if (e.target.classList.contains('table-menu')) {
+            return;
+        }
         this.classList.toggle('expanded');
         const columns = this.nextElementSibling;
         columns.classList.toggle('collapsed');
     });
 });
+
+// Handle table context menu
+let currentTableName = null;
+const tableContextMenu = document.getElementById('tableContextMenu');
+const loadTableItem = document.getElementById('loadTableItem');
+
+// Handle table menu button clicks
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('table-menu')) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        currentTableName = e.target.getAttribute('data-table');
+        
+        // Position the context menu
+        const rect = e.target.getBoundingClientRect();
+        tableContextMenu.style.left = rect.left + 'px';
+        tableContextMenu.style.top = (rect.bottom + 5) + 'px';
+        tableContextMenu.style.display = 'block';
+    } else {
+        // Hide context menu when clicking elsewhere
+        tableContextMenu.style.display = 'none';
+    }
+});
+
+// Handle Load Table menu item click
+loadTableItem.addEventListener('click', function() {
+    if (currentTableName) {
+        loadTableData(currentTableName);
+        tableContextMenu.style.display = 'none';
+    }
+});
+
+// Function to load table data
+async function loadTableData(tableName) {
+    try {
+        // Auto-save current query if it exists and is modified
+        if (currentLoadedQuery || isQueryModified) {
+            await autoSaveCurrentQuery();
+        }
+        
+        // Generate the SELECT query
+        const query = `SELECT * FROM ${tableName} LIMIT 1000;`;
+        
+        // Set the query in the editor
+        const textarea = document.getElementById('sql-textarea');
+        textarea.value = query;
+        
+        // Reset query state
+        currentLoadedQuery = null;
+        isQueryModified = false;
+        updateQueryInfo();
+        
+        // Execute the query
+        const runButton = document.getElementById('run-button');
+        if (runButton) {
+            runButton.click();
+        }
+        
+        console.log(`Loaded table data for: ${tableName}`);
+        
+    } catch (error) {
+        console.error('Error loading table data:', error);
+        // You might want to show a user-friendly error message here
+    }
+}
 
 // Handle clicking outside to collapse (optional)
 document.addEventListener('click', function(e) {
@@ -2266,6 +2337,7 @@ async function loadDatabaseSchema() {
                         <div class="table-header">
                             <span class="table-chevron">></span>
                             <span class="table-name">${escapeHtml(table.name)}</span>
+                            <span class="table-menu" data-table="${escapeHtml(table.name)}">⋮</span>
                         </div>
                         <div class="table-columns collapsed">
                             ${table.columns.map(column => `
@@ -2291,6 +2363,7 @@ async function loadDatabaseSchema() {
                         <div class="table-header">
                             <span class="table-chevron">></span>
                             <span class="table-name">${escapeHtml(view.name)}</span>
+                            <span class="table-menu" data-table="${escapeHtml(view.name)}">⋮</span>
                         </div>
                         <div class="table-columns collapsed">
                             ${view.columns.map(column => `
@@ -2309,7 +2382,11 @@ async function loadDatabaseSchema() {
         
         // Re-bind event listeners for the new table headers
         document.querySelectorAll('.table-header').forEach(header => {
-            header.addEventListener('click', function() {
+            header.addEventListener('click', function(e) {
+                // Don't toggle accordion if clicking on the menu button
+                if (e.target.classList.contains('table-menu')) {
+                    return;
+                }
                 this.classList.toggle('expanded');
                 const columns = this.nextElementSibling;
                 columns.classList.toggle('collapsed');

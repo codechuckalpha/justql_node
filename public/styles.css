@@ -316,12 +316,13 @@ body {
 .table-header {
   display: flex;
   align-items: center;
-  padding: 4px 8px;
+  padding: 2px 8px;
   color: #cccccc;
   font-size: 13px;
   cursor: pointer;
   transition: background 0.2s ease;
   border-radius: 4px;
+  min-height: 24px;
 }
 
 .table-header:hover {
@@ -378,6 +379,54 @@ body {
   color: #888;
   font-size: 11px;
   font-family: monospace;
+}
+
+.table-menu {
+  margin-left: auto;
+  padding: 2px 6px;
+  color: #888;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  user-select: none;
+  z-index: 10;
+}
+
+.table-menu:hover {
+  background: #37373d;
+  color: #cccccc;
+}
+
+/* Table context menu */
+.table-context-menu {
+  position: fixed;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  min-width: 120px;
+  z-index: 1000;
+  display: none;
+}
+
+.table-context-menu .menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: #cccccc;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+  text-align: left;
+}
+
+.table-context-menu .menu-item:hover {
+  background: #37373d;
 }
 
 .section-item {
