@@ -3,6 +3,11 @@
 // Global variable to store the grid instance
 let gridInstance = null;
 
+// Global variables for query cancellation
+let currentQueryId = null;
+let currentAbortController = null;
+let cancelRendering = false;
+
 // Handle icon clicks
 document.querySelectorAll('.icon-item').forEach(icon => {
     icon.addEventListener('click', function() {
@@ -121,23 +126,70 @@ function handleColumnHeaderClick(column) {
 }
 
 function renderTable(data, headers) {
-    let tableHTML = '<thead><tr>';
+    // Reset cancellation flag
+    cancelRendering = false;
+    
+    // Build header HTML
+    let headerHTML = '<thead><tr>';
     headers.forEach(header => {
         const isCurrentSort = currentSortColumn === header;
         const arrow = isCurrentSort ? (currentSortDirection === 'desc' ? ' ▲' : ' ▼') : '';
-        tableHTML += `<th onclick="handleColumnHeaderClick('${header}')" style="cursor: pointer; user-select: none;">${header}${arrow}</th>`;
+        headerHTML += `<th onclick="handleColumnHeaderClick('${header}')" style="cursor: pointer; user-select: none;">${header}${arrow}</th>`;
     });
-    tableHTML += '</tr></thead><tbody>';
+    headerHTML += '</tr></thead>';
+    
+    // Set table structure immediately
+    resultsTable.innerHTML = headerHTML + '<tbody></tbody>';
+    const tbody = resultsTable.querySelector('tbody');
+    
+    // Show progress message
+    errorMessageParagraph.textContent = `Rendering table... (0/${data.length} rows)`;
+    errorMessageParagraph.style.color = '#3b82f6';
+    
+    // Chunked rendering for large datasets
+    renderTableChunked(data, headers, tbody, 0);
+}
 
-    data.forEach(row => {
-        tableHTML += '<tr>';
+function renderTableChunked(data, headers, tbody, startIndex) {
+    if (cancelRendering || startIndex >= data.length) {
+        if (!cancelRendering) {
+            // Clear progress message when done
+            errorMessageParagraph.textContent = '';
+            errorMessageParagraph.style.color = '';
+        }
+        return;
+    }
+    
+    // Process in chunks of 100 rows to keep UI responsive
+    const CHUNK_SIZE = 100;
+    const endIndex = Math.min(startIndex + CHUNK_SIZE, data.length);
+    
+    // Create document fragment for efficient DOM updates
+    const fragment = document.createDocumentFragment();
+    
+    for (let i = startIndex; i < endIndex; i++) {
+        const row = data[i];
+        const tr = document.createElement('tr');
+        
         headers.forEach(header => {
-            tableHTML += `<td>${row[header] || ''}</td>`;
+            const td = document.createElement('td');
+            td.textContent = row[header] || '';
+            tr.appendChild(td);
         });
-        tableHTML += '</tr>';
+        
+        fragment.appendChild(tr);
+    }
+    
+    // Add chunk to table
+    tbody.appendChild(fragment);
+    
+    // Update progress
+    errorMessageParagraph.textContent = `Rendering table... (${endIndex}/${data.length} rows)`;
+    
+    // Continue with next chunk using requestAnimationFrame to yield control
+    requestAnimationFrame(() => {
+        renderTableChunked(data, headers, tbody, endIndex);
     });
-    tableHTML += '</tbody>';
-    resultsTable.innerHTML = tableHTML;
 }
 
 function downloadCSV() {
@@ -322,21 +374,37 @@ if (runButton && sqlTextarea) {
         errorMessageParagraph.style.color = '#3b82f6'; /* Blue for loading */
 
         try {
+            // Generate unique query ID and setup abort controller
+            currentQueryId = Date.now().toString();
+            currentAbortController = new AbortController();
+            
             // Assuming a backend endpoint '/run-query' for the actual query execution
             const response = await fetch('/run-query', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ sql: query })
+                body: JSON.stringify({ sql: query, queryId: currentQueryId }),
+                signal: currentAbortController.signal
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
+                // Handle cancelled queries specially
+                if (response.status === 499 && errorData.cancelled) {
+                    errorMessageParagraph.textContent = 'Query was cancelled';
+                    errorMessageParagraph.style.color = '#f59e0b'; // Orange for cancelled
+                    return;
+                }
                 // *** FIX HERE: Throw the entire errorData object to retain all details ***
                 throw errorData; 
             }
 
             const data = await response.json();
             console.log(data); // Log the response from the server
+
+            // Check if query was cancelled while processing
+            if (cancelRendering) {
+                return;
+            }
 
             errorMessageParagraph.textContent = ''; // Clear error message
             errorMessageParagraph.style.color = ''; // Reset color
@@ -357,8 +425,12 @@ if (runButton && sqlTextarea) {
                 const headers = Object.keys(data.results[0]);
                 renderTable(data.results, headers);
 
-                // Generate chart with the same data
-                generateChart(data.results);
+                // Generate chart with the same data (defer to not block table rendering)
+                setTimeout(() => {
+                    if (!cancelRendering) {
+                        generateChart(data.results);
+                    }
+                }, 100);
 
             } else {
                 // Show placeholder if no results
@@ -373,6 +445,14 @@ if (runButton && sqlTextarea) {
         } catch (error) {
             console.error('Error executing SQL:', error);
             let displayMessage = 'Unknown error occurred';
+
+            // Handle AbortError specifically for cancelled queries
+            if (error.name === 'AbortError') {
+                // Cancel any ongoing table rendering
+                cancelRendering = true;
+                // Don't show message here - let the stop button handler show the proper message
+                return; // Exit early for cancelled queries
+            }
 
             // *** FIX HERE: Smarter error message extraction from the caught error object ***
             if (error && typeof error === 'object') {
@@ -399,6 +479,57 @@ if (runButton && sqlTextarea) {
             resultsTable.style.display = 'none';
             tablePlaceholder.querySelector('p:first-child').textContent = 'Data table will appear here';
             tablePlaceholder.querySelector('p:nth-child(2)').textContent = 'Data table will be generated based on your query results';
+        } finally {
+            // Clean up query tracking
+            currentQueryId = null;
+            currentAbortController = null;
+        }
+    });
+}
+
+// Stop button functionality
+const stopButton = document.getElementById('stop-button');
+if (stopButton) {
+    stopButton.addEventListener('click', async () => {
+        if (!currentQueryId || !currentAbortController) {
+            errorMessageParagraph.textContent = 'No active query to cancel.';
+            errorMessageParagraph.style.color = '#f59e0b'; // Orange for warning
+            return;
+        }
+
+        // Store the query ID before aborting (as abort will trigger cleanup)
+        const queryIdToCancel = currentQueryId;
+        
+        try {
+            // Immediately show cancellation message
+            errorMessageParagraph.textContent = 'Cancelling query...';
+            errorMessageParagraph.style.color = '#f59e0b'; // Orange for in-progress
+            
+            // Cancel any ongoing table rendering
+            cancelRendering = true;
+            
+            // First abort the client-side request
+            currentAbortController.abort();
+            
+            // Then send cancel request to server
+            const response = await fetch('/cancel-query', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ queryId: queryIdToCancel })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                errorMessageParagraph.textContent = data.message;
+                errorMessageParagraph.style.color = '#10b981'; // Green for success
+            } else {
+                const errorData = await response.json();
+                errorMessageParagraph.textContent = `Failed to cancel query: ${errorData.error}`;
+                errorMessageParagraph.style.color = '#dc2626'; // Red for error
+            }
+        } catch (error) {
+            errorMessageParagraph.textContent = 'Query successfully cancelled';
+            errorMessageParagraph.style.color = '#10b981'; // Green for success - assume cancellation worked
         }
     });
 }

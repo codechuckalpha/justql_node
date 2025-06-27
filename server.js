@@ -70,8 +70,12 @@ app.get('/schema', (req, res) => {
   });
 });
 
+// Store active connections for cancellation
+const activeConnections = new Map();
+
 app.post('/run-query', (req, res) => {
   const query = req.body.sql; // This is correct
+  const queryId = req.body.queryId || Date.now().toString(); // Generate unique ID if not provided
   
   if (!query) {
     return res.status(400).json({ error: 'SQL query is missing from the request body.' });
@@ -83,15 +87,65 @@ app.post('/run-query', (req, res) => {
       return res.status(500).json({ error: 'Database connection error', details: err.message });
     }
 
+    // Store connection info for potential cancellation
+    activeConnections.set(queryId, { connection, startTime: Date.now() });
+
     connection.query(query, (error, results, fields) => {
+      // Remove from active connections when query completes
+      activeConnections.delete(queryId);
       connection.release();
+      
       if (error) {
         console.error('Error executing query:', error);
+        // Check if this was a cancelled query
+        if (error.code === 'ER_QUERY_INTERRUPTED' || error.sqlState === '70100') {
+          return res.status(499).json({ error: 'Query was cancelled', cancelled: true });
+        }
         return res.status(500).json({ error: 'Error executing query', details: error.message });
       }
       res.json({ results, fields }); // Include fields for table headers
     });
   });
+});
+
+app.post('/cancel-query', (req, res) => {
+  const { queryId } = req.body;
+  
+  if (!queryId) {
+    return res.status(400).json({ error: 'Query ID is missing from the request body.' });
+  }
+
+  const connectionInfo = activeConnections.get(queryId);
+  if (connectionInfo) {
+    try {
+      // Get a new connection to send KILL command
+      pool.getConnection((err, killConnection) => {
+        if (err) {
+          console.error('Error getting connection for kill command:', err);
+          return res.status(500).json({ error: 'Error getting connection to cancel query' });
+        }
+        
+        // Kill the specific query using the connection ID
+        killConnection.query(`KILL QUERY ${connectionInfo.connection.threadId}`, (killError) => {
+          killConnection.release();
+          
+          if (killError) {
+            console.error('Error killing query:', killError);
+            // Try to destroy the connection as fallback
+            connectionInfo.connection.destroy();
+          }
+          
+          activeConnections.delete(queryId);
+          res.json({ success: true, message: 'Query successfully cancelled' });
+        });
+      });
+    } catch (error) {
+      console.error('Error cancelling query:', error);
+      res.status(500).json({ error: 'Error cancelling query', details: error.message });
+    }
+  } else {
+    res.status(404).json({ error: 'No active query found with the provided ID' });
+  }
 });
 
 // Saved Queries API endpoints
