@@ -685,6 +685,8 @@ function generateChart(results) {
             createMultiStackedColumnChart(results, columns[0], columns[1], columns[2], chartContainer);
         } else if (selectedChartType === 'grouped') {
             createMultiGroupedColumnChart(results, columns[0], columns[1], columns[2], chartContainer);
+        } else if (selectedChartType === 'scatter') {
+            createMultiScatterPlot(results, columns[0], columns[1], columns[2], chartContainer);
         } else {
             createMultiLineChart(results, columns[0], columns[1], columns[2], chartContainer);
         }
@@ -695,6 +697,8 @@ function generateChart(results) {
         }
         if (selectedChartType === 'column') {
             createSimpleColumnChart(results, columns[0], columns[1], chartContainer);
+        } else if (selectedChartType === 'scatter') {
+            createSimpleScatterPlot(results, columns[0], columns[1], chartContainer);
         } else {
             createSimpleLineChart(results, columns[0], columns[1], chartContainer);
         }
@@ -1130,6 +1134,116 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
         modeBarButtonsToRemove: ['pan2d', 'lasso2d'], 
         scrollZoom: true, // Allow zoom with scroll for time series
         doubleClick: 'reset', // Double click to reset zoom
+        showTips: false,
+        staticPlot: false
+    };
+
+    Plotly.newPlot(container, traces, layout, config);
+}
+
+function createSimpleScatterPlot(results, xColumn, yColumn, container) {
+    const trace = {
+        x: results.map(row => parseFloat(row[xColumn]) || 0),
+        y: results.map(row => parseFloat(row[yColumn]) || 0),
+        type: 'scatter',
+        mode: 'markers',
+        name: `${yColumn} vs ${xColumn}`,
+        marker: {
+            size: 8,
+            color: '#6366f1',
+            opacity: 0.7
+        }
+    };
+
+    const layout = {
+        title: `${yColumn} vs ${xColumn}`,
+        paper_bgcolor: '#2d2d30',
+        plot_bgcolor: '#1a1a1a',
+        font: { color: '#cccccc' },
+        xaxis: {
+            title: xColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+        },
+        yaxis: {
+            title: yColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+        },
+        margin: { t: 50, b: 50, l: 50, r: 50 }
+    };
+
+    const config = {
+        responsive: true,
+        displayModeBar: false,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
+        scrollZoom: false,
+        doubleClick: false,
+        showTips: false,
+        staticPlot: false
+    };
+
+    Plotly.newPlot(container, [trace], layout, config);
+}
+
+function createMultiScatterPlot(results, xColumn, groupColumn, yColumn, container) {
+    const groupedData = {};
+    results.forEach(row => {
+        const groupValue = row[groupColumn];
+        if (!groupedData[groupValue]) {
+            groupedData[groupValue] = [];
+        }
+        groupedData[groupValue].push({
+            x: parseFloat(row[xColumn]) || 0,
+            y: parseFloat(row[yColumn]) || 0
+        });
+    });
+
+    const traces = Object.keys(groupedData).map((groupName, index) => {
+        return {
+            x: groupedData[groupName].map(d => d.x),
+            y: groupedData[groupName].map(d => d.y),
+            type: 'scatter',
+            mode: 'markers',
+            name: groupName,
+            marker: {
+                size: 8,
+                color: getLineColor(index),
+                opacity: 0.7
+            }
+        };
+    });
+
+    const layout = {
+        title: `${yColumn} vs ${xColumn} (by ${groupColumn})`,
+        paper_bgcolor: '#2d2d30',
+        plot_bgcolor: '#1a1a1a',
+        font: { color: '#cccccc' },
+        xaxis: {
+            title: xColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+        },
+        yaxis: {
+            title: yColumn,
+            color: '#cccccc',
+            gridcolor: '#404040'
+        },
+        margin: { t: 50, b: 50, l: 50, r: 50 },
+        legend: {
+            font: { color: '#cccccc' },
+            bgcolor: 'rgba(45, 45, 48, 0.8)'
+        }
+    };
+
+    const config = {
+        responsive: true,
+        displayModeBar: false,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
+        scrollZoom: false,
+        doubleClick: false,
         showTips: false,
         staticPlot: false
     };

@@ -1,5 +1,12 @@
 [
   {
+    "id": "1751023335788",
+    "name": "Query 2",
+    "query": "with CTE as (select j.date,\n\t\tj.region_id,\n\t\ts.id as station_id,\n\t\tavg(j.spot_price) as price,\n\t\tavg(w.temp) as temp\n\tfrom\n\t\tjepx_da_pivot j\n\tleft join\n\t\tref_stations s \n\ton \n\t\ts.region_id = j.region_id\n\tand \n\t\ts.is_active = 1\n\tleft join\n\t\tweather_historicals w\n\ton\n\t\tw.station_id = s.id and w.date = j.date\n\twhere\n\t\tj.date > current_date - interval 170 day\n\tand \n\t\tj.region_id in (3,6)\n\tgroup by j.date,\n\t\tj.region_id,\n\t\ts.id\n)\nselect price, region_id, temp from CTE",
+    "createdAt": "2025-06-27T11:22:15.788Z",
+    "updatedAt": "2025-06-27T11:57:21.241Z"
+  },
+  {
     "id": "1750939860101",
     "name": "Query 1",
     "query": "select concat(d.date, ' ', p.time_period) as date_time,\n\t\tconcat(r.name, '-', d.data_code) as region_conn_type,\n\t\tsum(d.usage_amount) as usage_amount\n\t\tfrom data_intraday d\n\t\tleft join ref_periods p on p.id = d.period_id\n\t\tleft join ref_regions r on r.id = d.region_id\n\t\twhere d.data_code in(0110,1110)\n\t\tand d.date > current_date - interval 1 day\n\t\tgroup by concat(d.date, ' ', p.time_period),\n \t\tconcat(r.name, '-', d.data_code)",
