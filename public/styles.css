@@ -308,6 +308,78 @@ body {
   background: #888;
 }
 
+/* Table item styles */
+.table-item {
+  margin-bottom: 4px;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  color: #cccccc;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-radius: 4px;
+}
+
+.table-header:hover {
+  background: #37373d;
+}
+
+.table-chevron {
+  width: 12px;
+  display: inline-block;
+  margin-right: 8px;
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+  color: #888;
+}
+
+.table-header.expanded .table-chevron {
+  transform: rotate(90deg);
+}
+
+.table-name {
+  flex: 1;
+}
+
+.table-columns {
+  max-height: 200px;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  margin-left: 20px;
+  border-left: 1px solid #333;
+  padding-left: 8px;
+}
+
+.table-columns.collapsed {
+  max-height: 0;
+}
+
+.column-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.column-name {
+  color: #cccccc;
+  font-weight: 500;
+}
+
+.column-type {
+  color: #888;
+  font-size: 11px;
+  font-family: monospace;
+}
+
 .section-item {
   padding: 4px 16px;
   color: #cccccc;

@@ -70,6 +70,75 @@ app.get('/schema', (req, res) => {
   });
 });
 
+// Get detailed schema with columns
+app.get('/schema/detailed', (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting database connection:', err);
+      return res.status(500).json({ error: 'Database connection error', details: err.message });
+    }
+
+    // Get tables with their columns
+    const query = `
+      SELECT 
+        t.TABLE_NAME,
+        t.TABLE_TYPE,
+        c.COLUMN_NAME,
+        c.DATA_TYPE,
+        c.IS_NULLABLE,
+        c.COLUMN_DEFAULT,
+        c.COLUMN_KEY
+      FROM INFORMATION_SCHEMA.TABLES t
+      LEFT JOIN INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME AND t.TABLE_SCHEMA = c.TABLE_SCHEMA
+      WHERE t.TABLE_SCHEMA = '${process.env.DB_NAME}'
+      ORDER BY t.TABLE_NAME, c.ORDINAL_POSITION
+    `;
+
+    connection.query(query, (error, results) => {
+      connection.release();
+      
+      if (error) {
+        console.error('Error fetching detailed schema:', error);
+        return res.status(500).json({ error: 'Query execution error', details: error.message });
+      }
+
+      // Group results by table
+      const schema = { tables: [], views: [] };
+      const tablesMap = new Map();
+
+      results.forEach(row => {
+        const tableName = row.TABLE_NAME;
+        const tableType = row.TABLE_TYPE === 'BASE TABLE' ? 'tables' : 'views';
+        
+        if (!tablesMap.has(tableName)) {
+          tablesMap.set(tableName, {
+            name: tableName,
+            type: tableType,
+            columns: []
+          });
+        }
+
+        if (row.COLUMN_NAME) {
+          tablesMap.get(tableName).columns.push({
+            name: row.COLUMN_NAME,
+            type: row.DATA_TYPE,
+            nullable: row.IS_NULLABLE === 'YES',
+            default: row.COLUMN_DEFAULT,
+            key: row.COLUMN_KEY
+          });
+        }
+      });
+
+      // Convert map to arrays
+      tablesMap.forEach(table => {
+        schema[table.type].push(table);
+      });
+
+      res.json(schema);
+    });
+  });
+});
+
 // Store active connections for cancellation
 const activeConnections = new Map();
 

@@ -50,6 +50,15 @@ document.querySelectorAll('.section-header').forEach(header => {
     });
 });
 
+// Handle table accordion functionality
+document.querySelectorAll('.table-header').forEach(header => {
+    header.addEventListener('click', function() {
+        this.classList.toggle('expanded');
+        const columns = this.nextElementSibling;
+        columns.classList.toggle('collapsed');
+    });
+});
+
 // Handle clicking outside to collapse (optional)
 document.addEventListener('click', function(e) {
     const sidebar = document.querySelector('.sidebar-container');
@@ -2239,7 +2248,7 @@ function escapeHtml(text) {
 async function loadDatabaseSchema() {
     try {
         console.log('Loading database schema...');
-        const response = await fetch('/schema');
+        const response = await fetch('/schema/detailed');
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -2251,18 +2260,61 @@ async function loadDatabaseSchema() {
         // Update tables section
         const tablesSection = document.querySelector('[data-section="tables"]').nextElementSibling;
         if (tablesSection && schema.tables) {
-            tablesSection.innerHTML = schema.tables.length > 0 
-                ? schema.tables.map(table => `<div class="section-item">${table}</div>`).join('')
-                : '<div class="section-item no-items">No tables found</div>';
+            if (schema.tables.length > 0) {
+                tablesSection.innerHTML = schema.tables.map(table => `
+                    <div class="table-item">
+                        <div class="table-header">
+                            <span class="table-chevron">></span>
+                            <span class="table-name">${escapeHtml(table.name)}</span>
+                        </div>
+                        <div class="table-columns collapsed">
+                            ${table.columns.map(column => `
+                                <div class="column-item">
+                                    <span class="column-name">${escapeHtml(column.name)}</span>
+                                    <span class="column-type">${escapeHtml(column.type.toUpperCase())}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                tablesSection.innerHTML = '<div class="section-item no-items">No tables found</div>';
+            }
         }
         
         // Update views section
         const viewsSection = document.querySelector('[data-section="views"]').nextElementSibling;
         if (viewsSection && schema.views) {
-            viewsSection.innerHTML = schema.views.length > 0
-                ? schema.views.map(view => `<div class="section-item">${view}</div>`).join('')
-                : '<div class="section-item no-items">No views found</div>';
+            if (schema.views.length > 0) {
+                viewsSection.innerHTML = schema.views.map(view => `
+                    <div class="table-item">
+                        <div class="table-header">
+                            <span class="table-chevron">></span>
+                            <span class="table-name">${escapeHtml(view.name)}</span>
+                        </div>
+                        <div class="table-columns collapsed">
+                            ${view.columns.map(column => `
+                                <div class="column-item">
+                                    <span class="column-name">${escapeHtml(column.name)}</span>
+                                    <span class="column-type">${escapeHtml(column.type.toUpperCase())}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                viewsSection.innerHTML = '<div class="section-item no-items">No views found</div>';
+            }
         }
+        
+        // Re-bind event listeners for the new table headers
+        document.querySelectorAll('.table-header').forEach(header => {
+            header.addEventListener('click', function() {
+                this.classList.toggle('expanded');
+                const columns = this.nextElementSibling;
+                columns.classList.toggle('collapsed');
+            });
+        });
         
         console.log('Schema panel updated successfully');
         
