@@ -560,16 +560,18 @@ body {
 .main-content {
   margin-top: 60px;
   margin-left: 60px;
-  height: 100vh;
+  height: calc(100vh - 60px);
+  padding: 0;
 }
 
 /* Ensure GridStack container fits viewport with explicit height */
 .grid-stack {
   margin-top: 80px;
-  height: calc(100vh - 120px) !important; /* Account for header + margins */
-    max-height: 800px; /* Cap maximum height */
-    overflow-y: auto;
-    overflow-x: hidden;
+  height: calc(100vh - 120px) !important;
+  height: 100% !important;
+  min-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Adjust main content when sidebar is expanded */
