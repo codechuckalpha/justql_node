@@ -1346,7 +1346,17 @@ function createMultiLineChart(results, xColumn, groupColumn, yColumn, container)
         staticPlot: false
     };
 
-    Plotly.newPlot(container, traces, layout, config);
+    Plotly.newPlot(container, traces, layout, config).then(() => {
+        // Fix resize handle positioning after chart loads
+        const gridItem = container.closest('.grid-stack-item');
+        if (gridItem) {
+            gridItem.classList.add('chart-loaded');
+            // Force GridStack to update resize handles
+            if (window.gridStackInstance) {
+                window.gridStackInstance.batchUpdate();
+            }
+        }
+    });
 }
 
 function createSimpleLineChart(results, xColumn, yColumn, container) {
@@ -1402,7 +1412,17 @@ function createSimpleLineChart(results, xColumn, yColumn, container) {
         staticPlot: false
     };
 
-    Plotly.newPlot(container, [trace], layout, config);
+    Plotly.newPlot(container, [trace], layout, config).then(() => {
+        // Fix resize handle positioning after chart loads
+        const gridItem = container.closest('.grid-stack-item');
+        if (gridItem) {
+            gridItem.classList.add('chart-loaded');
+            // Force GridStack to update resize handles
+            if (window.gridStackInstance) {
+                window.gridStackInstance.batchUpdate();
+            }
+        }
+    });
 }
 
 // Function to create a multi-stacked column chart
@@ -1474,7 +1494,17 @@ function createMultiStackedColumnChart(results, xColumn, groupColumn, yColumn, c
         staticPlot: false
     };
 
-    Plotly.newPlot(container, traces, layout, config);
+    Plotly.newPlot(container, traces, layout, config).then(() => {
+        // Fix resize handle positioning after chart loads
+        const gridItem = container.closest('.grid-stack-item');
+        if (gridItem) {
+            gridItem.classList.add('chart-loaded');
+            // Force GridStack to update resize handles
+            if (window.gridStackInstance) {
+                window.gridStackInstance.batchUpdate();
+            }
+        }
+    });
 }
 
 // Function to create a multi-grouped column chart
@@ -1546,7 +1576,17 @@ function createMultiGroupedColumnChart(results, xColumn, groupColumn, yColumn, c
         staticPlot: false
     };
 
-    Plotly.newPlot(container, traces, layout, config);
+    Plotly.newPlot(container, traces, layout, config).then(() => {
+        // Fix resize handle positioning after chart loads
+        const gridItem = container.closest('.grid-stack-item');
+        if (gridItem) {
+            gridItem.classList.add('chart-loaded');
+            // Force GridStack to update resize handles
+            if (window.gridStackInstance) {
+                window.gridStackInstance.batchUpdate();
+            }
+        }
+    });
 }
 
 // Function to create a simple column chart (for 2 columns) - no changes needed for stacking here
@@ -1597,7 +1637,17 @@ function createSimpleColumnChart(results, xColumn, yColumn, container) {
         staticPlot: false
     };
 
-    Plotly.newPlot(container, [trace], layout, config);
+    Plotly.newPlot(container, [trace], layout, config).then(() => {
+        // Fix resize handle positioning after chart loads
+        const gridItem = container.closest('.grid-stack-item');
+        if (gridItem) {
+            gridItem.classList.add('chart-loaded');
+            // Force GridStack to update resize handles
+            if (window.gridStackInstance) {
+                window.gridStackInstance.batchUpdate();
+            }
+        }
+    });
 }
 
 // NEW: Function to create a time series chart
@@ -1702,7 +1752,17 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
         staticPlot: false
     };
 
-    Plotly.newPlot(container, traces, layout, config);
+    Plotly.newPlot(container, traces, layout, config).then(() => {
+        // Fix resize handle positioning after chart loads
+        const gridItem = container.closest('.grid-stack-item');
+        if (gridItem) {
+            gridItem.classList.add('chart-loaded');
+            // Force GridStack to update resize handles
+            if (window.gridStackInstance) {
+                window.gridStackInstance.batchUpdate();
+            }
+        }
+    });
 }
 
 function createSimpleScatterPlot(results, xColumn, yColumn, container) {
@@ -1748,7 +1808,17 @@ function createSimpleScatterPlot(results, xColumn, yColumn, container) {
         staticPlot: false
     };
 
-    Plotly.newPlot(container, [trace], layout, config);
+    Plotly.newPlot(container, [trace], layout, config).then(() => {
+        // Fix resize handle positioning after chart loads
+        const gridItem = container.closest('.grid-stack-item');
+        if (gridItem) {
+            gridItem.classList.add('chart-loaded');
+            // Force GridStack to update resize handles
+            if (window.gridStackInstance) {
+                window.gridStackInstance.batchUpdate();
+            }
+        }
+    });
 }
 
 function createMultiScatterPlot(results, xColumn, groupColumn, yColumn, container) {
@@ -1812,7 +1882,17 @@ function createMultiScatterPlot(results, xColumn, groupColumn, yColumn, containe
         staticPlot: false
     };
 
-    Plotly.newPlot(container, traces, layout, config);
+    Plotly.newPlot(container, traces, layout, config).then(() => {
+        // Fix resize handle positioning after chart loads
+        const gridItem = container.closest('.grid-stack-item');
+        if (gridItem) {
+            gridItem.classList.add('chart-loaded');
+            // Force GridStack to update resize handles
+            if (window.gridStackInstance) {
+                window.gridStackInstance.batchUpdate();
+            }
+        }
+    });
 }
 
 function getLineColor(index) {
@@ -2037,7 +2117,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize GridStack with the global variable
     gridInstance = GridStack.init({
         alwaysShowResizeHandle: true,
-        float: true,
+        float: false,
         disableResize: false,
         cellHeight: 80, // Set explicit row height in pixels
         verticalMargin: 10, // Gap between rows
@@ -2047,14 +2127,68 @@ document.addEventListener('DOMContentLoaded', function () {
         // *** NEW: Filter out specific elements from being draggable ***
         // Plotly chart area (its internal <canvas> or <svg> for interaction)
         // This targets the main interactive area of a Plotly chart
-        filter: '.js-plotly-plot .plotly, .js-plotly-plot .svg-container, .plotly-event-overlay' 
+        filter: '.js-plotly-plot .plotly, .js-plotly-plot .svg-container, .plotly-event-overlay',
+        // Prevent position changes during resize
+        minRow: 1,
+        column: 12,  // Standard 12-column grid
+        resizable: {
+            handles: 'se',  // Only show bottom-right resize handle
+            containment: 'parent',  // Contain resize within parent container
+            helper: false,  // Disable helper to prevent position issues
+            start: function(_, ui) {
+                // Disable compact during resize to prevent jumping
+                gridInstance.compact(false);
+                // Store original position to prevent jumping on viewport boundary
+                const element = ui.element[0];
+                const gridNode = element.gridstackNode;
+                element._originalGridX = gridNode.x;
+                element._originalGridY = gridNode.y;
+            },
+            resize: function(_, ui) {
+                // Prevent position changes during resize
+                const element = ui.element[0];
+                const gridNode = element.gridstackNode;
+                if (gridNode && element._originalGridX !== undefined && element._originalGridY !== undefined) {
+                    if (gridNode.x !== element._originalGridX || gridNode.y !== element._originalGridY) {
+                        gridInstance.update(element, {
+                            x: element._originalGridX, 
+                            y: element._originalGridY,
+                            w: gridNode.w,
+                            h: gridNode.h
+                        });
+                    }
+                }
+            },
+            stop: function(_, ui) {
+                // Clean up stored position
+                const element = ui.element[0];
+                delete element._originalGridX;
+                delete element._originalGridY;
+                // Re-enable compact after resize
+                gridInstance.compact(true);
+            }
+        }
     });
 
     // Store the grid instance globally for layout functions
     window.gridStackInstance = gridInstance;
 
-    // Modified GridStack event listeners to use a blocking overlay
-    gridInstance.on('resizestart dragstart', function (event, el) {
+
+    gridInstance.on('resizestop dragstop', function (_, el) {
+        // Remove the overlay after drag/resize stops
+        const overlay = el.querySelector('.plotly-event-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        // Trigger Plotly resize after operations
+        if (el.id === 'data-analysis-section') {
+            setTimeout(() => {
+                Plotly.Plots.resize('chart-container');
+            }, 100);
+        }
+    });
+    
+    gridInstance.on('resizestart dragstart', function (_, el) {
         // Find the specific chart container within the dragged/resized element
         const chartContainer = el.querySelector('#chart-container');
         if (chartContainer) {
@@ -2073,20 +2207,6 @@ document.addEventListener('DOMContentLoaded', function () {
             
             // Append to the grid-stack-item-content to cover only its area
             el.querySelector('.grid-stack-item-content').appendChild(overlay);
-        }
-    });
-
-    gridInstance.on('resizestop dragstop', function (event, el) {
-        // Remove the overlay after drag/resize stops
-        const overlay = el.querySelector('.plotly-event-overlay');
-        if (overlay) {
-            overlay.remove();
-        }
-        // Trigger Plotly resize after operations
-        if (el.id === 'data-analysis-section') {
-            setTimeout(() => {
-                Plotly.Plots.resize('chart-container');
-            }, 100);
         }
     });
 
@@ -2139,7 +2259,7 @@ document.addEventListener('DOMContentLoaded', function () {
         chartResizeObserver.observe(dataAnalysisSection);
     }
 
-    gridInstance.on('change', function (event, items) {
+    gridInstance.on('change', function (_, items) {
         items.forEach(item => {
             if (item.el && item.el.id === 'data-analysis-section') {
                 const chartContainer = document.getElementById('chart-container');

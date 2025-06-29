@@ -800,6 +800,27 @@ body {
   pointer-events: none !important;
 }
 
+/* Position resize handles inside div border */
+.grid-stack-item .ui-resizable-se {
+  bottom: 2px !important;
+  right: 2px !important;
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Prevent resize issues at viewport boundaries */
+.grid-stack {
+  overflow: visible !important;
+  min-height: 100vh;
+  position: relative !important;
+}
+
+/* Ensure grid items don't jump during resize */
+.grid-stack-item.ui-resizable-resizing {
+  position: relative !important;
+  z-index: 1000 !important;
+}
+
 
 
 
