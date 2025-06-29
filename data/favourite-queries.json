@@ -10,9 +10,9 @@
   {
     "id": "1750518267116",
     "name": "basic jepx 30min",
-    "query": "select concat(j.date, ' ', p.time_period) as date_time,\n\t#j.region_id,\n    r.jp_name,\n\tj.spot_price\n\tfrom jepx_da_pivot j\n\tleft join ref_periods p on p.id = j.period_id\n    left join ref_regions r on r.id = j.region_id\n\twhere j.date > CURRENT_DATE - interval 100 day\n\tgroup by j.date, j.period_id, j.region_id\n\torder by j.date desc",
+    "query": "select concat(j.date, ' ', p.time_period) as date_time,\n\t#j.region_id,\n    r.jp_name,\n\tj.spot_price\n\tfrom jepx_da_pivot j\n\tleft join ref_periods p on p.id = j.period_id\n    left join ref_regions r on r.id = j.region_id\n\twhere j.date > CURRENT_DATE - interval 10 day\n\tgroup by j.date, j.period_id, j.region_id\n\torder by j.date desc",
     "createdAt": "2025-06-21T15:04:27.116Z",
-    "updatedAt": "2025-06-27T12:39:43.044Z",
+    "updatedAt": "2025-06-29T13:59:09.989Z",
     "addedToFavourites": "2025-06-26T14:21:35.229Z"
   },
   {

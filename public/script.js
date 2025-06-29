@@ -1351,10 +1351,25 @@ function createMultiLineChart(results, xColumn, groupColumn, yColumn, container)
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
-            // Force GridStack to update resize handles
-            if (window.gridStackInstance) {
-                window.gridStackInstance.batchUpdate();
-            }
+            // Ensure layout functionality remains working after chart creation
+            console.log('Chart loaded, ensuring layout functionality remains active');
+            
+            // Force refresh layout button functionality after chart creation
+            setTimeout(() => {
+                console.log('Refreshing layout functionality after chart creation');
+                // Ensure all overlays are cleaned up
+                document.querySelectorAll('.plotly-event-overlay').forEach(overlay => {
+                    console.log('Removing stray overlay:', overlay);
+                    overlay.remove();
+                });
+                
+                // Reset GridStack state if needed
+                if (gridInstance) {
+                    console.log('Resetting GridStack state after chart creation');
+                    gridInstance.float(true);
+                    gridInstance.compact(true);
+                }
+            }, 200);
         }
     });
 }
@@ -1417,10 +1432,25 @@ function createSimpleLineChart(results, xColumn, yColumn, container) {
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
-            // Force GridStack to update resize handles
-            if (window.gridStackInstance) {
-                window.gridStackInstance.batchUpdate();
-            }
+            // Ensure layout functionality remains working after chart creation
+            console.log('Chart loaded, ensuring layout functionality remains active');
+            
+            // Force refresh layout button functionality after chart creation
+            setTimeout(() => {
+                console.log('Refreshing layout functionality after chart creation');
+                // Ensure all overlays are cleaned up
+                document.querySelectorAll('.plotly-event-overlay').forEach(overlay => {
+                    console.log('Removing stray overlay:', overlay);
+                    overlay.remove();
+                });
+                
+                // Reset GridStack state if needed
+                if (gridInstance) {
+                    console.log('Resetting GridStack state after chart creation');
+                    gridInstance.float(true);
+                    gridInstance.compact(true);
+                }
+            }, 200);
         }
     });
 }
@@ -1499,10 +1529,25 @@ function createMultiStackedColumnChart(results, xColumn, groupColumn, yColumn, c
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
-            // Force GridStack to update resize handles
-            if (window.gridStackInstance) {
-                window.gridStackInstance.batchUpdate();
-            }
+            // Ensure layout functionality remains working after chart creation
+            console.log('Chart loaded, ensuring layout functionality remains active');
+            
+            // Force refresh layout button functionality after chart creation
+            setTimeout(() => {
+                console.log('Refreshing layout functionality after chart creation');
+                // Ensure all overlays are cleaned up
+                document.querySelectorAll('.plotly-event-overlay').forEach(overlay => {
+                    console.log('Removing stray overlay:', overlay);
+                    overlay.remove();
+                });
+                
+                // Reset GridStack state if needed
+                if (gridInstance) {
+                    console.log('Resetting GridStack state after chart creation');
+                    gridInstance.float(true);
+                    gridInstance.compact(true);
+                }
+            }, 200);
         }
     });
 }
@@ -1581,10 +1626,25 @@ function createMultiGroupedColumnChart(results, xColumn, groupColumn, yColumn, c
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
-            // Force GridStack to update resize handles
-            if (window.gridStackInstance) {
-                window.gridStackInstance.batchUpdate();
-            }
+            // Ensure layout functionality remains working after chart creation
+            console.log('Chart loaded, ensuring layout functionality remains active');
+            
+            // Force refresh layout button functionality after chart creation
+            setTimeout(() => {
+                console.log('Refreshing layout functionality after chart creation');
+                // Ensure all overlays are cleaned up
+                document.querySelectorAll('.plotly-event-overlay').forEach(overlay => {
+                    console.log('Removing stray overlay:', overlay);
+                    overlay.remove();
+                });
+                
+                // Reset GridStack state if needed
+                if (gridInstance) {
+                    console.log('Resetting GridStack state after chart creation');
+                    gridInstance.float(true);
+                    gridInstance.compact(true);
+                }
+            }, 200);
         }
     });
 }
@@ -1642,10 +1702,25 @@ function createSimpleColumnChart(results, xColumn, yColumn, container) {
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
-            // Force GridStack to update resize handles
-            if (window.gridStackInstance) {
-                window.gridStackInstance.batchUpdate();
-            }
+            // Ensure layout functionality remains working after chart creation
+            console.log('Chart loaded, ensuring layout functionality remains active');
+            
+            // Force refresh layout button functionality after chart creation
+            setTimeout(() => {
+                console.log('Refreshing layout functionality after chart creation');
+                // Ensure all overlays are cleaned up
+                document.querySelectorAll('.plotly-event-overlay').forEach(overlay => {
+                    console.log('Removing stray overlay:', overlay);
+                    overlay.remove();
+                });
+                
+                // Reset GridStack state if needed
+                if (gridInstance) {
+                    console.log('Resetting GridStack state after chart creation');
+                    gridInstance.float(true);
+                    gridInstance.compact(true);
+                }
+            }, 200);
         }
     });
 }
@@ -1757,10 +1832,25 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
-            // Force GridStack to update resize handles
-            if (window.gridStackInstance) {
-                window.gridStackInstance.batchUpdate();
-            }
+            // Ensure layout functionality remains working after chart creation
+            console.log('Chart loaded, ensuring layout functionality remains active');
+            
+            // Force refresh layout button functionality after chart creation
+            setTimeout(() => {
+                console.log('Refreshing layout functionality after chart creation');
+                // Ensure all overlays are cleaned up
+                document.querySelectorAll('.plotly-event-overlay').forEach(overlay => {
+                    console.log('Removing stray overlay:', overlay);
+                    overlay.remove();
+                });
+                
+                // Reset GridStack state if needed
+                if (gridInstance) {
+                    console.log('Resetting GridStack state after chart creation');
+                    gridInstance.float(true);
+                    gridInstance.compact(true);
+                }
+            }, 200);
         }
     });
 }
@@ -1813,10 +1903,25 @@ function createSimpleScatterPlot(results, xColumn, yColumn, container) {
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
-            // Force GridStack to update resize handles
-            if (window.gridStackInstance) {
-                window.gridStackInstance.batchUpdate();
-            }
+            // Ensure layout functionality remains working after chart creation
+            console.log('Chart loaded, ensuring layout functionality remains active');
+            
+            // Force refresh layout button functionality after chart creation
+            setTimeout(() => {
+                console.log('Refreshing layout functionality after chart creation');
+                // Ensure all overlays are cleaned up
+                document.querySelectorAll('.plotly-event-overlay').forEach(overlay => {
+                    console.log('Removing stray overlay:', overlay);
+                    overlay.remove();
+                });
+                
+                // Reset GridStack state if needed
+                if (gridInstance) {
+                    console.log('Resetting GridStack state after chart creation');
+                    gridInstance.float(true);
+                    gridInstance.compact(true);
+                }
+            }, 200);
         }
     });
 }
@@ -1887,10 +1992,25 @@ function createMultiScatterPlot(results, xColumn, groupColumn, yColumn, containe
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
-            // Force GridStack to update resize handles
-            if (window.gridStackInstance) {
-                window.gridStackInstance.batchUpdate();
-            }
+            // Ensure layout functionality remains working after chart creation
+            console.log('Chart loaded, ensuring layout functionality remains active');
+            
+            // Force refresh layout button functionality after chart creation
+            setTimeout(() => {
+                console.log('Refreshing layout functionality after chart creation');
+                // Ensure all overlays are cleaned up
+                document.querySelectorAll('.plotly-event-overlay').forEach(overlay => {
+                    console.log('Removing stray overlay:', overlay);
+                    overlay.remove();
+                });
+                
+                // Reset GridStack state if needed
+                if (gridInstance) {
+                    console.log('Resetting GridStack state after chart creation');
+                    gridInstance.float(true);
+                    gridInstance.compact(true);
+                }
+            }, 200);
         }
     });
 }
@@ -1947,38 +2067,122 @@ function initializeLayoutFunctionality() {
     }
 
     console.log("Initializing layout functionality with GridStack instance:", gridInstance);
+    
+    // Flag to track if initial layout is complete
+    let initialLayoutComplete = false;
 
     // Layout button click handler
     if (changeLayoutBtn && layoutSelectorPopup) {
         changeLayoutBtn.addEventListener('click', (event) => {
-            console.log('Layout button clicked');
+            console.log('=== LAYOUT BUTTON CLICK EVENT FIRED ===');
+            console.log('Layout button clicked, initial layout complete:', initialLayoutComplete);
+            console.log('Event target:', event.target);
+            console.log('Current target:', event.currentTarget);
+            console.log('Sidebar state:', document.querySelector('.sidebar-container').classList.contains('collapsed'));
+            console.log('GridStack instance status:', !!gridInstance);
+            console.log('Any overlays present:', document.querySelectorAll('.plotly-event-overlay').length);
             event.stopPropagation();
-            layoutSelectorPopup.classList.toggle('hidden');
+            event.preventDefault();
+            
+            // Ensure GridStack is still available
+            if (!gridInstance) {
+                console.error('GridStack instance lost, layout switching disabled');
+                return;
+            }
+            
+            // If initial layout not complete, ensure it's applied first
+            if (!initialLayoutComplete) {
+                console.log('Initial layout not complete, applying default layout first');
+                applyLayout('layout1');
+                initialLayoutComplete = true;
+                const firstLayoutBtn = document.querySelector('.layout-option-btn[data-layout="layout1"]');
+                if (firstLayoutBtn) {
+                    firstLayoutBtn.classList.add('active');
+                }
+            }
+            
+            // Force immediate popup show/hide
+            const isHidden = layoutSelectorPopup.classList.contains('hidden');
+            console.log('Popup current state - hidden:', isHidden);
+            
+            if (isHidden) {
+                layoutSelectorPopup.classList.remove('hidden');
+                // Force visible styles to override any potential conflicts
+                layoutSelectorPopup.style.display = 'flex';
+                layoutSelectorPopup.style.visibility = 'visible';
+                layoutSelectorPopup.style.opacity = '1';
+                console.log('Showing layout popup with forced styles');
+            } else {
+                layoutSelectorPopup.classList.add('hidden');
+                console.log('Hiding layout popup');
+            }
 
             // Position the popup below the button
             const btnRect = changeLayoutBtn.getBoundingClientRect();
+            layoutSelectorPopup.style.position = 'fixed';
             layoutSelectorPopup.style.top = `${btnRect.bottom + 5}px`;
             layoutSelectorPopup.style.left = `${btnRect.left}px`;
+            layoutSelectorPopup.style.zIndex = '10000'; // Ensure popup is above everything
+            
+            // Force popup to be on top of everything with additional CSS overrides
+            layoutSelectorPopup.style.transform = 'none';
+            layoutSelectorPopup.style.clip = 'auto';
+            layoutSelectorPopup.style.clipPath = 'none';
+            
+            // Debug popup state after changes
+            console.log('=== POPUP DEBUG INFO ===');
+            console.log('Popup element:', layoutSelectorPopup);
+            console.log('Popup classes:', layoutSelectorPopup.className);
+            console.log('Popup style.display:', layoutSelectorPopup.style.display);
+            console.log('Popup style.visibility:', layoutSelectorPopup.style.visibility);
+            console.log('Popup style.top:', layoutSelectorPopup.style.top);
+            console.log('Popup style.left:', layoutSelectorPopup.style.left);
+            console.log('Popup style.zIndex:', layoutSelectorPopup.style.zIndex);
+            console.log('Button rect:', btnRect);
+            console.log('Popup computed style:', window.getComputedStyle(layoutSelectorPopup));
+            console.log('=== END POPUP DEBUG ===');
         });
 
         // Layout option button handlers
         layoutOptionButtons.forEach(button => {
             button.addEventListener('click', (event) => {
-                console.log('Layout option clicked:', button.dataset.layout);
+                console.log('=== LAYOUT OPTION BUTTON CLICK EVENT FIRED ===');
+                console.log('Layout option clicked:', button.dataset.layout, 'initial complete:', initialLayoutComplete);
+                console.log('Event target:', event.target);
+                console.log('Sidebar state:', document.querySelector('.sidebar-container').classList.contains('collapsed'));
                 event.stopPropagation();
+                event.preventDefault();
+                
+                // Ensure GridStack is still available before applying layout
+                if (!gridInstance) {
+                    console.error('GridStack instance lost, cannot apply layout');
+                    return;
+                }
+                
+                // If initial layout not complete, mark it as complete now
+                if (!initialLayoutComplete) {
+                    console.log('Initial layout not complete, marking as complete now');
+                    initialLayoutComplete = true;
+                }
+                
                 const layoutName = button.dataset.layout;
+                console.log('Applying layout immediately:', layoutName);
                 applyLayout(layoutName);
                 layoutSelectorPopup.classList.add('hidden');
                 
                 // Visual feedback - highlight selected layout
                 layoutOptionButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
+                console.log('Layout option processing complete');
             });
         });
 
         // Close popup when clicking outside
         document.addEventListener('click', (event) => {
-            if (!layoutSelectorPopup.contains(event.target) && !changeLayoutBtn.contains(event.target)) {
+            // Only close if popup is visible and click is truly outside
+            if (!layoutSelectorPopup.classList.contains('hidden') && 
+                !layoutSelectorPopup.contains(event.target) && 
+                !changeLayoutBtn.contains(event.target)) {
                 layoutSelectorPopup.classList.add('hidden');
             }
         });
@@ -1987,6 +2191,8 @@ function initializeLayoutFunctionality() {
     // Apply default layout
     setTimeout(() => {
         applyLayout('layout1');
+        initialLayoutComplete = true;
+        console.log('Initial layout complete, flag set to true');
         // Set first layout button as active
         const firstLayoutBtn = document.querySelector('.layout-option-btn[data-layout="layout1"]');
         if (firstLayoutBtn) {
@@ -1996,6 +2202,11 @@ function initializeLayoutFunctionality() {
 }
 
 function applyLayout(layoutName) {
+    console.log('=== APPLY LAYOUT FUNCTION CALLED ===');
+    console.log('Layout name:', layoutName);
+    console.log('GridStack instance available:', !!gridInstance);
+    console.log('Sidebar state:', document.querySelector('.sidebar-container').classList.contains('collapsed'));
+    
     if (!gridInstance) {
         console.error('GridStack instance not available');
         return;
@@ -2010,6 +2221,16 @@ function applyLayout(layoutName) {
     }
 
     try {
+        // Debug: Check current GridStack state
+        console.log('Current GridStack state before layout change');
+        
+        // Ensure GridStack is in proper state for layout changes
+        gridInstance.float(true);
+        gridInstance.compact(true);
+        
+        // Force immediate execution without any delays
+        console.log('GridStack state reset, applying layout configuration');
+        
         // Method 1: Use GridStack's update method for each item
         layoutConfig.forEach(itemConfig => {
             const element = document.getElementById(itemConfig.id);
@@ -2117,7 +2338,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize GridStack with the global variable
     gridInstance = GridStack.init({
         alwaysShowResizeHandle: true,
-        float: false,
+        float: true,
         disableResize: false,
         cellHeight: 80, // Set explicit row height in pixels
         verticalMargin: 10, // Gap between rows
@@ -2136,7 +2357,8 @@ document.addEventListener('DOMContentLoaded', function () {
             containment: 'parent',  // Contain resize within parent container
             helper: false,  // Disable helper to prevent position issues
             start: function(_, ui) {
-                // Disable compact during resize to prevent jumping
+                // Disable float and compact during resize to prevent jumping
+                gridInstance.float(false);
                 gridInstance.compact(false);
                 // Store original position to prevent jumping on viewport boundary
                 const element = ui.element[0];
@@ -2164,8 +2386,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 const element = ui.element[0];
                 delete element._originalGridX;
                 delete element._originalGridY;
-                // Re-enable compact after resize
+                // Re-enable float and compact to allow collision detection
+                gridInstance.float(true);
                 gridInstance.compact(true);
+                // Force layout update to resolve overlaps after a short delay
+                setTimeout(() => {
+                    gridInstance.batchUpdate();
+                    gridInstance.compact(true);
+                }, 100);
             }
         }
     });
