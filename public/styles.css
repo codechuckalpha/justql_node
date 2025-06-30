@@ -704,9 +704,11 @@ body {
 .table-wrapper {
   flex-grow: 1; /* Make the table wrapper fill remaining space */
   overflow-y: auto; /* Enable vertical scrolling */
+  overflow-x: auto; /* Enable horizontal scrolling */
   position: relative; /* Needed for sticky positioning */
   padding: 0 10px 10px; /* Padding for left, right, and bottom within the wrapper */
   /* This 10px bottom margin will act as the 20px bottom anchor total, as 10px will be within the wrapper and 10px will be from the content */
+  scroll-behavior: smooth; /* Smooth scrolling */
 }
 
 /* Table Placeholder */
@@ -720,8 +722,8 @@ body {
 .data-table table {
   color: #cccccc;
   border-spacing: 0;
-  width: 100%;
-  table-layout: fixed; /* Ensures columns maintain width */
+  min-width: 100%; /* Allow table to expand beyond container width */
+  table-layout: auto; /* Allow columns to size based on content */
   border-collapse: collapse;
   margin-top: 0; /* Remove default table top margin */
 }
@@ -729,12 +731,15 @@ body {
 .data-table th {
   text-align: left;
   background-color: #0f0f0f;
-  padding-left: 10px;
+  padding: 8px 10px; /* Add top/bottom padding */
   border-spacing: 0;
   position: sticky; /* Make header sticky */
   top: 0; /* Stick to the top of its scrollable container */
   z-index: 10; /* Ensure header stays on top of content when scrolling */
   transition: background-color 0.2s ease;
+  white-space: nowrap; /* Prevent text wrapping */
+  min-width: 120px; /* Minimum column width */
+  box-sizing: border-box;
 }
 
 .data-table th:hover {
@@ -744,10 +749,15 @@ body {
 .data-table td {
   text-align: left;
   background-color: #0f0f0f;
-  padding-left: 10px;
+  padding: 8px 10px; /* Match header padding */
   border-top: 1px solid rgba(255, 255, 255, 0.1); /* Add a top border */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Add a top border */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Add a bottom border */
   border-spacing: 0;
+  white-space: nowrap; /* Prevent text wrapping */
+  min-width: 120px; /* Minimum column width */
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Add ellipsis for long content */
 }
 
 /* Optional: Add hover state for table rows */
