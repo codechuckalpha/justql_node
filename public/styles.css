@@ -812,10 +812,28 @@ body {
 
 /* Position resize handles inside div border */
 .grid-stack-item .ui-resizable-se {
-  bottom: 2px !important;
-  right: 2px !important;
-  width: 12px !important;
-  height: 12px !important;
+  bottom: 10px !important;
+  right: 10px !important;
+  width: 28px !important;
+  height: 28px !important;
+  background: none !important;
+  border: none !important;
+  cursor: nw-resize !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Use larger diagonal double-headed arrow emoji */
+.grid-stack-item .ui-resizable-se::before {
+  content: "⤢";
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+  pointer-events: none;
+  line-height: 1;
+  transform: rotate(-45deg);
 }
 
 /* Prevent resize issues at viewport boundaries */
