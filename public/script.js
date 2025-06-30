@@ -3083,6 +3083,134 @@ async function loadDatabaseSchema() {
     }
 }
 
+// Scroll Control: Only allow grid-stack to scroll when mouse is over it
+function setupScrollControl() {
+    const gridStack = document.querySelector('.grid-stack');
+    const sidebarContainer = document.querySelector('.sidebar-container');
+    const headerElement = document.querySelector('.app-header');
+    let isOverGridStack = false;
+    
+    // Track mouse position over different areas
+    function handleMouseEnter(event) {
+        const target = event.currentTarget;
+        if (target === gridStack) {
+            isOverGridStack = true;
+        }
+    }
+    
+    function handleMouseLeave(event) {
+        const target = event.currentTarget;
+        if (target === gridStack) {
+            isOverGridStack = false;
+        }
+    }
+    
+    // Add event listeners for mouse enter/leave on grid-stack only
+    if (gridStack) {
+        gridStack.addEventListener('mouseenter', handleMouseEnter);
+        gridStack.addEventListener('mouseleave', handleMouseLeave);
+        
+        // Add wheel event listener directly to grid-stack for controlled scrolling
+        gridStack.addEventListener('wheel', function(event) {
+            if (isOverGridStack) {
+                // Allow natural scrolling within grid-stack
+                return;
+            }
+        }, { passive: true });
+        
+        // Re-enable overflow for grid-stack since we're controlling it directly
+        gridStack.style.overflowY = 'auto';
+    }
+    
+    // Check if an element is scrollable
+    function isElementScrollable(element) {
+        const style = window.getComputedStyle(element);
+        const overflowY = style.overflowY;
+        const hasScrollableContent = element.scrollHeight > element.clientHeight;
+        return (overflowY === 'auto' || overflowY === 'scroll') && hasScrollableContent;
+    }
+    
+    // Prevent wheel events conditionally based on scrollability
+    function conditionalPreventWheelScroll(event) {
+        const target = event.target;
+        const currentElement = event.currentTarget;
+        
+        // Allow scrolling for elements that are actually scrollable
+        if (isElementScrollable(currentElement)) {
+            return; // Allow normal scrolling
+        }
+        
+        // For .section-items specifically, check if it's scrollable
+        if (currentElement.classList.contains('section-items')) {
+            if (isElementScrollable(currentElement)) {
+                return; // Allow scrolling for scrollable section-items
+            }
+        }
+        
+        // Prevent scrolling for non-scrollable elements
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    // Apply conditional wheel event prevention to header
+    if (headerElement) {
+        headerElement.addEventListener('wheel', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }, { passive: false });
+    }
+    
+    // Add wheel event prevention to sidebar content elements with scrollability check
+    const sidebarElements = [
+        '.content-panel',
+        '.panel-section',
+        '.section-items',
+        '.section-header',
+        '.panel-header',
+        '.section-item',
+        '.table-item',
+        '.table-header',
+        '.table-columns',
+        '.column-item'
+    ];
+    
+    sidebarElements.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+            element.addEventListener('wheel', conditionalPreventWheelScroll, { passive: false });
+        });
+    });
+    
+    // Global wheel event handler to prevent scrolling when not over grid-stack
+    document.addEventListener('wheel', function(event) {
+        // Check if the event target is within the grid-stack
+        const isWithinGridStack = gridStack && gridStack.contains(event.target);
+        
+        // Check if the event target is within the sidebar
+        const isWithinSidebar = sidebarContainer && sidebarContainer.contains(event.target);
+        
+        // Check if the event target is within the header
+        const isWithinHeader = headerElement && headerElement.contains(event.target);
+        
+        if ((isWithinSidebar || isWithinHeader) && !isWithinGridStack) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        if (!isWithinGridStack && !isOverGridStack) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }, { passive: false });
+}
+
+// Initialize scroll control when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupScrollControl);
+} else {
+    setupScrollControl();
+}
+
 // Add CSS for proper viewport sizing and GridStack height constraints
 const layoutCSS = `
 
