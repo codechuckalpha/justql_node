@@ -3211,6 +3211,52 @@ if (document.readyState === 'loading') {
     setupScrollControl();
 }
 
+// Fix resize handle positioning for elements with min-height
+function adjustResizeHandles() {
+    const gridItems = document.querySelectorAll('.grid-stack-item');
+    
+    gridItems.forEach(item => {
+        const resizeHandle = item.querySelector('.ui-resizable-se');
+        const content = item.querySelector('.grid-stack-item-content');
+        
+        if (resizeHandle && content) {
+            const itemHeight = item.offsetHeight;
+            const contentHeight = content.offsetHeight;
+            
+            // If content is taller than grid item (due to min-height)
+            if (contentHeight > itemHeight) {
+                // Position handle at bottom of visible content
+                resizeHandle.style.bottom = '10px';
+                resizeHandle.style.position = 'absolute';
+                // Position relative to content instead of grid item
+                content.style.position = 'relative';
+            } else {
+                // Reset to default positioning
+                resizeHandle.style.bottom = '10px';
+                resizeHandle.style.position = 'absolute';
+                content.style.position = '';
+            }
+        }
+    });
+}
+
+// Run on page load and after resize events
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', adjustResizeHandles);
+} else {
+    adjustResizeHandles();
+}
+
+// Observe resize changes
+const resizeObserver = new ResizeObserver(() => {
+    adjustResizeHandles();
+});
+
+// Observe all grid items
+document.querySelectorAll('.grid-stack-item').forEach(item => {
+    resizeObserver.observe(item);
+});
+
 // Add CSS for proper viewport sizing and GridStack height constraints
 const layoutCSS = `
 

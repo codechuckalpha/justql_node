@@ -822,6 +822,7 @@ body {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  position: absolute !important;
 }
 
 /* Use larger diagonal double-headed arrow emoji */
