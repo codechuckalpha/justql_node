@@ -604,9 +604,6 @@ body {
   box-sizing: border-box; /* Include padding in height calculation */
   padding: 15px; /* Consistent internal padding for all widgets */
   overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
 }
 
 .text-input {
@@ -737,7 +734,7 @@ body {
 .data-table th {
   text-align: left;
   background-color: #0f0f0f;
-  padding: 8px 10px; /* Add top/bottom padding */
+  padding: 0 10px; /* Add top/bottom padding */
   border-spacing: 0;
   position: sticky; /* Make header sticky */
   top: 0; /* Stick to the top of its scrollable container */
@@ -755,7 +752,7 @@ body {
 .data-table td {
   text-align: left;
   background-color: #0f0f0f;
-  padding: 8px 10px; /* Match header padding */
+  padding: 0 10px; /* Match header padding */
   border-top: 1px solid rgba(255, 255, 255, 0.1); /* Add a top border */
   border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Add a bottom border */
   border-spacing: 0;
