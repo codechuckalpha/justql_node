@@ -1339,6 +1339,10 @@ function createMultiLineChart(results, xColumn, groupColumn, yColumn, container)
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
+            // Add has-chart class for min-height enforcement
+            if (gridItem.id === 'data-analysis-section') {
+                gridItem.classList.add('has-chart');
+            }
             // Ensure layout functionality remains working after chart creation
             console.log('Chart loaded, ensuring layout functionality remains active');
             
@@ -1517,6 +1521,10 @@ function createMultiStackedColumnChart(results, xColumn, groupColumn, yColumn, c
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
+            // Add has-chart class for min-height enforcement
+            if (gridItem.id === 'data-analysis-section') {
+                gridItem.classList.add('has-chart');
+            }
             // Ensure layout functionality remains working after chart creation
             console.log('Chart loaded, ensuring layout functionality remains active');
             
@@ -1614,6 +1622,10 @@ function createMultiGroupedColumnChart(results, xColumn, groupColumn, yColumn, c
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
+            // Add has-chart class for min-height enforcement
+            if (gridItem.id === 'data-analysis-section') {
+                gridItem.classList.add('has-chart');
+            }
             // Ensure layout functionality remains working after chart creation
             console.log('Chart loaded, ensuring layout functionality remains active');
             
@@ -1820,6 +1832,10 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
+            // Add has-chart class for min-height enforcement
+            if (gridItem.id === 'data-analysis-section') {
+                gridItem.classList.add('has-chart');
+            }
             // Ensure layout functionality remains working after chart creation
             console.log('Chart loaded, ensuring layout functionality remains active');
             
@@ -1980,6 +1996,10 @@ function createMultiScatterPlot(results, xColumn, groupColumn, yColumn, containe
         const gridItem = container.closest('.grid-stack-item');
         if (gridItem) {
             gridItem.classList.add('chart-loaded');
+            // Add has-chart class for min-height enforcement
+            if (gridItem.id === 'data-analysis-section') {
+                gridItem.classList.add('has-chart');
+            }
             // Ensure layout functionality remains working after chart creation
             console.log('Chart loaded, ensuring layout functionality remains active');
             
@@ -2015,10 +2035,12 @@ function clearChart() {
     const chartContainer = document.getElementById('chart-container');
     const chartPlaceholder = document.getElementById('chart-placeholder');
     const chartDiv = document.querySelector('.chart-div');
+    const dataAnalysisSection = document.getElementById('data-analysis-section');
 
     if (chartPlaceholder) chartPlaceholder.style.display = 'block';
     if (chartContainer && chartContainer.data) Plotly.purge(chartContainer); // Ensure purge for a clean slate
     if (chartDiv) chartDiv.style.minHeight = 'auto';
+    if (dataAnalysisSection) dataAnalysisSection.classList.remove('has-chart'); // Remove min-height when chart is cleared
 }
 
 // Define the predefined layouts - calculated for 80px row height + 10px margin

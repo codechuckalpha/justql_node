@@ -856,6 +856,11 @@ body {
   z-index: 1000 !important;
 }
 
+/* Conditional min-height for data visualization when chart is present */
+#data-analysis-section.has-chart {
+  min-height: 400px !important; /* Enforce minimum height for chart visibility */
+}
+
 
 
 
