@@ -776,6 +776,15 @@ body {
   color: #cccccc;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Prevent scrolling on the chart div itself */
+}
+
+/* Chart div header styling to match data table */
+.chart-div h3 {
+  padding-bottom: 10px; /* Match data table header padding */
+  flex-shrink: 0; /* Prevent header from shrinking */
+  box-sizing: border-box;
+  font-size: 13px; /* Match data table font size */
 }
 #chart-type-dropdown {
   background-color: #2d2d30;
@@ -788,10 +797,34 @@ body {
   background-color: #2d2d30;
 }
 
+/* Chart container wrapper - shorter to prevent scrolling */
 #chart-container {
-  flex: 1;
+  flex-grow: 0; /* Don't expand to fill space */
+  height: 120px; /* Fixed shorter height */
+  position: relative; /* Needed for absolute positioning */
+  padding: 0 10px 10px; /* Match table wrapper padding */
+  overflow: hidden; /* Always prevent scrolling */
 }
 
+/* When chart is present, allow normal flex behavior for chart rendering */
+#data-analysis-section.has-chart #chart-container {
+  flex-grow: 1; /* Expand when chart is present */
+  height: auto; /* Auto height when chart is present */
+  overflow: visible; /* Allow chart to display properly */
+}
+
+/* Chart placeholder styling to match data table */
+#chart-placeholder {
+  padding: 20px;
+  text-align: center;
+  border: 2px dashed #555;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 13px; /* Match data table font size */
+  color: #888;
+  background-color: #2d2d30; /* Match chart div background */
+  overflow: hidden; /* Prevent any overflow */
+}
 /* Remove hover effects that might hide them again */
 .grid-stack-item:not(.ui-resizable-resizing) > .ui-resizable-handle {
     opacity: 1 !important;
@@ -859,6 +892,11 @@ body {
 /* Conditional min-height for data visualization when chart is present */
 #data-analysis-section.has-chart {
   min-height: 400px !important; /* Enforce minimum height for chart visibility */
+}
+
+/* Prevent scrolling in data visualization div */
+#data-analysis-section .grid-stack-item-content {
+  overflow-y: hidden !important; /* Prevent vertical scrolling */
 }
 
 
