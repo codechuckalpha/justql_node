@@ -643,9 +643,15 @@ body {
   text-align: right;
   user-select: none;
   min-width: 40px;
-  overflow-y: hidden;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   white-space: pre;
   height: 100%;
+}
+
+.line-numbers::-webkit-scrollbar {
+  display: none;
 }
 
 .text-input #sql-textarea {

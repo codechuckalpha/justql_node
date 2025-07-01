@@ -701,19 +701,7 @@ function updateLineNumbers() {
 }
 
 function syncScroll() {
-    const scrollTop = sqlTextarea.scrollTop;
-    const lineHeight = parseFloat(getComputedStyle(sqlTextarea).lineHeight);
-    const scrollLines = Math.floor(scrollTop / lineHeight);
-    
-    const lines = sqlTextarea.value.split('\n');
-    const totalLines = Math.max(lines.length, 20);
-    
-    let visibleNumbers = '';
-    for (let i = scrollLines + 1; i <= totalLines; i++) {
-        visibleNumbers += i + '\n';
-    }
-    
-    lineNumbers.textContent = visibleNumbers.slice(0, -1);
+    lineNumbers.scrollTop = sqlTextarea.scrollTop;
 }
 
 // SQL Keywords for auto-capitalization and highlighting
@@ -2977,6 +2965,7 @@ async function addToFavourites(queryId) {
 function loadQueryIntoTextarea(queryText) {
     if (sqlTextarea) {
         sqlTextarea.value = queryText;
+        updateLineNumbers();
         sqlTextarea.focus();
     }
 }
