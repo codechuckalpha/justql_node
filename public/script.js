@@ -1342,6 +1342,12 @@ function createMultiLineChart(results, xColumn, groupColumn, yColumn, container)
             // Add has-chart class for min-height enforcement
             if (gridItem.id === 'data-analysis-section') {
                 gridItem.classList.add('has-chart');
+                // Expand the chart div to accommodate the chart and push other elements down
+                const currentHeight = gridItem.gridstackNode.h;
+                const minChartHeight = 6; // Minimum height for chart display
+                if (currentHeight < minChartHeight) {
+                    gridInstance.resize(gridItem, gridItem.gridstackNode.w, minChartHeight);
+                }
             }
             // Ensure layout functionality remains working after chart creation
             console.log('Chart loaded, ensuring layout functionality remains active');
@@ -1524,6 +1530,12 @@ function createMultiStackedColumnChart(results, xColumn, groupColumn, yColumn, c
             // Add has-chart class for min-height enforcement
             if (gridItem.id === 'data-analysis-section') {
                 gridItem.classList.add('has-chart');
+                // Expand the chart div to accommodate the chart and push other elements down
+                const currentHeight = gridItem.gridstackNode.h;
+                const minChartHeight = 6; // Minimum height for chart display
+                if (currentHeight < minChartHeight) {
+                    gridInstance.resize(gridItem, gridItem.gridstackNode.w, minChartHeight);
+                }
             }
             // Ensure layout functionality remains working after chart creation
             console.log('Chart loaded, ensuring layout functionality remains active');
@@ -1625,6 +1637,12 @@ function createMultiGroupedColumnChart(results, xColumn, groupColumn, yColumn, c
             // Add has-chart class for min-height enforcement
             if (gridItem.id === 'data-analysis-section') {
                 gridItem.classList.add('has-chart');
+                // Expand the chart div to accommodate the chart and push other elements down
+                const currentHeight = gridItem.gridstackNode.h;
+                const minChartHeight = 6; // Minimum height for chart display
+                if (currentHeight < minChartHeight) {
+                    gridInstance.resize(gridItem, gridItem.gridstackNode.w, minChartHeight);
+                }
             }
             // Ensure layout functionality remains working after chart creation
             console.log('Chart loaded, ensuring layout functionality remains active');
@@ -1835,6 +1853,12 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
             // Add has-chart class for min-height enforcement
             if (gridItem.id === 'data-analysis-section') {
                 gridItem.classList.add('has-chart');
+                // Expand the chart div to accommodate the chart and push other elements down
+                const currentHeight = gridItem.gridstackNode.h;
+                const minChartHeight = 6; // Minimum height for chart display
+                if (currentHeight < minChartHeight) {
+                    gridInstance.resize(gridItem, gridItem.gridstackNode.w, minChartHeight);
+                }
             }
             // Ensure layout functionality remains working after chart creation
             console.log('Chart loaded, ensuring layout functionality remains active');
@@ -1999,6 +2023,12 @@ function createMultiScatterPlot(results, xColumn, groupColumn, yColumn, containe
             // Add has-chart class for min-height enforcement
             if (gridItem.id === 'data-analysis-section') {
                 gridItem.classList.add('has-chart');
+                // Expand the chart div to accommodate the chart and push other elements down
+                const currentHeight = gridItem.gridstackNode.h;
+                const minChartHeight = 6; // Minimum height for chart display
+                if (currentHeight < minChartHeight) {
+                    gridInstance.resize(gridItem, gridItem.gridstackNode.w, minChartHeight);
+                }
             }
             // Ensure layout functionality remains working after chart creation
             console.log('Chart loaded, ensuring layout functionality remains active');
