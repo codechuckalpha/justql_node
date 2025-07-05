@@ -1103,6 +1103,9 @@ if (newQueryButton && sqlTextarea) {
         isQueryModified = false;
         updateQueryInfo();
         sqlTextarea.focus();
+        
+        // Clear chart customization settings when starting new query
+        clearChartSettings();
     });
 }
 
@@ -1299,7 +1302,7 @@ function createMultiLineChart(results, xColumn, groupColumn, yColumn, container)
         };
     });
 
-    const layout = {
+    let layout = {
         title: `${yColumn} by ${xColumn} (grouped by ${groupColumn})`,
         paper_bgcolor: '#2d2d30',
         plot_bgcolor: '#1a1a1a',
@@ -1322,6 +1325,9 @@ function createMultiLineChart(results, xColumn, groupColumn, yColumn, container)
         },
         margin: { t: 50, b: 50, l: 50, r: 50 }
     };
+
+    // Apply saved chart customization settings
+    layout = applySettingsToLayout(layout);
 
     const config = {
         responsive: true,
@@ -1396,7 +1402,7 @@ function createSimpleLineChart(results, xColumn, yColumn, container) {
         }
     };
 
-    const layout = {
+    let layout = {
         title: `${yColumn} by ${xColumn}`,
         paper_bgcolor: '#2d2d30',
         plot_bgcolor: '#1a1a1a',
@@ -1413,6 +1419,9 @@ function createSimpleLineChart(results, xColumn, yColumn, container) {
         },
         margin: { t: 50, b: 50, l: 50, r: 50 }
     };
+
+    // Apply saved chart customization settings
+    layout = applySettingsToLayout(layout);
 
     const config = {
         responsive: true,
@@ -1486,7 +1495,7 @@ function createMultiStackedColumnChart(results, xColumn, groupColumn, yColumn, c
         };
     });
 
-    const layout = {
+    let layout = {
         title: `${yColumn} by ${xColumn} (grouped by ${groupColumn})`,
         barmode: 'stack', // Key change: 'stack' for stacked column chart
         paper_bgcolor: '#2d2d30',
@@ -1510,6 +1519,9 @@ function createMultiStackedColumnChart(results, xColumn, groupColumn, yColumn, c
         },
         margin: { t: 50, b: 50, l: 50, r: 50 }
     };
+
+    // Apply saved chart customization settings
+    layout = applySettingsToLayout(layout);
 
     const config = {
         responsive: true,
@@ -1593,7 +1605,7 @@ function createMultiGroupedColumnChart(results, xColumn, groupColumn, yColumn, c
         };
     });
 
-    const layout = {
+    let layout = {
         title: `${yColumn} by ${xColumn} (grouped by ${groupColumn})`,
         barmode: 'group', // Key change: 'group' for grouped column chart
         paper_bgcolor: '#2d2d30',
@@ -1617,6 +1629,9 @@ function createMultiGroupedColumnChart(results, xColumn, groupColumn, yColumn, c
         },
         margin: { t: 50, b: 50, l: 50, r: 50 }
     };
+
+    // Apply saved chart customization settings
+    layout = applySettingsToLayout(layout);
 
     const config = {
         responsive: true,
@@ -1686,7 +1701,7 @@ function createSimpleColumnChart(results, xColumn, yColumn, container) {
         }
     };
 
-    const layout = {
+    let layout = {
         title: `${yColumn} by ${xColumn}`,
         paper_bgcolor: '#2d2d30',
         plot_bgcolor: '#1a1a1a',
@@ -1703,6 +1718,9 @@ function createSimpleColumnChart(results, xColumn, yColumn, container) {
         },
         margin: { t: 50, b: 50, l: 50, r: 50 }
     };
+
+    // Apply saved chart customization settings
+    layout = applySettingsToLayout(layout);
 
     const config = {
         responsive: true,
@@ -1788,7 +1806,7 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
         });
     }
 
-    const layout = {
+    let layout = {
         title: `${yColumn} over Time${groupColumn ? ` (grouped by ${groupColumn})` : ''}`,
         paper_bgcolor: '#2d2d30',
         plot_bgcolor: '#1a1a1a',
@@ -1831,6 +1849,9 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
         },
         margin: { t: 50, b: 100, l: 50, r: 50 } 
     };
+
+    // Apply saved chart customization settings
+    layout = applySettingsToLayout(layout);
 
     const config = {
         responsive: true,
@@ -3025,6 +3046,9 @@ function loadQueryIntoTextarea(queryText) {
         sqlTextarea.value = queryText;
         updateLineNumbers();
         sqlTextarea.focus();
+        
+        // Clear chart customization settings when loading saved query
+        clearChartSettings();
     }
 }
 
@@ -3369,3 +3393,461 @@ const layoutCSS = `
 const style = document.createElement('style');
 style.textContent = layoutCSS;
 document.head.appendChild(style);
+
+// Chart customization functionality
+let currentChartSettings = {
+    type: 'bar',
+    backgroundColor: '#ffffff',
+    borderColor: '#007bff',
+    borderWidth: 2,
+    gridColor: '#e0e0e0',
+    textColor: '#333333',
+    fontSize: 12,
+    showLegend: true,
+    showGrid: true,
+    animation: true
+};
+
+// Event listener for customise button
+document.addEventListener('DOMContentLoaded', function() {
+    const customiseBtn = document.getElementById('customise-btn');
+    const popup = document.getElementById('chart-designer-popup');
+    const closeBtn = document.getElementById('chart-designer-close');
+    const applyBtn = document.getElementById('chart-designer-apply');
+    // Cancel button removed - no longer exists
+
+    if (customiseBtn) {
+        customiseBtn.addEventListener('click', function() {
+            populatePopupWithCurrentSettings();
+            popup.classList.remove('hidden');
+        });
+    }
+
+    // Close popup event listeners
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            popup.classList.add('hidden');
+        });
+    }
+
+    // Close popup when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === popup) {
+            popup.classList.add('hidden');
+        }
+    });
+
+    // Apply customization
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+            applyCustomization();
+            popup.classList.add('hidden');
+        });
+    }
+});
+
+// Function to populate popup with current chart settings
+function populatePopupWithCurrentSettings() {
+    const chartTypeSelect = document.getElementById('chart-type');
+    const backgroundColorInput = document.getElementById('background-color');
+    const borderColorInput = document.getElementById('border-color');
+    const borderWidthInput = document.getElementById('border-width');
+    const gridColorInput = document.getElementById('grid-color');
+    const textColorInput = document.getElementById('text-color');
+    const fontSizeInput = document.getElementById('font-size');
+    const showLegendCheckbox = document.getElementById('show-legend');
+    const showGridCheckbox = document.getElementById('show-grid');
+    const animationCheckbox = document.getElementById('animation');
+
+    if (chartTypeSelect) chartTypeSelect.value = currentChartSettings.type;
+    if (backgroundColorInput) backgroundColorInput.value = currentChartSettings.backgroundColor;
+    if (borderColorInput) borderColorInput.value = currentChartSettings.borderColor;
+    if (borderWidthInput) borderWidthInput.value = currentChartSettings.borderWidth;
+    if (gridColorInput) gridColorInput.value = currentChartSettings.gridColor;
+    if (textColorInput) textColorInput.value = currentChartSettings.textColor;
+    if (fontSizeInput) fontSizeInput.value = currentChartSettings.fontSize;
+    if (showLegendCheckbox) showLegendCheckbox.checked = currentChartSettings.showLegend;
+    if (showGridCheckbox) showGridCheckbox.checked = currentChartSettings.showGrid;
+    if (animationCheckbox) animationCheckbox.checked = currentChartSettings.animation;
+}
+
+// Function to apply customization changes to the chart
+function applyCustomization() {
+    const chartTypeSelect = document.getElementById('chart-type');
+    const backgroundColorInput = document.getElementById('background-color');
+    const borderColorInput = document.getElementById('border-color');
+    const borderWidthInput = document.getElementById('border-width');
+    const gridColorInput = document.getElementById('grid-color');
+    const textColorInput = document.getElementById('text-color');
+    const fontSizeInput = document.getElementById('font-size');
+    const showLegendCheckbox = document.getElementById('show-legend');
+    const showGridCheckbox = document.getElementById('show-grid');
+    const animationCheckbox = document.getElementById('animation');
+
+    // Update current settings
+    if (chartTypeSelect) currentChartSettings.type = chartTypeSelect.value;
+    if (backgroundColorInput) currentChartSettings.backgroundColor = backgroundColorInput.value;
+    if (borderColorInput) currentChartSettings.borderColor = borderColorInput.value;
+    if (borderWidthInput) currentChartSettings.borderWidth = parseInt(borderWidthInput.value);
+    if (gridColorInput) currentChartSettings.gridColor = gridColorInput.value;
+    if (textColorInput) currentChartSettings.textColor = textColorInput.value;
+    if (fontSizeInput) currentChartSettings.fontSize = parseInt(fontSizeInput.value);
+    if (showLegendCheckbox) currentChartSettings.showLegend = showLegendCheckbox.checked;
+    if (showGridCheckbox) currentChartSettings.showGrid = showGridCheckbox.checked;
+    if (animationCheckbox) currentChartSettings.animation = animationCheckbox.checked;
+
+    // Apply changes to existing chart if it exists
+    if (window.currentChart) {
+        updateChartWithSettings(window.currentChart);
+    }
+}
+
+// Function to update chart with new settings
+function updateChartWithSettings(chart) {
+    if (!chart) return;
+
+    // Update chart type
+    chart.config.type = currentChartSettings.type;
+
+    // Update colors and styling
+    if (chart.config.data.datasets && chart.config.data.datasets.length > 0) {
+        chart.config.data.datasets.forEach(dataset => {
+            dataset.backgroundColor = currentChartSettings.backgroundColor;
+            dataset.borderColor = currentChartSettings.borderColor;
+            dataset.borderWidth = currentChartSettings.borderWidth;
+        });
+    }
+
+    // Update options
+    if (!chart.config.options) chart.config.options = {};
+    if (!chart.config.options.plugins) chart.config.options.plugins = {};
+    if (!chart.config.options.scales) chart.config.options.scales = {};
+
+    // Update legend
+    chart.config.options.plugins.legend = {
+        display: currentChartSettings.showLegend,
+        labels: {
+            color: currentChartSettings.textColor,
+            font: {
+                size: currentChartSettings.fontSize
+            }
+        }
+    };
+
+    // Update grid and scales
+    chart.config.options.scales.x = {
+        display: currentChartSettings.showGrid,
+        grid: {
+            color: currentChartSettings.gridColor
+        },
+        ticks: {
+            color: currentChartSettings.textColor,
+            font: {
+                size: currentChartSettings.fontSize
+            }
+        }
+    };
+
+    chart.config.options.scales.y = {
+        display: currentChartSettings.showGrid,
+        grid: {
+            color: currentChartSettings.gridColor
+        },
+        ticks: {
+            color: currentChartSettings.textColor,
+            font: {
+                size: currentChartSettings.fontSize
+            }
+        }
+    };
+
+    // Update animation
+    chart.config.options.animation = currentChartSettings.animation;
+
+    // Update the chart
+    chart.update();
+}
+
+// Global variables to store current chart settings for Plotly.js
+let chartTitle = '';
+let legendPosition = 'right';
+
+// Event listener for customise-button to show popup
+document.addEventListener('DOMContentLoaded', function() {
+    const customiseButton = document.getElementById('customise-button');
+    const popup = document.getElementById('chart-designer-popup');
+    
+    // Load chart settings from localStorage when page loads
+    loadChartSettings();
+    
+    if (customiseButton) {
+        customiseButton.addEventListener('click', function() {
+            populatePopupWithCurrentSettings();
+            popup.classList.remove('hidden');
+        });
+    }
+});
+
+// Event listeners for popup close actions
+document.addEventListener('DOMContentLoaded', function() {
+    const popup = document.getElementById('chart-designer-popup');
+    const closeBtn = document.getElementById('chart-designer-close');
+    // Cancel button removed - no longer exists
+    
+    // Close popup with close button
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            popup.classList.add('hidden');
+        });
+    }
+    
+    // Close popup when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === popup) {
+            popup.classList.add('hidden');
+        }
+    });
+    
+    // Apply customization button
+    const applyBtn = document.getElementById('chart-designer-apply');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+            applyCustomizationChanges();
+            popup.classList.add('hidden');
+        });
+    }
+});
+
+// Function to populate popup with current chart settings
+function populatePopupWithCurrentSettings() {
+    const chartTitleInput = document.getElementById('chart-title-input');
+    const legendPositionSelect = document.getElementById('legend-position-select');
+    
+    // Get current settings from the chart container
+    const chartContainer = document.getElementById('chart-container');
+    if (chartContainer && chartContainer.layout) {
+        chartTitle = chartContainer.layout.title ? chartContainer.layout.title.text || chartContainer.layout.title || '' : '';
+        legendPosition = chartContainer.layout.legend ? chartContainer.layout.legend.orientation || 'right' : 'right';
+    }
+    
+    // Populate form fields
+    if (chartTitleInput) {
+        chartTitleInput.value = chartTitle;
+    }
+    
+    if (legendPositionSelect) {
+        legendPositionSelect.value = legendPosition;
+    }
+}
+
+// Function to apply customization changes using Plotly.relayout()
+function applyCustomizationChanges() {
+    const chartTitleInput = document.getElementById('chart-title-input');
+    const legendPositionSelect = document.getElementById('legend-position-select');
+    
+    // Get new values from form
+    if (chartTitleInput) {
+        chartTitle = chartTitleInput.value;
+    }
+    
+    if (legendPositionSelect) {
+        legendPosition = legendPositionSelect.value;
+    }
+    
+    // Save settings to localStorage
+    saveChartSettings();
+    
+    // Update existing Plotly charts
+    updatePlotlyCharts();
+}
+
+// Function to update existing Plotly charts with new title and legend position
+function updatePlotlyCharts() {
+    const chartContainer = document.getElementById('chart-container');
+    
+    if (chartContainer && chartContainer.data && window.Plotly) {
+        // Prepare update object for Plotly.relayout()
+        const updateObject = {};
+        
+        // Update title
+        if (chartTitle) {
+            updateObject.title = {
+                text: chartTitle,
+                font: {
+                    size: 16
+                }
+            };
+        } else {
+            updateObject.title = null;
+        }
+        
+        // Update legend position
+        const legendConfig = {
+            orientation: legendPosition === 'top' || legendPosition === 'bottom' ? 'h' : 'v'
+        };
+        
+        switch (legendPosition) {
+            case 'top':
+                legendConfig.x = 0.5;
+                legendConfig.xanchor = 'center';
+                legendConfig.y = 1.1;
+                legendConfig.yanchor = 'bottom';
+                break;
+            case 'bottom':
+                legendConfig.x = 0.5;
+                legendConfig.xanchor = 'center';
+                legendConfig.y = -0.2;
+                legendConfig.yanchor = 'top';
+                break;
+            case 'left':
+                legendConfig.x = -0.1;
+                legendConfig.xanchor = 'right';
+                legendConfig.y = 0.5;
+                legendConfig.yanchor = 'middle';
+                break;
+            case 'right':
+            default:
+                legendConfig.x = 1.02;
+                legendConfig.xanchor = 'left';
+                legendConfig.y = 0.5;
+                legendConfig.yanchor = 'middle';
+                break;
+        }
+        
+        updateObject.legend = legendConfig;
+        
+        // Apply updates using Plotly.relayout()
+        Plotly.relayout(chartContainer, updateObject).then(() => {
+            console.log('Chart updated with new customization settings');
+        }).catch((error) => {
+            console.error('Error updating chart:', error);
+        });
+    }
+}
+
+// Chart customization persistence functions
+function saveChartSettings() {
+    const settings = {
+        chartTitle: chartTitle,
+        legendPosition: legendPosition
+    };
+    
+    try {
+        localStorage.setItem('chartCustomizationSettings', JSON.stringify(settings));
+        console.log('Chart settings saved to localStorage:', settings);
+    } catch (error) {
+        console.error('Error saving chart settings to localStorage:', error);
+    }
+}
+
+function loadChartSettings() {
+    try {
+        const savedSettings = localStorage.getItem('chartCustomizationSettings');
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            chartTitle = settings.chartTitle || '';
+            legendPosition = settings.legendPosition || 'right';
+            console.log('Chart settings loaded from localStorage:', settings);
+            return settings;
+        }
+    } catch (error) {
+        console.error('Error loading chart settings from localStorage:', error);
+    }
+    
+    // Return default settings if no saved settings found or error occurred
+    return {
+        chartTitle: '',
+        legendPosition: 'right'
+    };
+}
+
+function clearChartSettings() {
+    try {
+        localStorage.removeItem('chartCustomizationSettings');
+        console.log('Chart settings cleared from localStorage');
+        
+        // Reset global variables to defaults
+        chartTitle = '';
+        legendPosition = 'right';
+    } catch (error) {
+        console.error('Error clearing chart settings from localStorage:', error);
+    }
+}
+
+function applyLoadedSettingsToChart() {
+    // Load settings from localStorage
+    const settings = loadChartSettings();
+    
+    // Apply the loaded settings to existing charts
+    if (settings.chartTitle || settings.legendPosition !== 'right') {
+        updatePlotlyCharts();
+    }
+    
+    // Update the customization popup if it exists
+    updateCustomizationPopup();
+}
+
+function updateCustomizationPopup() {
+    const chartTitleInput = document.getElementById('chart-title-input');
+    const legendPositionSelect = document.getElementById('legend-position-select');
+    
+    if (chartTitleInput) {
+        chartTitleInput.value = chartTitle;
+    }
+    
+    if (legendPositionSelect) {
+        legendPositionSelect.value = legendPosition;
+    }
+}
+
+function applySettingsToLayout(layout) {
+    // Apply saved chart title if it exists
+    if (chartTitle) {
+        layout.title = {
+            text: chartTitle,
+            font: {
+                size: 16,
+                color: '#cccccc'
+            }
+        };
+    }
+    
+    // Apply saved legend position - merge with existing legend settings
+    const existingLegend = layout.legend || {};
+    const legendConfig = {
+        ...existingLegend,
+        orientation: legendPosition === 'top' || legendPosition === 'bottom' ? 'h' : 'v'
+    };
+    
+    switch (legendPosition) {
+        case 'top':
+            legendConfig.x = 0.5;
+            legendConfig.xanchor = 'center';
+            legendConfig.y = 1.1;
+            legendConfig.yanchor = 'bottom';
+            break;
+        case 'bottom':
+            legendConfig.x = 0.5;
+            legendConfig.xanchor = 'center';
+            legendConfig.y = -0.2;
+            legendConfig.yanchor = 'top';
+            break;
+        case 'left':
+            legendConfig.x = -0.1;
+            legendConfig.xanchor = 'right';
+            legendConfig.y = 0.5;
+            legendConfig.yanchor = 'middle';
+            break;
+        case 'right':
+        default:
+            legendConfig.x = 1.02;
+            legendConfig.xanchor = 'left';
+            legendConfig.y = 0.5;
+            legendConfig.yanchor = 'middle';
+            break;
+    }
+    
+    layout.legend = legendConfig;
+    
+    return layout;
+}
