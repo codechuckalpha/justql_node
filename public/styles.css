@@ -803,13 +803,6 @@ body {
   overflow: hidden; /* Always prevent scrolling */
 }
 
-/* When chart is present, allow normal flex behavior for chart rendering */
-#data-analysis-section.has-chart #chart-container {
-  flex-grow: 1; /* Expand when chart is present */
-  height: auto; /* Auto height when chart is present */
-  overflow: visible; /* Allow chart to display properly */
-}
-
 /* Chart placeholder styling to match data table */
 #chart-placeholder {
   padding: 20px;
