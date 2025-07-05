@@ -1936,6 +1936,9 @@ function createSimpleScatterPlot(results, xColumn, yColumn, container) {
         margin: { t: 50, b: 50, l: 50, r: 50 }
     };
 
+    // Apply saved chart customization settings
+    layout = applySettingsToLayout(layout);
+
     const config = {
         responsive: true,
         displayModeBar: false,
@@ -2024,6 +2027,9 @@ function createMultiScatterPlot(results, xColumn, groupColumn, yColumn, containe
             bgcolor: 'rgba(45, 45, 48, 0.8)'
         }
     };
+
+    // Apply saved chart customization settings
+    layout = applySettingsToLayout(layout);
 
     const config = {
         responsive: true,
@@ -3263,6 +3269,15 @@ function setupScrollControl() {
         // Check if the event target is within the header
         const isWithinHeader = headerElement && headerElement.contains(event.target);
         
+        // Check if the event target is within the chart designer popup
+        const chartDesignerPopup = document.getElementById('chart-designer-popup');
+        const isWithinChartDesignerPopup = chartDesignerPopup && chartDesignerPopup.contains(event.target);
+        
+        // Allow normal scrolling within chart designer popup
+        if (isWithinChartDesignerPopup) {
+            return;
+        }
+        
         if ((isWithinSidebar || isWithinHeader) && !isWithinGridStack) {
             event.preventDefault();
             event.stopPropagation();
@@ -3408,183 +3423,50 @@ let currentChartSettings = {
     animation: true
 };
 
-// Event listener for customise button
-document.addEventListener('DOMContentLoaded', function() {
-    const customiseBtn = document.getElementById('customise-btn');
-    const popup = document.getElementById('chart-designer-popup');
-    const closeBtn = document.getElementById('chart-designer-close');
-    const applyBtn = document.getElementById('chart-designer-apply');
-    // Cancel button removed - no longer exists
+// Old customization system removed - replaced with simplified version below
 
-    if (customiseBtn) {
-        customiseBtn.addEventListener('click', function() {
-            populatePopupWithCurrentSettings();
-            popup.classList.remove('hidden');
-        });
-    }
+// Old populatePopupWithCurrentSettings function removed - replaced with simplified version below
 
-    // Close popup event listeners
-    if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
-            popup.classList.add('hidden');
-        });
-    }
+// Old applyCustomization function removed - replaced with applyCustomizationChanges below
 
-    // Close popup when clicking outside
-    window.addEventListener('click', function(event) {
-        if (event.target === popup) {
-            popup.classList.add('hidden');
-        }
-    });
-
-    // Apply customization
-    if (applyBtn) {
-        applyBtn.addEventListener('click', function() {
-            applyCustomization();
-            popup.classList.add('hidden');
-        });
-    }
-});
-
-// Function to populate popup with current chart settings
-function populatePopupWithCurrentSettings() {
-    const chartTypeSelect = document.getElementById('chart-type');
-    const backgroundColorInput = document.getElementById('background-color');
-    const borderColorInput = document.getElementById('border-color');
-    const borderWidthInput = document.getElementById('border-width');
-    const gridColorInput = document.getElementById('grid-color');
-    const textColorInput = document.getElementById('text-color');
-    const fontSizeInput = document.getElementById('font-size');
-    const showLegendCheckbox = document.getElementById('show-legend');
-    const showGridCheckbox = document.getElementById('show-grid');
-    const animationCheckbox = document.getElementById('animation');
-
-    if (chartTypeSelect) chartTypeSelect.value = currentChartSettings.type;
-    if (backgroundColorInput) backgroundColorInput.value = currentChartSettings.backgroundColor;
-    if (borderColorInput) borderColorInput.value = currentChartSettings.borderColor;
-    if (borderWidthInput) borderWidthInput.value = currentChartSettings.borderWidth;
-    if (gridColorInput) gridColorInput.value = currentChartSettings.gridColor;
-    if (textColorInput) textColorInput.value = currentChartSettings.textColor;
-    if (fontSizeInput) fontSizeInput.value = currentChartSettings.fontSize;
-    if (showLegendCheckbox) showLegendCheckbox.checked = currentChartSettings.showLegend;
-    if (showGridCheckbox) showGridCheckbox.checked = currentChartSettings.showGrid;
-    if (animationCheckbox) animationCheckbox.checked = currentChartSettings.animation;
-}
-
-// Function to apply customization changes to the chart
-function applyCustomization() {
-    const chartTypeSelect = document.getElementById('chart-type');
-    const backgroundColorInput = document.getElementById('background-color');
-    const borderColorInput = document.getElementById('border-color');
-    const borderWidthInput = document.getElementById('border-width');
-    const gridColorInput = document.getElementById('grid-color');
-    const textColorInput = document.getElementById('text-color');
-    const fontSizeInput = document.getElementById('font-size');
-    const showLegendCheckbox = document.getElementById('show-legend');
-    const showGridCheckbox = document.getElementById('show-grid');
-    const animationCheckbox = document.getElementById('animation');
-
-    // Update current settings
-    if (chartTypeSelect) currentChartSettings.type = chartTypeSelect.value;
-    if (backgroundColorInput) currentChartSettings.backgroundColor = backgroundColorInput.value;
-    if (borderColorInput) currentChartSettings.borderColor = borderColorInput.value;
-    if (borderWidthInput) currentChartSettings.borderWidth = parseInt(borderWidthInput.value);
-    if (gridColorInput) currentChartSettings.gridColor = gridColorInput.value;
-    if (textColorInput) currentChartSettings.textColor = textColorInput.value;
-    if (fontSizeInput) currentChartSettings.fontSize = parseInt(fontSizeInput.value);
-    if (showLegendCheckbox) currentChartSettings.showLegend = showLegendCheckbox.checked;
-    if (showGridCheckbox) currentChartSettings.showGrid = showGridCheckbox.checked;
-    if (animationCheckbox) currentChartSettings.animation = animationCheckbox.checked;
-
-    // Apply changes to existing chart if it exists
-    if (window.currentChart) {
-        updateChartWithSettings(window.currentChart);
-    }
-}
-
-// Function to update chart with new settings
-function updateChartWithSettings(chart) {
-    if (!chart) return;
-
-    // Update chart type
-    chart.config.type = currentChartSettings.type;
-
-    // Update colors and styling
-    if (chart.config.data.datasets && chart.config.data.datasets.length > 0) {
-        chart.config.data.datasets.forEach(dataset => {
-            dataset.backgroundColor = currentChartSettings.backgroundColor;
-            dataset.borderColor = currentChartSettings.borderColor;
-            dataset.borderWidth = currentChartSettings.borderWidth;
-        });
-    }
-
-    // Update options
-    if (!chart.config.options) chart.config.options = {};
-    if (!chart.config.options.plugins) chart.config.options.plugins = {};
-    if (!chart.config.options.scales) chart.config.options.scales = {};
-
-    // Update legend
-    chart.config.options.plugins.legend = {
-        display: currentChartSettings.showLegend,
-        labels: {
-            color: currentChartSettings.textColor,
-            font: {
-                size: currentChartSettings.fontSize
-            }
-        }
-    };
-
-    // Update grid and scales
-    chart.config.options.scales.x = {
-        display: currentChartSettings.showGrid,
-        grid: {
-            color: currentChartSettings.gridColor
-        },
-        ticks: {
-            color: currentChartSettings.textColor,
-            font: {
-                size: currentChartSettings.fontSize
-            }
-        }
-    };
-
-    chart.config.options.scales.y = {
-        display: currentChartSettings.showGrid,
-        grid: {
-            color: currentChartSettings.gridColor
-        },
-        ticks: {
-            color: currentChartSettings.textColor,
-            font: {
-                size: currentChartSettings.fontSize
-            }
-        }
-    };
-
-    // Update animation
-    chart.config.options.animation = currentChartSettings.animation;
-
-    // Update the chart
-    chart.update();
-}
+// Old updateChartWithSettings function removed - chart updates now handled by updatePlotlyCharts
 
 // Global variables to store current chart settings for Plotly.js
 let chartTitle = '';
 let legendPosition = 'right';
 
-// Event listener for customise-button to show popup
+// Event listener for customise buttons to show popup
 document.addEventListener('DOMContentLoaded', function() {
     const customiseButton = document.getElementById('customise-button');
+    const customiseBtn = document.getElementById('customise-btn');
     const popup = document.getElementById('chart-designer-popup');
     
     // Load chart settings from localStorage when page loads
     loadChartSettings();
     
+    // Function to show popup with proper focus
+    function showPopup() {
+        populatePopupWithCurrentSettings();
+        popup.classList.remove('hidden');
+        
+        // Set focus to chart title input when popup opens
+        const chartTitleInput = document.getElementById('chart-title-input');
+        if (chartTitleInput) {
+            // Use setTimeout to ensure popup is fully rendered before focusing
+            setTimeout(() => {
+                chartTitleInput.focus();
+                chartTitleInput.select(); // Select existing text for easy editing
+            }, 100);
+        }
+    }
+    
+    // Add event listeners for both possible customise buttons
     if (customiseButton) {
-        customiseButton.addEventListener('click', function() {
-            populatePopupWithCurrentSettings();
-            popup.classList.remove('hidden');
-        });
+        customiseButton.addEventListener('click', showPopup);
+    }
+    
+    if (customiseBtn) {
+        customiseBtn.addEventListener('click', showPopup);
     }
 });
 
@@ -3592,7 +3474,9 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     const popup = document.getElementById('chart-designer-popup');
     const closeBtn = document.getElementById('chart-designer-close');
-    // Cancel button removed - no longer exists
+    const applyBtn = document.getElementById('chart-designer-apply');
+    
+    if (!popup) return; // Exit if popup doesn't exist
     
     // Close popup with close button
     if (closeBtn) {
@@ -3601,21 +3485,40 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Close popup when clicking outside
-    window.addEventListener('click', function(event) {
-        if (event.target === popup) {
+    // Improved click-outside logic that doesn't interfere with input fields
+    document.addEventListener('click', function(event) {
+        // Only close if popup is visible and click is outside popup content
+        if (!popup.classList.contains('hidden') && 
+            !popup.contains(event.target) && 
+            event.target !== popup) {
+            
+            // Don't close if clicking on the customise buttons
+            const customiseButton = document.getElementById('customise-button');
+            const customiseBtn = document.getElementById('customise-btn');
+            
+            if ((customiseButton && customiseButton.contains(event.target)) ||
+                (customiseBtn && customiseBtn.contains(event.target))) {
+                return;
+            }
+            
             popup.classList.add('hidden');
         }
     });
     
     // Apply customization button
-    const applyBtn = document.getElementById('chart-designer-apply');
     if (applyBtn) {
         applyBtn.addEventListener('click', function() {
             applyCustomizationChanges();
             popup.classList.add('hidden');
         });
     }
+    
+    // Close popup on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && !popup.classList.contains('hidden')) {
+            popup.classList.add('hidden');
+        }
+    });
 });
 
 // Function to populate popup with current chart settings
@@ -3819,24 +3722,39 @@ function applySettingsToLayout(layout) {
         orientation: legendPosition === 'top' || legendPosition === 'bottom' ? 'h' : 'v'
     };
     
+    // Initialize or preserve existing margin settings
+    if (!layout.margin) {
+        layout.margin = {};
+    }
+    
     switch (legendPosition) {
         case 'top':
             legendConfig.x = 0.5;
             legendConfig.xanchor = 'center';
             legendConfig.y = 1.1;
             legendConfig.yanchor = 'bottom';
+            // Increase top margin to provide space between title and legend
+            layout.margin.t = (layout.margin.t || 50) + 40;
             break;
         case 'bottom':
             legendConfig.x = 0.5;
             legendConfig.xanchor = 'center';
             legendConfig.y = -0.2;
             legendConfig.yanchor = 'top';
+            // Reset top margin to default if it was increased for top legend
+            if (layout.margin.t && layout.margin.t > 50) {
+                layout.margin.t = 50;
+            }
             break;
         case 'left':
             legendConfig.x = -0.1;
             legendConfig.xanchor = 'right';
             legendConfig.y = 0.5;
             legendConfig.yanchor = 'middle';
+            // Reset top margin to default if it was increased for top legend
+            if (layout.margin.t && layout.margin.t > 50) {
+                layout.margin.t = 50;
+            }
             break;
         case 'right':
         default:
@@ -3844,6 +3762,10 @@ function applySettingsToLayout(layout) {
             legendConfig.xanchor = 'left';
             legendConfig.y = 0.5;
             legendConfig.yanchor = 'middle';
+            // Reset top margin to default if it was increased for top legend
+            if (layout.margin.t && layout.margin.t > 50) {
+                layout.margin.t = 50;
+            }
             break;
     }
     

@@ -63,6 +63,35 @@
         </svg>
     </button>
 </div>
+  
+  <!-- Chart Designer Popup -->
+  <div id="chart-designer-popup" class="popup-overlay hidden">
+    <div class="popup-content">
+      <div class="popup-header">
+        <h3>🎨 Chart Designer</h3>
+        <button class="popup-close" id="chart-designer-close">&times;</button>
+      </div>
+      <div class="popup-body">
+        <div class="form-group">
+          <label>Chart Title</label>
+          <input type="text" id="chart-title-input" class="form-input" placeholder="Enter chart title">
+        </div>
+        <div class="form-group">
+          <label>Legend Position</label>
+          <select id="legend-position-select" class="form-select">
+            <option value="top">Top</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+            <option value="bottom">Bottom</option>
+          </select>
+        </div>
+      </div>
+      <div class="popup-footer">
+        <button class="popup-button" id="chart-designer-apply">Close</button>
+      </div>
+    </div>
+  </div>
+  
   <div class="sidebar-container collapsed">
     <!-- Icon Bar -->
     <div class="icon-bar">
