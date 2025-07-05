@@ -3731,20 +3731,26 @@ function applySettingsToLayout(layout) {
         case 'top':
             legendConfig.x = 0.5;
             legendConfig.xanchor = 'center';
-            legendConfig.y = 1.15;
-            legendConfig.yanchor = 'bottom';
+            legendConfig.y = 1.5;
+            legendConfig.yanchor = 'top';
             // Increase top margin to provide space between title and legend
-            layout.margin.t = (layout.margin.t || 50) + 60;
+            layout.margin.t = (layout.margin.t || 50) + 110;
+            // Reset bottom margin to default if it was increased for bottom legend
+            if (layout.margin.b && layout.margin.b > 50) {
+                layout.margin.b = 50;
+            }
             break;
         case 'bottom':
             legendConfig.x = 0.5;
             legendConfig.xanchor = 'center';
-            legendConfig.y = -0.2;
+            legendConfig.y = -0.3;
             legendConfig.yanchor = 'top';
             // Reset top margin to default if it was increased for top legend
             if (layout.margin.t && layout.margin.t > 50) {
                 layout.margin.t = 50;
             }
+            // Add bottom margin adjustment
+            layout.margin.b = (layout.margin.b || 50) + 40;
             break;
         case 'left':
             legendConfig.x = -0.1;
@@ -3754,6 +3760,10 @@ function applySettingsToLayout(layout) {
             // Reset top margin to default if it was increased for top legend
             if (layout.margin.t && layout.margin.t > 50) {
                 layout.margin.t = 50;
+            }
+            // Reset bottom margin to default if it was increased for bottom legend
+            if (layout.margin.b && layout.margin.b > 50) {
+                layout.margin.b = 50;
             }
             break;
         case 'right':
@@ -3765,6 +3775,10 @@ function applySettingsToLayout(layout) {
             // Reset top margin to default if it was increased for top legend
             if (layout.margin.t && layout.margin.t > 50) {
                 layout.margin.t = 50;
+            }
+            // Reset bottom margin to default if it was increased for bottom legend
+            if (layout.margin.b && layout.margin.b > 50) {
+                layout.margin.b = 50;
             }
             break;
     }
