@@ -2418,6 +2418,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (overlay) {
             overlay.remove();
         }
+        // Re-enable float and compact after drag/resize stops
+        gridInstance.float(true);
+        gridInstance.compact(true);
         // Trigger Plotly resize after operations
         if (el.id === 'data-analysis-section') {
             setTimeout(() => {
@@ -2427,6 +2430,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     
     gridInstance.on('resizestart dragstart', function (_, el) {
+        // Disable float and compact during drag to prevent other elements from moving
+        gridInstance.float(false);
+        gridInstance.compact(false);
         // Find the specific chart container within the dragged/resized element
         const chartContainer = el.querySelector('#chart-container');
         if (chartContainer) {
