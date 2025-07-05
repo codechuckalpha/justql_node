@@ -1918,7 +1918,7 @@ function createSimpleScatterPlot(results, xColumn, yColumn, container) {
         }
     };
 
-    const layout = {
+    let layout = {
         title: `${yColumn} vs ${xColumn}`,
         paper_bgcolor: '#2d2d30',
         plot_bgcolor: '#1a1a1a',
@@ -2006,7 +2006,7 @@ function createMultiScatterPlot(results, xColumn, groupColumn, yColumn, containe
         };
     });
 
-    const layout = {
+    let layout = {
         title: `${yColumn} vs ${xColumn} (by ${groupColumn})`,
         paper_bgcolor: '#2d2d30',
         plot_bgcolor: '#1a1a1a',
@@ -3731,10 +3731,10 @@ function applySettingsToLayout(layout) {
         case 'top':
             legendConfig.x = 0.5;
             legendConfig.xanchor = 'center';
-            legendConfig.y = 1.1;
+            legendConfig.y = 1.15;
             legendConfig.yanchor = 'bottom';
             // Increase top margin to provide space between title and legend
-            layout.margin.t = (layout.margin.t || 50) + 40;
+            layout.margin.t = (layout.margin.t || 50) + 60;
             break;
         case 'bottom':
             legendConfig.x = 0.5;
