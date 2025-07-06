@@ -3473,24 +3473,16 @@ document.addEventListener('DOMContentLoaded', function() {
 // Event listeners for popup close actions
 document.addEventListener('DOMContentLoaded', function() {
     const popup = document.getElementById('chart-designer-popup');
-    const closeBtn = document.getElementById('chart-designer-close');
     const applyBtn = document.getElementById('chart-designer-apply');
     
     if (!popup) return; // Exit if popup doesn't exist
     
-    // Close popup with close button
-    if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
-            popup.classList.add('hidden');
-        });
-    }
     
-    // Improved click-outside logic that doesn't interfere with input fields
+    // Click outside to close popup
     document.addEventListener('click', function(event) {
         // Only close if popup is visible and click is outside popup content
-        if (!popup.classList.contains('hidden') && 
-            !popup.contains(event.target) && 
-            event.target !== popup) {
+        if (!popup.classList.contains('hidden')) {
+            const popupContent = popup.querySelector('.popup-content');
             
             // Don't close if clicking on the customise buttons
             const customiseButton = document.getElementById('customise-button');
@@ -3501,7 +3493,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            popup.classList.add('hidden');
+            // Close if clicking outside the popup content
+            if (!popupContent.contains(event.target)) {
+                popup.classList.add('hidden');
+            }
         }
     });
     
