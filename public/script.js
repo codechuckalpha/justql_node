@@ -3589,24 +3589,39 @@ function updatePlotlyCharts() {
             orientation: legendPosition === 'top' || legendPosition === 'bottom' ? 'h' : 'v'
         };
         
+        // Initialize margin object if it doesn't exist
+        if (!updateObject.margin) {
+            updateObject.margin = {};
+        }
+        
         switch (legendPosition) {
             case 'top':
                 legendConfig.x = 0.5;
                 legendConfig.xanchor = 'center';
-                legendConfig.y = 1.1;
+                legendConfig.y = 1.02;
                 legendConfig.yanchor = 'bottom';
+                // Increase top margin to provide space for legend below title
+                updateObject.margin.t = 100;
+                // Reset bottom margin to default
+                updateObject.margin.b = 50;
                 break;
             case 'bottom':
                 legendConfig.x = 0.5;
                 legendConfig.xanchor = 'center';
                 legendConfig.y = -0.2;
                 legendConfig.yanchor = 'top';
+                // Keep margins consistent with other positions
+                updateObject.margin.t = 50;
+                updateObject.margin.b = 50;
                 break;
             case 'left':
                 legendConfig.x = -0.1;
                 legendConfig.xanchor = 'right';
                 legendConfig.y = 0.5;
                 legendConfig.yanchor = 'middle';
+                // Reset margins to default
+                updateObject.margin.t = 50;
+                updateObject.margin.b = 50;
                 break;
             case 'right':
             default:
@@ -3614,6 +3629,9 @@ function updatePlotlyCharts() {
                 legendConfig.xanchor = 'left';
                 legendConfig.y = 0.5;
                 legendConfig.yanchor = 'middle';
+                // Reset margins to default
+                updateObject.margin.t = 50;
+                updateObject.margin.b = 50;
                 break;
         }
         
@@ -3731,10 +3749,10 @@ function applySettingsToLayout(layout) {
         case 'top':
             legendConfig.x = 0.5;
             legendConfig.xanchor = 'center';
-            legendConfig.y = 1.5;
-            legendConfig.yanchor = 'top';
-            // Increase top margin to provide space between title and legend
-            layout.margin.t = (layout.margin.t || 50) + 110;
+            legendConfig.y = 1.02;
+            legendConfig.yanchor = 'bottom';
+            // Increase top margin to provide space for legend below title
+            layout.margin.t = (layout.margin.t || 50) + 50;
             // Reset bottom margin to default if it was increased for bottom legend
             if (layout.margin.b && layout.margin.b > 50) {
                 layout.margin.b = 50;

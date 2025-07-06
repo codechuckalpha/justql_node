@@ -796,8 +796,9 @@ body {
 
 /* Chart container wrapper - shorter to prevent scrolling */
 #chart-container {
-  flex-grow: 0; /* Don't expand to fill space */
-  height: 120px; /* Fixed shorter height */
+  flex-grow: 1; /* Allow expansion to fill space */
+  height: 100%; /* Use full available height */
+  min-height: 200px; /* Minimum height for visibility */
   position: relative; /* Needed for absolute positioning */
   padding: 0 10px 10px; /* Match table wrapper padding */
   overflow: hidden; /* Always prevent scrolling */
