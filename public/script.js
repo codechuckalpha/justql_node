@@ -3608,11 +3608,21 @@ function updatePlotlyCharts() {
             case 'bottom':
                 legendConfig.x = 0.5;
                 legendConfig.xanchor = 'center';
-                legendConfig.y = -0.2;
                 legendConfig.yanchor = 'top';
-                // Keep margins consistent with other positions
+                // Keep top margin consistent with other positions
                 updateObject.margin.t = 50;
-                updateObject.margin.b = 50;
+                // Check if it's a time series chart and adjust legend positioning
+                const chartTypeDropdown = document.getElementById('chart-type-dropdown');
+                const currentChartType = chartTypeDropdown ? chartTypeDropdown.value : 'line';
+                if (currentChartType === 'timeseries') {
+                    // Position legend above the date slider
+                    legendConfig.y = -0.25;
+                    updateObject.margin.b = 50;
+                } else {
+                    // Position legend below x-axis titles for other charts
+                    legendConfig.y = -0.4;
+                    updateObject.margin.b = 50;
+                }
                 break;
             case 'left':
                 legendConfig.x = -0.1;
@@ -3761,14 +3771,23 @@ function applySettingsToLayout(layout) {
         case 'bottom':
             legendConfig.x = 0.5;
             legendConfig.xanchor = 'center';
-            legendConfig.y = -0.3;
             legendConfig.yanchor = 'top';
             // Reset top margin to default if it was increased for top legend
             if (layout.margin.t && layout.margin.t > 50) {
                 layout.margin.t = 50;
             }
-            // Add bottom margin adjustment
-            layout.margin.b = (layout.margin.b || 50) + 40;
+            // Check if it's a time series chart and adjust legend positioning
+            const chartTypeDropdown = document.getElementById('chart-type-dropdown');
+            const currentChartType = chartTypeDropdown ? chartTypeDropdown.value : 'line';
+            if (currentChartType === 'timeseries') {
+                // Position legend above the date slider
+                legendConfig.y = -0.25;
+                layout.margin.b = 50;
+            } else {
+                // Position legend below x-axis titles for other charts
+                legendConfig.y = -0.4;
+                layout.margin.b = 50;
+            }
             break;
         case 'left':
             legendConfig.x = -0.1;
