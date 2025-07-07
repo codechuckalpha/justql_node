@@ -1348,9 +1348,16 @@ function createMultiLineChart(results, xColumn, groupColumn, yColumn, container)
             // Add has-chart class for min-height enforcement
             if (gridItem.id === 'data-analysis-section') {
                 gridItem.classList.add('has-chart');
+                // Update minimum height constraint for charts
+                const minHeight = 400; // Match CSS min-height for has-chart
+                const cellHeight = 80; // Match gridstack cellHeight
+                const verticalMargin = 10; // Match gridstack verticalMargin
+                const minRows = Math.ceil(minHeight / (cellHeight + verticalMargin));
+                gridInstance.update(gridItem, { minH: minRows });
+                
                 // Expand the chart div to accommodate the chart and push other elements down
                 const currentHeight = gridItem.gridstackNode.h;
-                const minChartHeight = 6; // Minimum height for chart display
+                const minChartHeight = minRows; // Use calculated minimum height
                 if (currentHeight < minChartHeight) {
                     gridInstance.resize(gridItem, gridItem.gridstackNode.w, minChartHeight);
                 }
@@ -1542,9 +1549,16 @@ function createMultiStackedColumnChart(results, xColumn, groupColumn, yColumn, c
             // Add has-chart class for min-height enforcement
             if (gridItem.id === 'data-analysis-section') {
                 gridItem.classList.add('has-chart');
+                // Update minimum height constraint for charts
+                const minHeight = 400; // Match CSS min-height for has-chart
+                const cellHeight = 80; // Match gridstack cellHeight
+                const verticalMargin = 10; // Match gridstack verticalMargin
+                const minRows = Math.ceil(minHeight / (cellHeight + verticalMargin));
+                gridInstance.update(gridItem, { minH: minRows });
+                
                 // Expand the chart div to accommodate the chart and push other elements down
                 const currentHeight = gridItem.gridstackNode.h;
-                const minChartHeight = 6; // Minimum height for chart display
+                const minChartHeight = minRows; // Use calculated minimum height
                 if (currentHeight < minChartHeight) {
                     gridInstance.resize(gridItem, gridItem.gridstackNode.w, minChartHeight);
                 }
@@ -1652,9 +1666,16 @@ function createMultiGroupedColumnChart(results, xColumn, groupColumn, yColumn, c
             // Add has-chart class for min-height enforcement
             if (gridItem.id === 'data-analysis-section') {
                 gridItem.classList.add('has-chart');
+                // Update minimum height constraint for charts
+                const minHeight = 400; // Match CSS min-height for has-chart
+                const cellHeight = 80; // Match gridstack cellHeight
+                const verticalMargin = 10; // Match gridstack verticalMargin
+                const minRows = Math.ceil(minHeight / (cellHeight + verticalMargin));
+                gridInstance.update(gridItem, { minH: minRows });
+                
                 // Expand the chart div to accommodate the chart and push other elements down
                 const currentHeight = gridItem.gridstackNode.h;
-                const minChartHeight = 6; // Minimum height for chart display
+                const minChartHeight = minRows; // Use calculated minimum height
                 if (currentHeight < minChartHeight) {
                     gridInstance.resize(gridItem, gridItem.gridstackNode.w, minChartHeight);
                 }
@@ -1874,9 +1895,16 @@ function createTimeSeriesChart(results, xColumn, yColumn, groupColumn, container
             // Add has-chart class for min-height enforcement
             if (gridItem.id === 'data-analysis-section') {
                 gridItem.classList.add('has-chart');
+                // Update minimum height constraint for charts
+                const minHeight = 400; // Match CSS min-height for has-chart
+                const cellHeight = 80; // Match gridstack cellHeight
+                const verticalMargin = 10; // Match gridstack verticalMargin
+                const minRows = Math.ceil(minHeight / (cellHeight + verticalMargin));
+                gridInstance.update(gridItem, { minH: minRows });
+                
                 // Expand the chart div to accommodate the chart and push other elements down
                 const currentHeight = gridItem.gridstackNode.h;
-                const minChartHeight = 6; // Minimum height for chart display
+                const minChartHeight = minRows; // Use calculated minimum height
                 if (currentHeight < minChartHeight) {
                     gridInstance.resize(gridItem, gridItem.gridstackNode.w, minChartHeight);
                 }
@@ -2050,9 +2078,16 @@ function createMultiScatterPlot(results, xColumn, groupColumn, yColumn, containe
             // Add has-chart class for min-height enforcement
             if (gridItem.id === 'data-analysis-section') {
                 gridItem.classList.add('has-chart');
+                // Update minimum height constraint for charts
+                const minHeight = 400; // Match CSS min-height for has-chart
+                const cellHeight = 80; // Match gridstack cellHeight
+                const verticalMargin = 10; // Match gridstack verticalMargin
+                const minRows = Math.ceil(minHeight / (cellHeight + verticalMargin));
+                gridInstance.update(gridItem, { minH: minRows });
+                
                 // Expand the chart div to accommodate the chart and push other elements down
                 const currentHeight = gridItem.gridstackNode.h;
-                const minChartHeight = 6; // Minimum height for chart display
+                const minChartHeight = minRows; // Use calculated minimum height
                 if (currentHeight < minChartHeight) {
                     gridInstance.resize(gridItem, gridItem.gridstackNode.w, minChartHeight);
                 }
@@ -2097,14 +2132,22 @@ function clearChart() {
     if (chartPlaceholder) chartPlaceholder.style.display = 'block';
     if (chartContainer && chartContainer.data) Plotly.purge(chartContainer); // Ensure purge for a clean slate
     if (chartDiv) chartDiv.style.minHeight = 'auto';
-    if (dataAnalysisSection) dataAnalysisSection.classList.remove('has-chart'); // Remove min-height when chart is cleared
+    if (dataAnalysisSection) {
+        dataAnalysisSection.classList.remove('has-chart'); // Remove min-height when chart is cleared
+        // Reset minimum height constraint to no-chart value
+        const minHeight = 200; // Match CSS min-height for no chart
+        const cellHeight = 80; // Match gridstack cellHeight
+        const verticalMargin = 10; // Match gridstack verticalMargin
+        const minRows = Math.ceil(minHeight / (cellHeight + verticalMargin));
+        gridInstance.update(dataAnalysisSection, { minH: minRows });
+    }
 }
 
 // Define the predefined layouts - calculated for 80px row height + 10px margin
 const predefinedLayouts = {
     layout1: [ // Default: Stacked in three rows (total: ~360px)
         { id: 'sql-editor-item', x: 0, y: 0, w: 12, h: 3 },      // 3 * 90px = 270px
-        { id: 'data-analysis-section', x: 0, y: 5, w: 12, h: 3 }, // 3 * 90px = 270px
+        { id: 'data-analysis-section', x: 0, y: 5, w: 12, h: 5 }, // 3 * 90px = 270px
         { id: 'data-table-section', x: 0, y: 5, w: 12, h: 3 },  // 2 * 90px = 180px  
     ],
     layout2: [ // Three Even Columns (total: ~720px)
@@ -2437,6 +2480,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Prevent position changes during resize
                 const element = ui.element[0];
                 const gridNode = element.gridstackNode;
+                
                 if (gridNode && element._originalGridX !== undefined && element._originalGridY !== undefined) {
                     if (gridNode.x !== element._originalGridX || gridNode.y !== element._originalGridY) {
                         gridInstance.update(element, {
@@ -2485,6 +2529,19 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 100);
         }
     });
+    
+    // Set minimum height constraints for data-analysis-section
+    const dataAnalysisEl = document.getElementById('data-analysis-section');
+    if (dataAnalysisEl) {
+        const hasChart = dataAnalysisEl.classList.contains('has-chart');
+        const minHeight = hasChart ? 400 : 200; // Match CSS min-height values
+        const cellHeight = 80; // Match gridstack cellHeight
+        const verticalMargin = 10; // Match gridstack verticalMargin
+        const minRows = Math.ceil(minHeight / (cellHeight + verticalMargin));
+        
+        // Set minH property on the grid item
+        gridInstance.update(dataAnalysisEl, { minH: minRows });
+    }
     
     gridInstance.on('resizestart dragstart', function (_, el) {
         // Disable float and compact during drag to prevent other elements from moving
