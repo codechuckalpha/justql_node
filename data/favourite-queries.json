@@ -2,9 +2,9 @@
   {
     "id": "1750775668158",
     "name": "basic_usage_checker",
-    "query": "select concat(d.date, ' ', p.time_period) as date_time,\n\t\tconcat(r.name, '-', d.data_code) as region_conn_type,\n\t\tsum(d.usage_amount) as usage_amount\n\t\tfrom data_intraday_agg d\n\t\tleft join ref_periods p on p.id = d.period_id\n\t\tleft join ref_regions r on r.id = d.region_id\n\t\twhere d.data_code in(0110,1110)\n\t\tand d.date > current_date - interval 3 day\n\t\tgroup by concat(d.date, ' ', p.time_period),\n \t\tconcat(r.name, '-', d.data_code)",
+    "query": "select concat(d.date, ' ', p.time_period) as date_time,\n\t\tconcat(r.name, '-', d.data_code) as region_conn_type,\n\t\tsum(d.usage_amount) as usage_amount\n\t\tfrom data_intraday_agg d\n\t\tleft join ref_periods p on p.id = d.period_id\n\t\tleft join ref_regions r on r.id = d.region_id\n\t\twhere d.data_code in(0110,1110)\n\t\tand d.date > current_date - interval 30 day\n\t\tgroup by concat(d.date, ' ', p.time_period),\n \t\tconcat(r.name, '-', d.data_code)",
     "createdAt": "2025-06-24T14:34:28.158Z",
-    "updatedAt": "2025-07-09T12:34:31.875Z",
+    "updatedAt": "2025-07-13T13:43:43.855Z",
     "addedToFavourites": "2025-06-26T14:20:08.122Z"
   },
   {
