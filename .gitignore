@@ -1,3 +1,4 @@
 node_modules/
 .env
 jpplatform-7fdf3ceb88c8.json
+data/connections.json

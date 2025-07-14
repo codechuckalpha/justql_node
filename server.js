@@ -3,8 +3,9 @@ if (process.env.NODE_ENV !== 'production') {
 };
 const express = require('express');
 const path = require('path');
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const fs = require('fs');
+const ConnectionManager = require('./lib/connectionManager');
 
 const app = express();
 
@@ -35,6 +36,9 @@ if (isProduction) {
   dbConfig.host = process.env.DB_HOST;
 }
 const pool = mysql.createPool(dbConfig);
+
+// Initialize connection manager
+const connectionManager = new ConnectionManager();
 
 app.get('/schema', (req, res) => {
   pool.getConnection((err, connection) => {
@@ -72,72 +76,166 @@ app.get('/schema', (req, res) => {
 
 // Get detailed schema with columns
 app.get('/schema/detailed', (req, res) => {
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error('Error getting database connection:', err);
-      return res.status(500).json({ error: 'Database connection error', details: err.message });
-    }
-
-    // Get tables with their columns
-    const query = `
-      SELECT 
-        t.TABLE_NAME,
-        t.TABLE_TYPE,
-        c.COLUMN_NAME,
-        c.DATA_TYPE,
-        c.IS_NULLABLE,
-        c.COLUMN_DEFAULT,
-        c.COLUMN_KEY
-      FROM INFORMATION_SCHEMA.TABLES t
-      LEFT JOIN INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME AND t.TABLE_SCHEMA = c.TABLE_SCHEMA
-      WHERE t.TABLE_SCHEMA = '${process.env.DB_NAME}'
-      ORDER BY t.TABLE_NAME, c.ORDINAL_POSITION
-    `;
-
-    connection.query(query, (error, results) => {
-      connection.release();
-      
-      if (error) {
-        console.error('Error fetching detailed schema:', error);
-        return res.status(500).json({ error: 'Query execution error', details: error.message });
+  // Check if there's an active connection from connection manager
+  const activePool = connectionManager.getActivePool();
+  const activeConnectionInfo = connectionManager.getActiveConnection();
+  
+  if (activePool && activeConnectionInfo) {
+    executeSchemaQuery(activePool, activeConnectionInfo, res);
+  } else {
+    // Fallback to original pool
+    pool.getConnection((err, connection) => {
+      if (err) {
+        console.error('Error getting database connection:', err);
+        return res.status(500).json({ error: 'Database connection error', details: err.message });
       }
 
-      // Group results by table
-      const schema = { tables: [], views: [] };
-      const tablesMap = new Map();
+      // Get tables with their columns
+      const query = `
+        SELECT 
+          t.TABLE_NAME,
+          t.TABLE_TYPE,
+          c.COLUMN_NAME,
+          c.DATA_TYPE,
+          c.IS_NULLABLE,
+          c.COLUMN_DEFAULT,
+          c.COLUMN_KEY
+        FROM INFORMATION_SCHEMA.TABLES t
+        LEFT JOIN INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME AND t.TABLE_SCHEMA = c.TABLE_SCHEMA
+        WHERE t.TABLE_SCHEMA = '${process.env.DB_NAME}'
+        ORDER BY t.TABLE_NAME, c.ORDINAL_POSITION
+      `;
 
-      results.forEach(row => {
-        const tableName = row.TABLE_NAME;
-        const tableType = row.TABLE_TYPE === 'BASE TABLE' ? 'tables' : 'views';
+      connection.query(query, (error, results) => {
+        connection.release();
         
-        if (!tablesMap.has(tableName)) {
-          tablesMap.set(tableName, {
-            name: tableName,
-            type: tableType,
-            columns: []
-          });
+        if (error) {
+          console.error('Error fetching detailed schema:', error);
+          return res.status(500).json({ error: 'Query execution error', details: error.message });
         }
 
-        if (row.COLUMN_NAME) {
-          tablesMap.get(tableName).columns.push({
-            name: row.COLUMN_NAME,
-            type: row.DATA_TYPE,
-            nullable: row.IS_NULLABLE === 'YES',
-            default: row.COLUMN_DEFAULT,
-            key: row.COLUMN_KEY
-          });
-        }
+        // Group results by table
+        const schema = processSchemaResults(results);
+        res.json(schema);
       });
-
-      // Convert map to arrays
-      tablesMap.forEach(table => {
-        schema[table.type].push(table);
-      });
-
-      res.json(schema);
     });
-  });
+  }
 });
+
+// Helper function to execute schema queries on active connections
+function executeSchemaQuery(activePool, connectionInfo, res) {
+  const dbType = connectionInfo.type;
+  const dbName = connectionInfo.database;
+  
+  if (dbType === 'mysql') {
+    activePool.getConnection((err, connection) => {
+      if (err) {
+        console.error('Error getting active MySQL connection:', err);
+        return res.status(500).json({ error: 'Database connection error', details: err.message });
+      }
+
+      const query = `
+        SELECT 
+          t.TABLE_NAME,
+          t.TABLE_TYPE,
+          c.COLUMN_NAME,
+          c.DATA_TYPE,
+          c.IS_NULLABLE,
+          c.COLUMN_DEFAULT,
+          c.COLUMN_KEY
+        FROM INFORMATION_SCHEMA.TABLES t
+        LEFT JOIN INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME AND t.TABLE_SCHEMA = c.TABLE_SCHEMA
+        WHERE t.TABLE_SCHEMA = '${dbName}'
+        ORDER BY t.TABLE_NAME, c.ORDINAL_POSITION
+      `;
+
+      connection.query(query, (error, results) => {
+        connection.release();
+        
+        if (error) {
+          console.error('Error fetching detailed schema:', error);
+          return res.status(500).json({ error: 'Query execution error', details: error.message });
+        }
+
+        const schema = processSchemaResults(results);
+        res.json(schema);
+      });
+    });
+  } else if (dbType === 'postgresql') {
+    activePool.connect((err, client, release) => {
+      if (err) {
+        console.error('Error getting active PostgreSQL connection:', err);
+        return res.status(500).json({ error: 'Database connection error', details: err.message });
+      }
+
+      const query = `
+        SELECT 
+          t.table_name as "TABLE_NAME",
+          CASE WHEN t.table_type = 'BASE TABLE' THEN 'BASE TABLE' ELSE 'VIEW' END as "TABLE_TYPE",
+          c.column_name as "COLUMN_NAME",
+          c.data_type as "DATA_TYPE",
+          c.is_nullable as "IS_NULLABLE",
+          c.column_default as "COLUMN_DEFAULT",
+          CASE WHEN pk.column_name IS NOT NULL THEN 'PRI' ELSE '' END as "COLUMN_KEY"
+        FROM information_schema.tables t
+        LEFT JOIN information_schema.columns c ON t.table_name = c.table_name AND t.table_schema = c.table_schema
+        LEFT JOIN information_schema.key_column_usage pk ON c.table_name = pk.table_name AND c.column_name = pk.column_name AND pk.constraint_name LIKE '%_pkey'
+        WHERE t.table_schema = 'public'
+        ORDER BY t.table_name, c.ordinal_position
+      `;
+
+      client.query(query, (error, result) => {
+        release();
+        
+        if (error) {
+          console.error('Error fetching detailed schema:', error);
+          return res.status(500).json({ error: 'Query execution error', details: error.message });
+        }
+
+        const schema = processSchemaResults(result.rows);
+        res.json(schema);
+      });
+    });
+  } else {
+    return res.status(500).json({ error: 'Schema queries not yet supported for SQL Server' });
+  }
+}
+
+// Helper function to process schema query results
+function processSchemaResults(results) {
+  const schema = { tables: [], views: [] };
+  const tablesMap = new Map();
+
+  results.forEach(row => {
+    const tableName = row.TABLE_NAME;
+    const tableType = row.TABLE_TYPE === 'BASE TABLE' ? 'tables' : 'views';
+    
+    if (!tablesMap.has(tableName)) {
+      tablesMap.set(tableName, {
+        name: tableName,
+        type: tableType,
+        columns: []
+      });
+    }
+
+    if (row.COLUMN_NAME) {
+      tablesMap.get(tableName).columns.push({
+        name: row.COLUMN_NAME,
+        type: row.DATA_TYPE,
+        nullable: row.IS_NULLABLE === 'YES',
+        default: row.COLUMN_DEFAULT,
+        key: row.COLUMN_KEY
+      });
+    }
+  });
+
+  // Convert map to arrays
+  tablesMap.forEach(table => {
+    schema[table.type].push(table);
+  });
+
+  return schema;
+}
 
 // Get complete table schema for CREATE TABLE script
 app.get('/schema/table/:tableName', (req, res) => {
@@ -324,39 +422,117 @@ function generateCsvFromResults(results) {
 const activeConnections = new Map();
 
 app.post('/run-query', (req, res) => {
-  const query = req.body.sql; // This is correct
-  const queryId = req.body.queryId || Date.now().toString(); // Generate unique ID if not provided
+  const query = req.body.sql;
+  const queryId = req.body.queryId || Date.now().toString();
   
   if (!query) {
     return res.status(400).json({ error: 'SQL query is missing from the request body.' });
   }
 
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error('Error getting database connection:', err);
-      return res.status(500).json({ error: 'Database connection error', details: err.message });
-    }
+  // Check if there's an active connection from connection manager
+  const activePool = connectionManager.getActivePool();
+  const activeConnectionInfo = connectionManager.getActiveConnection();
+  
+  if (activePool && activeConnectionInfo) {
+    // Use the active connection from connection manager
+    executeQueryOnActiveConnection(activePool, activeConnectionInfo, query, queryId, res);
+  } else {
+    // Fallback to the original pool for backward compatibility
+    pool.getConnection((err, connection) => {
+      if (err) {
+        console.error('Error getting database connection:', err);
+        return res.status(500).json({ error: 'Database connection error', details: err.message });
+      }
 
-    // Store connection info for potential cancellation
-    activeConnections.set(queryId, { connection, startTime: Date.now() });
+      // Store connection info for potential cancellation
+      activeConnections.set(queryId, { connection, startTime: Date.now() });
 
-    connection.query(query, (error, results, fields) => {
-      // Remove from active connections when query completes
-      activeConnections.delete(queryId);
-      connection.release();
-      
+      connection.query(query, (error, results, fields) => {
+        // Remove from active connections when query completes
+        activeConnections.delete(queryId);
+        connection.release();
+        
+        if (error) {
+          console.error('Error executing query:', error);
+          if (error.code === 'ER_QUERY_INTERRUPTED' || error.sqlState === '70100') {
+            return res.status(499).json({ error: 'Query was cancelled', cancelled: true });
+          }
+          return res.status(500).json({ error: 'Error executing query', details: error.message });
+        }
+        res.json({ results, fields });
+      });
+    });
+  }
+});
+
+// Helper function to execute queries on active connections
+function executeQueryOnActiveConnection(activePool, connectionInfo, query, queryId, res) {
+  const dbType = connectionInfo.type;
+  
+  if (dbType === 'mysql') {
+    activePool.getConnection((err, connection) => {
+      if (err) {
+        console.error('Error getting active MySQL connection:', err);
+        return res.status(500).json({ error: 'Database connection error', details: err.message });
+      }
+
+      activeConnections.set(queryId, { connection, startTime: Date.now() });
+
+      connection.query(query, (error, results, fields) => {
+        activeConnections.delete(queryId);
+        connection.release();
+        
+        if (error) {
+          console.error('Error executing query:', error);
+          if (error.code === 'ER_QUERY_INTERRUPTED' || error.sqlState === '70100') {
+            return res.status(499).json({ error: 'Query was cancelled', cancelled: true });
+          }
+          return res.status(500).json({ error: 'Error executing query', details: error.message });
+        }
+        res.json({ results, fields });
+      });
+    });
+  } else if (dbType === 'postgresql') {
+    activePool.connect((err, client, release) => {
+      if (err) {
+        console.error('Error getting active PostgreSQL connection:', err);
+        return res.status(500).json({ error: 'Database connection error', details: err.message });
+      }
+
+      activeConnections.set(queryId, { client, startTime: Date.now() });
+
+      client.query(query, (error, result) => {
+        activeConnections.delete(queryId);
+        release();
+        
+        if (error) {
+          console.error('Error executing query:', error);
+          return res.status(500).json({ error: 'Error executing query', details: error.message });
+        }
+        
+        // Convert PostgreSQL result to MySQL-like format
+        const results = result.rows;
+        const fields = result.fields ? result.fields.map(field => ({ name: field.name })) : [];
+        res.json({ results, fields });
+      });
+    });
+  } else if (dbType === 'sqlserver') {
+    const request = activePool.request();
+    request.query(query, (error, result) => {
       if (error) {
         console.error('Error executing query:', error);
-        // Check if this was a cancelled query
-        if (error.code === 'ER_QUERY_INTERRUPTED' || error.sqlState === '70100') {
-          return res.status(499).json({ error: 'Query was cancelled', cancelled: true });
-        }
         return res.status(500).json({ error: 'Error executing query', details: error.message });
       }
-      res.json({ results, fields }); // Include fields for table headers
+      
+      // Convert SQL Server result to MySQL-like format
+      const results = result.recordset;
+      const fields = result.recordset.columns ? Object.keys(result.recordset.columns).map(name => ({ name })) : [];
+      res.json({ results, fields });
     });
-  });
-});
+  } else {
+    return res.status(500).json({ error: 'Unsupported database type for active connection' });
+  }
+}
 
 app.post('/cancel-query', (req, res) => {
   const { queryId } = req.body;
@@ -396,6 +572,61 @@ app.post('/cancel-query', (req, res) => {
   } else {
     res.status(404).json({ error: 'No active query found with the provided ID' });
   }
+});
+
+// Connection Management API endpoints
+app.get('/api/connections', (req, res) => {
+  const connections = connectionManager.getConnections();
+  res.json(connections);
+});
+
+app.post('/api/connections', async (req, res) => {
+  try {
+    const connection = await connectionManager.addConnection(req.body);
+    if (connection) {
+      res.json(connection);
+    } else {
+      res.status(500).json({ error: 'Failed to save connection' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/connections/test', async (req, res) => {
+  try {
+    const result = await connectionManager.testConnection(req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/connections/:id/activate', async (req, res) => {
+  try {
+    const result = await connectionManager.activateConnection(req.params.id);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/connections/:id', (req, res) => {
+  try {
+    const success = connectionManager.deleteConnection(req.params.id);
+    if (success) {
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: 'Connection not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/connections/active', (req, res) => {
+  const activeConnection = connectionManager.getActiveConnection();
+  res.json(activeConnection);
 });
 
 // Saved Queries API endpoints

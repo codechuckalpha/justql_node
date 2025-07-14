@@ -50,6 +50,295 @@ document.querySelectorAll('.section-header').forEach(header => {
     });
 });
 
+// Connection Management
+class ConnectionManager {
+    constructor() {
+        this.connections = [];
+        this.activeConnection = null;
+        this.init();
+    }
+
+    async init() {
+        this.setupEventListeners();
+        await this.loadConnections();
+        this.updateConnectionsList();
+        this.setupConnectionTypeChange();
+    }
+
+    setupEventListeners() {
+        // Add connection button
+        document.querySelector('#connections-panel .add-button').addEventListener('click', () => {
+            this.showConnectionPopup();
+        });
+
+        // Close popup
+        document.getElementById('connection-popup-close').addEventListener('click', () => {
+            this.hideConnectionPopup();
+        });
+
+        // Test connection
+        document.getElementById('test-connection').addEventListener('click', () => {
+            this.testConnection();
+        });
+
+        // Save connection
+        document.getElementById('save-connection').addEventListener('click', () => {
+            this.saveConnection();
+        });
+
+        // Click outside to close
+        document.getElementById('connection-popup').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                this.hideConnectionPopup();
+            }
+        });
+    }
+
+    setupConnectionTypeChange() {
+        const typeSelect = document.getElementById('connection-type');
+        const portInput = document.getElementById('connection-port');
+        
+        typeSelect.addEventListener('change', (e) => {
+            const type = e.target.value;
+            switch (type) {
+                case 'mysql':
+                    portInput.value = '3306';
+                    break;
+                case 'postgresql':
+                    portInput.value = '5432';
+                    break;
+                case 'sqlserver':
+                    portInput.value = '1433';
+                    break;
+            }
+        });
+    }
+
+    async loadConnections() {
+        try {
+            console.log('Loading connections from API...');
+            const response = await fetch('/api/connections');
+            if (response.ok) {
+                this.connections = await response.json();
+                console.log('Loaded connections:', this.connections);
+            } else {
+                console.error('Failed to load connections:', response.status);
+            }
+        } catch (error) {
+            console.error('Error loading connections:', error);
+        }
+    }
+
+    updateConnectionsList() {
+        const container = document.querySelector('#connections-panel .section-items');
+        if (!container) {
+            console.error('Could not find connections container');
+            return;
+        }
+        
+        console.log('Updating connections list with', this.connections.length, 'connections');
+        container.innerHTML = '';
+
+        if (this.connections.length === 0) {
+            container.innerHTML = '<div class="section-item">No connections configured</div>';
+            return;
+        }
+
+        this.connections.forEach(connection => {
+            const item = document.createElement('div');
+            item.className = 'connection-item';
+            item.innerHTML = `
+                <div class="connection-color" style="background-color: ${connection.color}"></div>
+                <div class="connection-info">
+                    <div class="connection-name">${connection.name}</div>
+                    <div class="connection-details">${connection.type} • ${connection.host}:${connection.port}</div>
+                </div>
+                <div class="connection-actions">
+                    <button class="connection-action" onclick="connectionManager.activateConnection('${connection.id}')" title="Activate">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM10 17l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                    </button>
+                    <button class="connection-action" onclick="connectionManager.deleteConnection('${connection.id}')" title="Delete">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    showConnectionPopup() {
+        document.getElementById('connection-popup').classList.remove('hidden');
+        this.resetForm();
+    }
+
+    hideConnectionPopup() {
+        document.getElementById('connection-popup').classList.add('hidden');
+    }
+
+    resetForm() {
+        document.getElementById('connection-type').value = 'mysql';
+        document.getElementById('connection-host').value = 'localhost';
+        document.getElementById('connection-port').value = '3306';
+        document.getElementById('connection-username').value = '';
+        document.getElementById('connection-password').value = '';
+        document.getElementById('connection-database').value = '';
+        document.getElementById('connection-name').value = '';
+        document.getElementById('connection-ssl').checked = false;
+        document.getElementById('connection-color').value = '#4F46E5';
+        document.getElementById('save-passwords').checked = true;
+    }
+
+    async testConnection() {
+        const connectionData = this.getFormData();
+        const testButton = document.getElementById('test-connection');
+        
+        testButton.disabled = true;
+        testButton.textContent = 'Testing...';
+
+        try {
+            const response = await fetch('/api/connections/test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(connectionData),
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('Connection successful!');
+            } else {
+                alert('Connection failed: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error testing connection: ' + error.message);
+        } finally {
+            testButton.disabled = false;
+            testButton.textContent = 'Test';
+        }
+    }
+
+    async saveConnection() {
+        const connectionData = this.getFormData();
+        const saveButton = document.getElementById('save-connection');
+        
+        if (!connectionData.name) {
+            alert('Please enter a connection name');
+            return;
+        }
+
+        saveButton.disabled = true;
+        saveButton.textContent = 'Saving...';
+
+        try {
+            const response = await fetch('/api/connections', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(connectionData),
+            });
+
+            const result = await response.json();
+            
+            if (response.ok) {
+                await this.loadConnections();
+                this.updateConnectionsList();
+                this.hideConnectionPopup();
+                alert('Connection saved successfully!');
+            } else {
+                alert('Error saving connection: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error saving connection: ' + error.message);
+        } finally {
+            saveButton.disabled = false;
+            saveButton.textContent = 'Connect';
+        }
+    }
+
+    async activateConnection(connectionId) {
+        try {
+            const response = await fetch(`/api/connections/${connectionId}/activate`, {
+                method: 'POST',
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                this.activeConnection = result.connection;
+                this.updateConnectionsList();
+                alert('Connection activated successfully!');
+                
+                // Refresh schema if schema panel is active
+                if (document.getElementById('schema-panel').style.display !== 'none') {
+                    loadDatabaseSchema();
+                }
+            } else {
+                alert('Error activating connection: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error activating connection: ' + error.message);
+        }
+    }
+
+    async deleteConnection(connectionId) {
+        if (!confirm('Are you sure you want to delete this connection?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/connections/${connectionId}`, {
+                method: 'DELETE',
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                await this.loadConnections();
+                this.updateConnectionsList();
+                alert('Connection deleted successfully!');
+            } else {
+                alert('Error deleting connection: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error deleting connection: ' + error.message);
+        }
+    }
+
+    getFormData() {
+        return {
+            type: document.getElementById('connection-type').value,
+            host: document.getElementById('connection-host').value,
+            port: parseInt(document.getElementById('connection-port').value),
+            username: document.getElementById('connection-username').value,
+            password: document.getElementById('connection-password').value,
+            database: document.getElementById('connection-database').value,
+            name: document.getElementById('connection-name').value,
+            ssl: document.getElementById('connection-ssl').checked,
+            color: document.getElementById('connection-color').value,
+        };
+    }
+}
+
+// Initialize connection manager
+let connectionManager;
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOM loaded, initializing connection manager...');
+    connectionManager = new ConnectionManager();
+    
+    // Give it a moment to initialize
+    setTimeout(() => {
+        console.log('Connection manager initialized:', connectionManager);
+        console.log('Current connections:', connectionManager.connections);
+    }, 1000);
+});
+
 // Handle table accordion functionality
 document.querySelectorAll('.table-header').forEach(header => {
     header.addEventListener('click', function(e) {

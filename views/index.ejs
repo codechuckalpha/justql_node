@@ -90,6 +90,90 @@
       </div>
     </div>
   </div>
+
+  <!-- Connection Manager Popup -->
+  <div id="connection-popup" class="popup-overlay hidden">
+    <div class="popup-content connection-popup">
+      <div class="popup-header">
+        <h3>New Connection</h3>
+        <button class="close-button" id="connection-popup-close">×</button>
+      </div>
+      <div class="popup-body">
+        <div class="form-group">
+          <label>Connection Type</label>
+          <select id="connection-type" class="form-select">
+            <option value="mysql">MySQL</option>
+            <option value="postgresql">PostgreSQL</option>
+            <option value="sqlserver">SQL Server</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Connection Mode</label>
+          <select id="connection-mode" class="form-select">
+            <option value="host-port">Host and Port</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Host</label>
+            <input type="text" id="connection-host" class="form-input" placeholder="localhost" value="localhost">
+          </div>
+          <div class="form-group">
+            <label>Port</label>
+            <input type="text" id="connection-port" class="form-input" placeholder="3306" value="3306">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="flex items-center">
+            <input type="checkbox" id="connection-ssl" class="mr-2">
+            <span>Enable SSL</span>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>User</label>
+            <input type="text" id="connection-username" class="form-input" placeholder="username">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="connection-password" class="form-input" placeholder="password">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Default Database</label>
+          <input type="text" id="connection-database" class="form-input" placeholder="database_name">
+        </div>
+
+        <div class="form-group">
+          <label>Connection Name</label>
+          <input type="text" id="connection-name" class="form-input" placeholder="My Connection">
+        </div>
+
+        <div class="form-group">
+          <label class="flex items-center">
+            <input type="checkbox" id="save-passwords" class="mr-2" checked>
+            <span>Save Passwords</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>Connection Color</label>
+          <div class="color-picker">
+            <input type="color" id="connection-color" value="#4F46E5">
+          </div>
+        </div>
+      </div>
+      <div class="popup-footer">
+        <button class="popup-button secondary" id="test-connection">Test</button>
+        <button class="popup-button primary" id="save-connection">Connect</button>
+      </div>
+    </div>
+  </div>
   
   <div class="sidebar-container collapsed">
     <!-- Icon Bar -->
@@ -129,9 +213,7 @@
             <div class="add-button">+</div>
           </div>
           <div class="section-items">
-            <div class="section-item">Production DB</div>
-            <div class="section-item">Development DB</div>
-            <div class="section-item">Test Environment</div>
+            <!-- Connections will be loaded dynamically by JavaScript -->
           </div>
         </div>
 
