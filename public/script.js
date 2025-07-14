@@ -133,10 +133,12 @@ class ConnectionManager {
         const container = document.querySelector('#connections-panel .section-items');
         if (!container) {
             console.error('Could not find connections container');
+            console.log('Available elements:', document.querySelectorAll('[id*="connection"], [class*="section"]'));
             return;
         }
         
         console.log('Updating connections list with', this.connections.length, 'connections');
+        console.log('Container found:', container);
         container.innerHTML = '';
 
         if (this.connections.length === 0) {
@@ -190,16 +192,71 @@ class ConnectionManager {
         document.getElementById('connection-ssl').checked = false;
         document.getElementById('connection-color').value = '#4F46E5';
         document.getElementById('save-passwords').checked = true;
+        this.hideTestResult();
+        this.clearValidationErrors();
+    }
+
+    showTestResult(type, message, icon) {
+        const resultDiv = document.getElementById('connection-test-result');
+        const iconSpan = resultDiv.querySelector('.result-icon');
+        const messageSpan = resultDiv.querySelector('.result-message');
+        
+        resultDiv.className = 'connection-result ' + type;
+        iconSpan.textContent = icon;
+        messageSpan.textContent = message;
+        resultDiv.classList.remove('hidden');
+    }
+
+    hideTestResult() {
+        document.getElementById('connection-test-result').classList.add('hidden');
+    }
+
+    showValidationError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        const formGroup = field.closest('.form-group');
+        
+        field.classList.add('error');
+        formGroup.classList.add('error');
+        
+        // Remove existing validation message
+        const existingMessage = formGroup.querySelector('.validation-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Add new validation message
+        const validationMessage = document.createElement('span');
+        validationMessage.className = 'validation-message';
+        validationMessage.textContent = message;
+        formGroup.appendChild(validationMessage);
+    }
+
+    clearValidationErrors() {
+        document.querySelectorAll('.form-input.error, .form-select.error').forEach(field => {
+            field.classList.remove('error');
+        });
+        document.querySelectorAll('.form-group.error').forEach(group => {
+            group.classList.remove('error');
+        });
+        document.querySelectorAll('.validation-message').forEach(message => {
+            message.remove();
+        });
     }
 
     async testConnection() {
         const connectionData = this.getFormData();
         const testButton = document.getElementById('test-connection');
         
+        // Clear previous results
+        this.hideTestResult();
+        this.clearValidationErrors();
+        
+        console.log('Testing connection with data:', connectionData);
         testButton.disabled = true;
         testButton.textContent = 'Testing...';
 
         try {
+            console.log('Sending test request to /api/connections/test');
             const response = await fetch('/api/connections/test', {
                 method: 'POST',
                 headers: {
@@ -208,34 +265,81 @@ class ConnectionManager {
                 body: JSON.stringify(connectionData),
             });
 
+            console.log('Test response status:', response.status);
             const result = await response.json();
+            console.log('Test result:', result);
             
             if (result.success) {
-                alert('Connection successful!');
+                this.showTestResult('success', result.message, '✓');
             } else {
-                alert('Connection failed: ' + result.error);
+                this.showTestResult('error', result.error, '✗');
             }
         } catch (error) {
-            alert('Error testing connection: ' + error.message);
+            console.error('Error testing connection:', error);
+            this.showTestResult('error', 'Network error: ' + error.message, '✗');
         } finally {
             testButton.disabled = false;
             testButton.textContent = 'Test';
         }
     }
 
+    validateForm(connectionData) {
+        let isValid = true;
+        this.clearValidationErrors();
+
+        // Validate required fields
+        if (!connectionData.name || connectionData.name.trim() === '') {
+            this.showValidationError('connection-name', 'Connection name is required');
+            isValid = false;
+        }
+
+        if (!connectionData.host || connectionData.host.trim() === '') {
+            this.showValidationError('connection-host', 'Host is required');
+            isValid = false;
+        }
+
+        if (!connectionData.username || connectionData.username.trim() === '') {
+            this.showValidationError('connection-username', 'Username is required');
+            isValid = false;
+        }
+
+        if (!connectionData.password || connectionData.password.trim() === '') {
+            this.showValidationError('connection-password', 'Password is required');
+            isValid = false;
+        }
+
+        if (!connectionData.database || connectionData.database.trim() === '') {
+            this.showValidationError('connection-database', 'Database name is required');
+            isValid = false;
+        }
+
+        // Validate port number
+        if (isNaN(connectionData.port) || connectionData.port <= 0 || connectionData.port > 65535) {
+            this.showValidationError('connection-port', 'Port must be a valid number between 1 and 65535');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
     async saveConnection() {
         const connectionData = this.getFormData();
         const saveButton = document.getElementById('save-connection');
         
-        if (!connectionData.name) {
-            alert('Please enter a connection name');
+        console.log('Saving connection with data:', connectionData);
+        
+        // Validate form
+        if (!this.validateForm(connectionData)) {
+            this.showTestResult('warning', 'Please fix the validation errors above', '⚠');
             return;
         }
 
+        this.hideTestResult();
         saveButton.disabled = true;
         saveButton.textContent = 'Saving...';
 
         try {
+            console.log('Sending save request to /api/connections');
             const response = await fetch('/api/connections', {
                 method: 'POST',
                 headers: {
@@ -244,18 +348,30 @@ class ConnectionManager {
                 body: JSON.stringify(connectionData),
             });
 
+            console.log('Save response status:', response.status);
+            console.log('Response OK:', response.ok);
             const result = await response.json();
+            console.log('Save result:', result);
             
             if (response.ok) {
+                console.log('Connection saved successfully, updating UI...');
                 await this.loadConnections();
+                console.log('Connections loaded:', this.connections);
                 this.updateConnectionsList();
-                this.hideConnectionPopup();
-                alert('Connection saved successfully!');
+                console.log('Connections list updated');
+                this.showTestResult('success', 'Connection saved successfully!', '✓');
+                
+                // Hide popup after a short delay to show success message
+                setTimeout(() => {
+                    this.hideConnectionPopup();
+                }, 1500);
             } else {
-                alert('Error saving connection: ' + result.error);
+                console.error('Save failed with status:', response.status);
+                this.showTestResult('error', result.error || 'Failed to save connection', '✗');
             }
         } catch (error) {
-            alert('Error saving connection: ' + error.message);
+            console.error('Error saving connection:', error);
+            this.showTestResult('error', 'Network error: ' + error.message, '✗');
         } finally {
             saveButton.disabled = false;
             saveButton.textContent = 'Connect';

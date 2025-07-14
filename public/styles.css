@@ -1158,6 +1158,65 @@ body {
   color: #ffffff;
 }
 
+/* Connection Test Results */
+.connection-result {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.connection-result.success {
+  background-color: #065f46;
+  border: 1px solid #10b981;
+  color: #ffffff;
+}
+
+.connection-result.error {
+  background-color: #7f1d1d;
+  border: 1px solid #ef4444;
+  color: #ffffff;
+}
+
+.connection-result.warning {
+  background-color: #78350f;
+  border: 1px solid #f59e0b;
+  color: #ffffff;
+}
+
+.result-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-icon {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.result-message {
+  flex: 1;
+  font-size: 14px;
+}
+
+/* Form Validation */
+.form-input.error, .form-select.error {
+  border-color: #ef4444 !important;
+  background-color: #7f1d1d !important;
+}
+
+.form-group.error label {
+  color: #ef4444 !important;
+}
+
+.validation-message {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
 
 
 
