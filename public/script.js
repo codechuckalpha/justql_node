@@ -147,27 +147,65 @@ class ConnectionManager {
         }
 
         this.connections.forEach(connection => {
+            const isActive = this.activeConnection && this.activeConnection.id === connection.id;
             const item = document.createElement('div');
             item.className = 'connection-item';
             item.innerHTML = `
-                <div class="connection-color" style="background-color: ${connection.color}"></div>
                 <div class="connection-info">
                     <div class="connection-name">${connection.name}</div>
                     <div class="connection-details">${connection.type} • ${connection.host}:${connection.port}</div>
                 </div>
                 <div class="connection-actions">
-                    <button class="connection-action" onclick="connectionManager.activateConnection('${connection.id}')" title="Activate">
+                    <button class="connection-action activate-btn ${isActive ? 'active' : ''}" data-connection-id="${connection.id}" title="Activate">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM10 17l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                         </svg>
                     </button>
-                    <button class="connection-action" onclick="connectionManager.deleteConnection('${connection.id}')" title="Delete">
+                    <button class="connection-action delete-btn" data-connection-id="${connection.id}" title="Delete">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                         </svg>
                     </button>
                 </div>
             `;
+            
+            // Add event listeners
+            const activateBtn = item.querySelector('.activate-btn');
+            const deleteBtn = item.querySelector('.delete-btn');
+            
+            console.log('Setting up event listeners for connection:', connection.id);
+            console.log('Activate button found:', !!activateBtn);
+            console.log('Delete button found:', !!deleteBtn);
+            
+            if (activateBtn) {
+                activateBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.activateConnection(connection.id);
+                });
+            }
+            
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    console.log('DELETE BUTTON CLICKED for connection:', connection.id);
+                    console.log('connectionManager instance:', this);
+                    console.log('deleteConnection method exists:', typeof this.deleteConnection);
+                    
+                    // Simple test first
+                    alert('Delete button was clicked for: ' + connection.name);
+                    
+                    try {
+                        this.deleteConnection(connection.id);
+                    } catch (error) {
+                        console.error('Error calling deleteConnection:', error);
+                        alert('Error: ' + error.message);
+                    }
+                });
+                console.log('Delete button event listener added successfully');
+            } else {
+                console.error('Delete button not found in DOM!');
+            }
+            
             container.appendChild(item);
         });
     }
@@ -404,25 +442,44 @@ class ConnectionManager {
     }
 
     async deleteConnection(connectionId) {
-        if (!confirm('Are you sure you want to delete this connection?')) {
+        console.log('Delete connection called with ID:', connectionId);
+        console.log('Current connections:', this.connections);
+        
+        // Find the connection to get its name for the confirmation
+        const connection = this.connections.find(conn => conn.id === connectionId);
+        console.log('Found connection:', connection);
+        const connectionName = connection ? connection.name : 'this connection';
+        
+        const userConfirmed = confirm(`Are you sure you want to remove "${connectionName}"? This action cannot be undone.`);
+        console.log('User confirmed deletion:', userConfirmed);
+        
+        if (!userConfirmed) {
+            console.log('User cancelled deletion');
             return;
         }
 
         try {
+            console.log('Sending delete request for connection:', connectionId);
             const response = await fetch(`/api/connections/${connectionId}`, {
                 method: 'DELETE',
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const result = await response.json();
+            console.log('Delete response:', result);
             
             if (result.success) {
                 await this.loadConnections();
                 this.updateConnectionsList();
-                alert('Connection deleted successfully!');
+                alert(`Connection "${connectionName}" deleted successfully!`);
             } else {
                 alert('Error deleting connection: ' + result.error);
             }
         } catch (error) {
+            console.error('Error deleting connection:', error);
             alert('Error deleting connection: ' + error.message);
         }
     }
@@ -448,10 +505,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM loaded, initializing connection manager...');
     connectionManager = new ConnectionManager();
     
+    // Make connectionManager globally accessible for debugging
+    window.connectionManager = connectionManager;
+    
     // Give it a moment to initialize
     setTimeout(() => {
         console.log('Connection manager initialized:', connectionManager);
         console.log('Current connections:', connectionManager.connections);
+        console.log('connectionManager is now available globally as window.connectionManager');
     }, 1000);
 });
 

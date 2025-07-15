@@ -464,12 +464,8 @@ body {
   justify-content: center;
   font-size: 12px;
   font-weight: bold;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.section-header:hover .add-button {
   opacity: 1;
+  transition: opacity 0.2s ease;
 }
 
 /* Saved Query Item Styles */
@@ -1156,6 +1152,10 @@ body {
 .connection-action:hover {
   background-color: #444;
   color: #ffffff;
+}
+
+.connection-action.active {
+  color: #9333ea;
 }
 
 /* Connection Test Results */
