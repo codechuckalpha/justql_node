@@ -1293,8 +1293,14 @@ if (runButton && sqlTextarea) {
                 const responseText = await response.text();
                 console.error('Failed to parse JSON response:', parseError);
                 console.error('Response text:', responseText.substring(0, 500));
+                console.error('Full response text:', responseText);
                 
-                errorMessageParagraph.textContent = 'Server returned invalid response. Check server logs.';
+                // Show the actual HTML error content to understand what's happening
+                if (responseText.includes('<html>')) {
+                    errorMessageParagraph.textContent = `Server timeout - received HTML error page instead of JSON. This indicates a proxy/load balancer timeout (typically 30 seconds). Response preview: ${responseText.substring(0, 200)}...`;
+                } else {
+                    errorMessageParagraph.textContent = `Server returned invalid response: ${responseText.substring(0, 200)}`;
+                }
                 errorMessageParagraph.style.color = '#e74c3c';
                 return;
             }
@@ -1354,7 +1360,10 @@ if (runButton && sqlTextarea) {
 
             // *** FIX HERE: Smarter error message extraction from the caught error object ***
             if (error && typeof error === 'object') {
-                if (error.error && error.details) {
+                // Check for JSON parse error specifically (HTML response timeout)
+                if (error instanceof SyntaxError && error.message.includes('Unexpected token') && error.message.includes('<')) {
+                    displayMessage = 'Server timeout - received HTML error page instead of JSON. This indicates a proxy/load balancer timeout (typically 30 seconds). Try shortening your query or contact admin to increase timeout limits.';
+                } else if (error.error && error.details) {
                     displayMessage = `${error.error}: ${error.details}`;
                 } else if (error.error) {
                     displayMessage = error.error;

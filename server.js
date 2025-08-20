@@ -14,6 +14,21 @@ const port = process.argv[3] || process.env.PORT;
 // Middleware to parse JSON request bodies with increased size limit
 app.use(express.json({ limit: '50mb' }));
 
+// Add request timeout middleware to prevent HTML error responses
+app.use('/run-query', (req, res, next) => {
+  // Set a 10-minute timeout for query requests
+  req.setTimeout(10 * 60 * 1000, () => {
+    if (!res.headersSent) {
+      console.log('Request timeout occurred for query request');
+      res.status(504).json({ 
+        error: 'Query timeout - request took too long to complete',
+        details: 'The query exceeded the maximum allowed execution time of 10 minutes'
+      });
+    }
+  });
+  next();
+});
+
 // Debug: Log all requests
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);
@@ -69,8 +84,8 @@ if (isProduction) {
 const pool = mysql.createPool({
   ...dbConfig,
   connectionLimit: 10,
-  acquireTimeout: 60000,
-  timeout: 60000,
+  acquireTimeout: 300000,  // 5 minutes to acquire connection
+  timeout: 600000,         // 10 minutes query timeout
   reconnect: true,
   idleTimeout: 300000
 });
@@ -531,134 +546,99 @@ function forceCleanupConnections() {
 }
 
 app.post('/run-query', (req, res) => {
+  console.log('=== /run-query ENDPOINT HIT ===');
+  console.log('Request received at:', new Date().toISOString());
+  console.log('User-Agent:', req.get('User-Agent'));
+  console.log('X-Forwarded-For:', req.get('X-Forwarded-For'));
+  console.log('Host:', req.get('Host'));
+  
+  // Set explicit timeout and headers to prevent proxy issues
+  res.setTimeout(0); // Disable Express timeout
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+  res.setHeader('Cache-Control', 'no-cache');
+  
+  // Ensure we ALWAYS send JSON response
+  const sendJSONResponse = (statusCode, data) => {
+    try {
+      if (!res.headersSent) {
+        res.status(statusCode).json(data);
+      }
+    } catch (e) {
+      console.error('Failed to send JSON response:', e);
+    }
+  };
+  
   try {
-    logConnectionPoolState();
+    const query = req.body?.sql;
+    const queryId = req.body?.queryId || Date.now().toString();
     
-    console.log('=== /run-query REQUEST DEBUG ===');
-    console.log('Request method:', req.method);
-    console.log('Request headers:', req.headers);
-    console.log('Request body type:', typeof req.body);
-    console.log('Request body:', req.body);
-    
-    const query = req.body.sql;
-    const queryId = req.body.queryId || Date.now().toString();
-    
-    console.log('Extracted query:', query);
-    console.log('Query length:', query ? query.length : 'undefined');
+    console.log('Query:', query);
     console.log('Query ID:', queryId);
     
     if (!query) {
       console.log('ERROR: No query provided');
-      return res.status(400).json({ error: 'SQL query is missing from the request body.' });
+      return sendJSONResponse(400, { error: 'SQL query is missing from the request body.' });
     }
 
     // Check if there's an active connection from connection manager
-    const activePool = connectionManager.getActivePool();
-    const activeConnectionInfo = connectionManager.getActiveConnection();
+    const activePool = connectionManager?.getActivePool();
+    const activeConnectionInfo = connectionManager?.getActiveConnection();
+    
+    console.log('Active pool exists:', !!activePool);
+    console.log('Active connection exists:', !!activeConnectionInfo);
     
     if (activePool && activeConnectionInfo) {
-      // Use the active connection from connection manager
-      executeQueryOnActiveConnection(activePool, activeConnectionInfo, query, queryId, res);
+      console.log('Using active connection pool');
+      executeQueryOnActiveConnection(activePool, activeConnectionInfo, query, queryId, res, sendJSONResponse);
     } else {
+      console.log('Using fallback pool');
+      
       // Check if fallback pool exists
       if (!pool) {
-        return res.status(500).json({ error: 'No database connection available. Please create a connection first.' });
+        console.log('ERROR: No fallback pool available');
+        return sendJSONResponse(500, { error: 'No database connection available. Please create a connection first.' });
       }
       
-      // Fallback to the original pool for backward compatibility
+      // Use fallback pool
       pool.getConnection((err, connection) => {
         if (err) {
           console.error('Error getting database connection:', err);
-          return res.status(500).json({ error: 'Database connection error', details: err.message });
+          return sendJSONResponse(500, { error: 'Database connection error', details: err.message });
         }
 
-        // Store connection info for potential cancellation
+        console.log('Got connection from fallback pool');
         activeConnections.set(queryId, { connection, startTime: Date.now() });
 
-        connection.query(query, (error, results, fields) => {
-          // Always clean up connection and remove from active connections
-          console.log('=== QUERY COMPLETED - CLEANING UP ===');
-          activeConnections.delete(queryId);
+        // Set query timeout specifically for this query
+        connection.query({ sql: query, timeout: 600000 }, (error, results, fields) => {
+          console.log('Query execution completed');
           
-          // Force connection release
-          if (connection) {
-            if (connection.release) {
-              try {
-                connection.release();
-                console.log('Connection released successfully');
-              } catch (releaseError) {
-                console.error('Error releasing connection:', releaseError);
-              }
-            }
-            // Additional cleanup
-            if (connection.destroy) {
-              try {
-                connection.destroy();
-                console.log('Connection destroyed as backup');
-              } catch (destroyError) {
-                console.error('Error destroying connection:', destroyError);
-              }
-            }
+          // Clean up connection
+          activeConnections.delete(queryId);
+          if (connection && connection.release) {
+            connection.release();
+            console.log('Connection released');
           }
           
           if (error) {
-            console.error('Error executing query:', error);
-            if (error.code === 'ER_QUERY_INTERRUPTED' || error.sqlState === '70100') {
-              return res.status(499).json({ error: 'Query was cancelled', cancelled: true });
+            console.error('Query execution error:', error);
+            if (error.code === 'PROTOCOL_SEQUENCE_TIMEOUT') {
+              return sendJSONResponse(504, { 
+                error: 'Query timeout', 
+                details: 'The query exceeded the maximum allowed execution time of 10 minutes' 
+              });
             }
-            return res.status(500).json({ error: 'Error executing query', details: error.message });
+            return sendJSONResponse(500, { error: 'Error executing query', details: error.message });
           }
           
-          try {
-            console.log('=== SENDING SUCCESSFUL RESPONSE ===');
-            console.log('Results count:', results ? results.length : 'undefined');
-            console.log('Fields count:', fields ? fields.length : 'undefined');
-            const response = { results, fields };
-            console.log('Response object created successfully');
-            res.json(response);
-            console.log('Response sent successfully');
-            
-            // Force garbage collection hint
-            if (global.gc) {
-              global.gc();
-            }
-            
-            // Aggressive connection cleanup - close active connection pool after each query
-            setTimeout(async () => {
-              try {
-                // Get connection info BEFORE closing
-                const activeConnectionInfo = connectionManager.getActiveConnection();
-                
-                console.log('=== CLOSING ACTIVE CONNECTION POOL ===');
-                await connectionManager.closeActiveConnection();
-                console.log('Active connection closed successfully');
-                
-                // Reactivate the same connection if it existed
-                if (activeConnectionInfo && activeConnectionInfo.id) {
-                  console.log('=== REACTIVATING CONNECTION ===');
-                  const result = await connectionManager.activateConnection(activeConnectionInfo.id);
-                  if (result.success) {
-                    console.log('Connection reactivated successfully');
-                  } else {
-                    console.error('Failed to reactivate connection:', result.error);
-                  }
-                }
-              } catch (cleanupError) {
-                console.error('Error during connection cleanup:', cleanupError);
-              }
-            }, 1000); // Give time for response to be sent
-          } catch (jsonError) {
-            console.error('Error sending JSON response:', jsonError);
-            if (!res.headersSent) {
-              res.status(500).json({ error: 'Error sending response' });
-            }
-          }
+          console.log('Query successful, returning results');
+          sendJSONResponse(200, { results, fields });
         });
       });
     }
   } catch (error) {
     console.error('Unexpected error in /run-query:', error);
-    return res.status(500).json({ error: 'Internal server error', details: error.message });
+    return sendJSONResponse(500, { error: 'Internal server error', details: error.message });
   }
 });
 
@@ -675,51 +655,29 @@ function executeQueryOnActiveConnection(activePool, connectionInfo, query, query
 
       activeConnections.set(queryId, { connection, startTime: Date.now() });
 
-      connection.query(query, (error, results, fields) => {
-        // Always clean up connection and remove from active connections
+      connection.query({ sql: query, timeout: 600000 }, (error, results, fields) => {
+        console.log('Active connection query completed');
+        
+        // Clean up connection
         activeConnections.delete(queryId);
         if (connection && connection.release) {
           connection.release();
+          console.log('Active connection released');
         }
         
         if (error) {
-          console.error('Error executing query:', error);
-          if (error.code === 'ER_QUERY_INTERRUPTED' || error.sqlState === '70100') {
-            return res.status(499).json({ error: 'Query was cancelled', cancelled: true });
+          console.error('Active connection query error:', error);
+          if (error.code === 'PROTOCOL_SEQUENCE_TIMEOUT') {
+            return res.status(504).json({ 
+              error: 'Query timeout', 
+              details: 'The query exceeded the maximum allowed execution time of 10 minutes' 
+            });
           }
           return res.status(500).json({ error: 'Error executing query', details: error.message });
         }
         
-        try {
-          res.json({ results, fields });
-          
-          // Apply same aggressive cleanup for active connections
-          setTimeout(async () => {
-            try {
-              const activeConnectionInfo = connectionManager.getActiveConnection();
-              console.log('=== CLOSING ACTIVE CONNECTION POOL (Active Path) ===');
-              await connectionManager.closeActiveConnection();
-              console.log('Active connection closed successfully (Active Path)');
-              
-              if (activeConnectionInfo && activeConnectionInfo.id) {
-                console.log('=== REACTIVATING CONNECTION (Active Path) ===');
-                const result = await connectionManager.activateConnection(activeConnectionInfo.id);
-                if (result.success) {
-                  console.log('Connection reactivated successfully (Active Path)');
-                } else {
-                  console.error('Failed to reactivate connection (Active Path):', result.error);
-                }
-              }
-            } catch (cleanupError) {
-              console.error('Error during connection cleanup (Active Path):', cleanupError);
-            }
-          }, 1000);
-        } catch (jsonError) {
-          console.error('Error sending JSON response:', jsonError);
-          if (!res.headersSent) {
-            res.status(500).json({ error: 'Error sending response' });
-          }
-        }
+        console.log('Active connection query successful, returning results');
+        res.json({ results, fields });
       });
     });
   } else if (dbType === 'postgresql') {
@@ -1092,6 +1050,25 @@ app.delete('/api/favourite-queries/:id', (req, res) => {
   } else {
     res.status(500).json({ error: 'Failed to delete query' });
   }
+});
+
+// Emergency: Catch any unhandled errors that might serve HTML
+app.use((err, req, res, next) => {
+  console.error('=== UNHANDLED ERROR MIDDLEWARE ===');
+  console.error('Error:', err);
+  console.error('Request path:', req.path);
+  console.error('Request method:', req.method);
+  
+  // ALWAYS return JSON for API routes, never HTML
+  if (req.path.startsWith('/run-query') || req.path.startsWith('/api/')) {
+    return res.status(500).json({ 
+      error: 'Server error caught by middleware', 
+      details: err.message,
+      path: req.path 
+    });
+  }
+  
+  next(err);
 });
 
 // Serve main page for non-API routes (this should be the very last route)
