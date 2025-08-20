@@ -1285,8 +1285,19 @@ if (runButton && sqlTextarea) {
                 throw errorData; 
             }
 
-            const data = await response.json();
-            console.log(data); // Log the response from the server
+            let data;
+            try {
+                data = await response.json();
+                console.log('Parsed JSON response:', data);
+            } catch (parseError) {
+                const responseText = await response.text();
+                console.error('Failed to parse JSON response:', parseError);
+                console.error('Response text:', responseText.substring(0, 500));
+                
+                errorMessageParagraph.textContent = 'Server returned invalid response. Check server logs.';
+                errorMessageParagraph.style.color = '#e74c3c';
+                return;
+            }
 
             // Check if query was cancelled while processing
             if (cancelRendering) {
@@ -1296,7 +1307,7 @@ if (runButton && sqlTextarea) {
             errorMessageParagraph.textContent = ''; // Clear error message
             errorMessageParagraph.style.color = ''; // Reset color
 
-            if (data.results && data.results.length > 0) {
+            if (data && data.results && Array.isArray(data.results) && data.results.length > 0) {
                 // Hide placeholder and show table
                 if (tablePlaceholder) tablePlaceholder.style.display = 'none';
                 resultsTable.style.display = 'table';
@@ -3084,15 +3095,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     gridInstance.on('change', function (_, items) {
-        items.forEach(item => {
-            if (item.el && item.el.id === 'data-analysis-section') {
-                const chartContainer = document.getElementById('chart-container');
-                if (chartContainer && chartContainer.data) {
-                    // This is now redundant as ResizeObserver on dataAnalysisSection handles it.
-                    // setTimeout(() => { Plotly.Plots.resize('chart-container'); }, 100);
+        if (items && Array.isArray(items)) {
+            items.forEach(item => {
+                if (item.el && item.el.id === 'data-analysis-section') {
+                    const chartContainer = document.getElementById('chart-container');
+                    if (chartContainer && chartContainer.data) {
+                        // This is now redundant as ResizeObserver on dataAnalysisSection handles it.
+                        // setTimeout(() => { Plotly.Plots.resize('chart-container'); }, 100);
+                    }
                 }
-            }
-        });
+            });
+        }
     });
 
     const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');

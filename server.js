@@ -11,8 +11,20 @@ const app = express();
 
 const port = process.argv[3] || process.env.PORT;
 
-// Middleware to parse JSON request bodies
-app.use(express.json()); // <--- ADD THIS LINE
+// Middleware to parse JSON request bodies with increased size limit
+app.use(express.json({ limit: '50mb' }));
+
+// Debug: Log all requests
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  if (req.path === '/run-query') {
+    console.log(`=== INCOMING REQUEST: ${req.method} ${req.path} ===`);
+    console.log('Content-Type:', req.get('Content-Type'));
+    console.log('Content-Length:', req.get('Content-Length'));
+    console.log('Raw body available:', !!req.body);
+  }
+  next();
+});
 
 app.use(express.static(path.join(__dirname, 'public')))
   .set('views', path.join(__dirname, 'views'))
@@ -20,6 +32,25 @@ app.use(express.static(path.join(__dirname, 'public')))
 
 app.get('/', (req, res) => {
   res.render('index');
+});
+
+// Test endpoint to verify API is working
+app.get('/test-api', (req, res) => {
+  console.log('=== TEST API ENDPOINT HIT ===');
+  res.json({ status: 'API is working', timestamp: new Date().toISOString() });
+});
+
+app.post('/test-api', (req, res) => {
+  console.log('=== TEST POST API ENDPOINT HIT ===');
+  console.log('Body:', req.body);
+  res.json({ status: 'POST API is working', received: req.body, timestamp: new Date().toISOString() });
+});
+
+// Manual cleanup endpoint
+app.post('/cleanup-connections', (req, res) => {
+  forceCleanupConnections();
+  logConnectionPoolState();
+  res.json({ status: 'Connections cleaned up', timestamp: new Date().toISOString() });
 });
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -428,10 +459,29 @@ function generateCsvFromResults(results) {
 // Store active connections for cancellation
 const activeConnections = new Map();
 
-// Periodic cleanup of stale connections (every 5 minutes)
+// Track connection pool state
+let queryCount = 0;
+function logConnectionPoolState() {
+  queryCount++;
+  console.log(`=== QUERY #${queryCount} - CONNECTION POOL STATE ===`);
+  console.log('Active connections in map:', activeConnections.size);
+  
+  if (pool && pool._allConnections) {
+    console.log('Pool total connections:', pool._allConnections.length);
+    console.log('Pool free connections:', pool._freeConnections.length);
+  }
+  
+  const activePool = connectionManager.getActivePool();
+  if (activePool && activePool._allConnections) {
+    console.log('Active pool total connections:', activePool._allConnections.length);
+    console.log('Active pool free connections:', activePool._freeConnections.length);
+  }
+}
+
+// Aggressive cleanup of stale connections (every 30 seconds)
 setInterval(() => {
   const now = Date.now();
-  const staleTimeout = 5 * 60 * 1000; // 5 minutes
+  const staleTimeout = 30 * 1000; // 30 seconds (much more aggressive)
   
   for (const [queryId, connectionInfo] of activeConnections.entries()) {
     if (now - connectionInfo.startTime > staleTimeout) {
@@ -443,17 +493,62 @@ setInterval(() => {
           console.error('Error releasing stale connection:', e);
         }
       }
+      if (connectionInfo.connection && connectionInfo.connection.destroy) {
+        try {
+          connectionInfo.connection.destroy();
+        } catch (e) {
+          console.error('Error destroying stale connection:', e);
+        }
+      }
       activeConnections.delete(queryId);
     }
   }
-}, 5 * 60 * 1000);
+}, 30 * 1000);
+
+// Force cleanup function
+function forceCleanupConnections() {
+  console.log('=== FORCING CONNECTION CLEANUP ===');
+  for (const [queryId, connectionInfo] of activeConnections.entries()) {
+    console.log('Force cleaning connection for query:', queryId);
+    if (connectionInfo.connection) {
+      if (connectionInfo.connection.release) {
+        try {
+          connectionInfo.connection.release();
+        } catch (e) {
+          console.error('Error force-releasing connection:', e);
+        }
+      }
+      if (connectionInfo.connection.destroy) {
+        try {
+          connectionInfo.connection.destroy();
+        } catch (e) {
+          console.error('Error force-destroying connection:', e);
+        }
+      }
+    }
+  }
+  activeConnections.clear();
+}
 
 app.post('/run-query', (req, res) => {
   try {
+    logConnectionPoolState();
+    
+    console.log('=== /run-query REQUEST DEBUG ===');
+    console.log('Request method:', req.method);
+    console.log('Request headers:', req.headers);
+    console.log('Request body type:', typeof req.body);
+    console.log('Request body:', req.body);
+    
     const query = req.body.sql;
     const queryId = req.body.queryId || Date.now().toString();
     
+    console.log('Extracted query:', query);
+    console.log('Query length:', query ? query.length : 'undefined');
+    console.log('Query ID:', queryId);
+    
     if (!query) {
+      console.log('ERROR: No query provided');
       return res.status(400).json({ error: 'SQL query is missing from the request body.' });
     }
 
@@ -482,9 +577,28 @@ app.post('/run-query', (req, res) => {
 
         connection.query(query, (error, results, fields) => {
           // Always clean up connection and remove from active connections
+          console.log('=== QUERY COMPLETED - CLEANING UP ===');
           activeConnections.delete(queryId);
-          if (connection && connection.release) {
-            connection.release();
+          
+          // Force connection release
+          if (connection) {
+            if (connection.release) {
+              try {
+                connection.release();
+                console.log('Connection released successfully');
+              } catch (releaseError) {
+                console.error('Error releasing connection:', releaseError);
+              }
+            }
+            // Additional cleanup
+            if (connection.destroy) {
+              try {
+                connection.destroy();
+                console.log('Connection destroyed as backup');
+              } catch (destroyError) {
+                console.error('Error destroying connection:', destroyError);
+              }
+            }
           }
           
           if (error) {
@@ -496,7 +610,43 @@ app.post('/run-query', (req, res) => {
           }
           
           try {
-            res.json({ results, fields });
+            console.log('=== SENDING SUCCESSFUL RESPONSE ===');
+            console.log('Results count:', results ? results.length : 'undefined');
+            console.log('Fields count:', fields ? fields.length : 'undefined');
+            const response = { results, fields };
+            console.log('Response object created successfully');
+            res.json(response);
+            console.log('Response sent successfully');
+            
+            // Force garbage collection hint
+            if (global.gc) {
+              global.gc();
+            }
+            
+            // Aggressive connection cleanup - close active connection pool after each query
+            setTimeout(async () => {
+              try {
+                // Get connection info BEFORE closing
+                const activeConnectionInfo = connectionManager.getActiveConnection();
+                
+                console.log('=== CLOSING ACTIVE CONNECTION POOL ===');
+                await connectionManager.closeActiveConnection();
+                console.log('Active connection closed successfully');
+                
+                // Reactivate the same connection if it existed
+                if (activeConnectionInfo && activeConnectionInfo.id) {
+                  console.log('=== REACTIVATING CONNECTION ===');
+                  const result = await connectionManager.activateConnection(activeConnectionInfo.id);
+                  if (result.success) {
+                    console.log('Connection reactivated successfully');
+                  } else {
+                    console.error('Failed to reactivate connection:', result.error);
+                  }
+                }
+              } catch (cleanupError) {
+                console.error('Error during connection cleanup:', cleanupError);
+              }
+            }, 1000); // Give time for response to be sent
           } catch (jsonError) {
             console.error('Error sending JSON response:', jsonError);
             if (!res.headersSent) {
@@ -542,6 +692,28 @@ function executeQueryOnActiveConnection(activePool, connectionInfo, query, query
         
         try {
           res.json({ results, fields });
+          
+          // Apply same aggressive cleanup for active connections
+          setTimeout(async () => {
+            try {
+              const activeConnectionInfo = connectionManager.getActiveConnection();
+              console.log('=== CLOSING ACTIVE CONNECTION POOL (Active Path) ===');
+              await connectionManager.closeActiveConnection();
+              console.log('Active connection closed successfully (Active Path)');
+              
+              if (activeConnectionInfo && activeConnectionInfo.id) {
+                console.log('=== REACTIVATING CONNECTION (Active Path) ===');
+                const result = await connectionManager.activateConnection(activeConnectionInfo.id);
+                if (result.success) {
+                  console.log('Connection reactivated successfully (Active Path)');
+                } else {
+                  console.error('Failed to reactivate connection (Active Path):', result.error);
+                }
+              }
+            } catch (cleanupError) {
+              console.error('Error during connection cleanup (Active Path):', cleanupError);
+            }
+          }, 1000);
         } catch (jsonError) {
           console.error('Error sending JSON response:', jsonError);
           if (!res.headersSent) {
@@ -919,6 +1091,20 @@ app.delete('/api/favourite-queries/:id', (req, res) => {
     res.json({ success: true });
   } else {
     res.status(500).json({ error: 'Failed to delete query' });
+  }
+});
+
+// Serve main page for non-API routes (this should be the very last route)
+app.get('*', (req, res) => {
+  // Only serve index for non-API requests
+  if (!req.path.startsWith('/run-query') && !req.path.startsWith('/api/') && !req.path.startsWith('/schema') && !req.path.startsWith('/cancel-query')) {
+    res.render('index');
+  } else {
+    console.log('=== UNMATCHED API REQUEST ===');
+    console.log('Method:', req.method);
+    console.log('URL:', req.originalUrl);
+    console.log('Path:', req.path);
+    res.status(404).json({ error: 'API endpoint not found' });
   }
 });
 
