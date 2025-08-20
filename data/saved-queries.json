@@ -1,5 +1,18 @@
 [
   {
+    "id": "1755681820667",
+    "name": "Query 1",
+    "query": "SELECT concat(d.date, ' ', p.time_period) as date_time,\n\t\tSUM(d.usage_amount) AS usage_amount \n\tfrom\n\t\tusages5 d\n\tLEFT JOIN\n\t\tref_periods p ON p.id = d.period_id\n\twhere\n\t\tspid = \"0310112050416706100028\"\n\tGROUP BY \n\t\tconcat(d.date, ' ', p.time_period)",
+    "createdAt": "2025-08-20T09:23:40.667Z"
+  },
+  {
+    "id": "1755678488402",
+    "name": "gja_spid_check",
+    "query": "SELECT concat(d.date, ' ', p.time_period) as date_time,\n\t\tSUM(d.usage_amount) AS usage_amount \n\tfrom\n\t\tusages5 d\n\tLEFT JOIN\n\t\tref_periods p ON p.id = d.period_id\n\twhere\n\t\tspid = \"0310112050630202200739\"\n\tGROUP BY \n\t\tconcat(d.date, ' ', p.time_period)",
+    "createdAt": "2025-08-20T08:28:08.402Z",
+    "updatedAt": "2025-08-20T08:54:33.278Z"
+  },
+  {
     "id": "1752414036108",
     "name": "kakutei_master_check",
     "query": "select a.id as account_id, k.spid, k.filename, k.meter_read_date, max(k.maximum_demand), k.usage_amount_monthly\n\tfrom data_kakutei k\n  left join spids_ep s on s.spid = k.spid\n  left join accounts_ep a on a.id = s.account_id\n  group by a.id, k.spid, k.filename, k.meter_read_date, k.usage_amount_monthly\n  order by a.id desc, k.meter_read_date desc, k.spid, k.filename",

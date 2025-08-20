@@ -35,7 +35,14 @@ if (isProduction) {
 } else {
   dbConfig.host = process.env.DB_HOST;
 }
-const pool = mysql.createPool(dbConfig);
+const pool = mysql.createPool({
+  ...dbConfig,
+  connectionLimit: 10,
+  acquireTimeout: 60000,
+  timeout: 60000,
+  reconnect: true,
+  idleTimeout: 300000
+});
 
 // Initialize connection manager
 const connectionManager = new ConnectionManager();
@@ -421,47 +428,87 @@ function generateCsvFromResults(results) {
 // Store active connections for cancellation
 const activeConnections = new Map();
 
-app.post('/run-query', (req, res) => {
-  const query = req.body.sql;
-  const queryId = req.body.queryId || Date.now().toString();
+// Periodic cleanup of stale connections (every 5 minutes)
+setInterval(() => {
+  const now = Date.now();
+  const staleTimeout = 5 * 60 * 1000; // 5 minutes
   
-  if (!query) {
-    return res.status(400).json({ error: 'SQL query is missing from the request body.' });
-  }
-
-  // Check if there's an active connection from connection manager
-  const activePool = connectionManager.getActivePool();
-  const activeConnectionInfo = connectionManager.getActiveConnection();
-  
-  if (activePool && activeConnectionInfo) {
-    // Use the active connection from connection manager
-    executeQueryOnActiveConnection(activePool, activeConnectionInfo, query, queryId, res);
-  } else {
-    // Fallback to the original pool for backward compatibility
-    pool.getConnection((err, connection) => {
-      if (err) {
-        console.error('Error getting database connection:', err);
-        return res.status(500).json({ error: 'Database connection error', details: err.message });
-      }
-
-      // Store connection info for potential cancellation
-      activeConnections.set(queryId, { connection, startTime: Date.now() });
-
-      connection.query(query, (error, results, fields) => {
-        // Remove from active connections when query completes
-        activeConnections.delete(queryId);
-        connection.release();
-        
-        if (error) {
-          console.error('Error executing query:', error);
-          if (error.code === 'ER_QUERY_INTERRUPTED' || error.sqlState === '70100') {
-            return res.status(499).json({ error: 'Query was cancelled', cancelled: true });
-          }
-          return res.status(500).json({ error: 'Error executing query', details: error.message });
+  for (const [queryId, connectionInfo] of activeConnections.entries()) {
+    if (now - connectionInfo.startTime > staleTimeout) {
+      console.log('Cleaning up stale connection for query:', queryId);
+      if (connectionInfo.connection && connectionInfo.connection.release) {
+        try {
+          connectionInfo.connection.release();
+        } catch (e) {
+          console.error('Error releasing stale connection:', e);
         }
-        res.json({ results, fields });
+      }
+      activeConnections.delete(queryId);
+    }
+  }
+}, 5 * 60 * 1000);
+
+app.post('/run-query', (req, res) => {
+  try {
+    const query = req.body.sql;
+    const queryId = req.body.queryId || Date.now().toString();
+    
+    if (!query) {
+      return res.status(400).json({ error: 'SQL query is missing from the request body.' });
+    }
+
+    // Check if there's an active connection from connection manager
+    const activePool = connectionManager.getActivePool();
+    const activeConnectionInfo = connectionManager.getActiveConnection();
+    
+    if (activePool && activeConnectionInfo) {
+      // Use the active connection from connection manager
+      executeQueryOnActiveConnection(activePool, activeConnectionInfo, query, queryId, res);
+    } else {
+      // Check if fallback pool exists
+      if (!pool) {
+        return res.status(500).json({ error: 'No database connection available. Please create a connection first.' });
+      }
+      
+      // Fallback to the original pool for backward compatibility
+      pool.getConnection((err, connection) => {
+        if (err) {
+          console.error('Error getting database connection:', err);
+          return res.status(500).json({ error: 'Database connection error', details: err.message });
+        }
+
+        // Store connection info for potential cancellation
+        activeConnections.set(queryId, { connection, startTime: Date.now() });
+
+        connection.query(query, (error, results, fields) => {
+          // Always clean up connection and remove from active connections
+          activeConnections.delete(queryId);
+          if (connection && connection.release) {
+            connection.release();
+          }
+          
+          if (error) {
+            console.error('Error executing query:', error);
+            if (error.code === 'ER_QUERY_INTERRUPTED' || error.sqlState === '70100') {
+              return res.status(499).json({ error: 'Query was cancelled', cancelled: true });
+            }
+            return res.status(500).json({ error: 'Error executing query', details: error.message });
+          }
+          
+          try {
+            res.json({ results, fields });
+          } catch (jsonError) {
+            console.error('Error sending JSON response:', jsonError);
+            if (!res.headersSent) {
+              res.status(500).json({ error: 'Error sending response' });
+            }
+          }
+        });
       });
-    });
+    }
+  } catch (error) {
+    console.error('Unexpected error in /run-query:', error);
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 
@@ -479,8 +526,11 @@ function executeQueryOnActiveConnection(activePool, connectionInfo, query, query
       activeConnections.set(queryId, { connection, startTime: Date.now() });
 
       connection.query(query, (error, results, fields) => {
+        // Always clean up connection and remove from active connections
         activeConnections.delete(queryId);
-        connection.release();
+        if (connection && connection.release) {
+          connection.release();
+        }
         
         if (error) {
           console.error('Error executing query:', error);
@@ -489,7 +539,15 @@ function executeQueryOnActiveConnection(activePool, connectionInfo, query, query
           }
           return res.status(500).json({ error: 'Error executing query', details: error.message });
         }
-        res.json({ results, fields });
+        
+        try {
+          res.json({ results, fields });
+        } catch (jsonError) {
+          console.error('Error sending JSON response:', jsonError);
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Error sending response' });
+          }
+        }
       });
     });
   } else if (dbType === 'postgresql') {

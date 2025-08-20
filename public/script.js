@@ -494,7 +494,7 @@ class ConnectionManager {
             database: document.getElementById('connection-database').value,
             name: document.getElementById('connection-name').value,
             ssl: document.getElementById('connection-ssl').checked,
-            color: document.getElementById('connection-color').value,
+            color: '#007bff', // Default color since connection-color element doesn't exist
         };
     }
 }
