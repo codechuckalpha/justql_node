@@ -308,6 +308,33 @@ body {
   background: #888;
 }
 
+/* Schema resizer styles */
+.schema-resizer {
+  height: 8px;
+  background: #2d2d30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.schema-resizer:hover {
+  background: #3e3e3e;
+}
+
+.schema-resizer .resizer-line {
+  width: 40px;
+  height: 2px;
+  background: #666;
+  border-radius: 1px;
+}
+
+.schema-resizer:hover .resizer-line {
+  background: #888;
+}
+
 /* Table item styles */
 .table-item {
   margin-bottom: 4px;

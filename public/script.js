@@ -50,6 +50,54 @@ document.querySelectorAll('.section-header').forEach(header => {
     });
 });
 
+// Handle schema resizer drag functionality
+(function() {
+    const resizer = document.getElementById('schema-resizer');
+    if (!resizer) return;
+
+    const tablesSection = resizer.previousElementSibling;
+    const viewsHeader = resizer.nextElementSibling;
+    const viewsSection = viewsHeader ? viewsHeader.nextElementSibling : null;
+
+    let isResizing = false;
+    let startY = 0;
+    let startTablesHeight = 0;
+
+    resizer.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        startY = e.clientY;
+        startTablesHeight = tablesSection.offsetHeight;
+
+        // Prevent text selection while dragging
+        e.preventDefault();
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'ns-resize';
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+
+        const deltaY = e.clientY - startY;
+        const newHeight = startTablesHeight + deltaY;
+
+        // Set minimum and maximum heights
+        const minHeight = 50;
+        const maxHeight = 600;
+
+        if (newHeight >= minHeight && newHeight <= maxHeight) {
+            tablesSection.style.maxHeight = newHeight + 'px';
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.userSelect = '';
+            document.body.style.cursor = '';
+        }
+    });
+})();
+
 // Connection Management
 class ConnectionManager {
     constructor() {
