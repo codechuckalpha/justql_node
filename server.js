@@ -293,99 +293,34 @@ function processSchemaResults(results) {
 // Get complete table schema for CREATE TABLE script
 app.get('/schema/table/:tableName', (req, res) => {
   const tableName = req.params.tableName;
-  
+
   pool.getConnection((err, connection) => {
     if (err) {
       console.error('Error getting database connection:', err);
       return res.status(500).json({ error: 'Database connection error', details: err.message });
     }
 
-    // Get complete table information
-    const queries = {
-      // Basic column information
-      columns: `
-        SELECT 
-          COLUMN_NAME,
-          DATA_TYPE,
-          IS_NULLABLE,
-          COLUMN_DEFAULT,
-          COLUMN_KEY,
-          EXTRA,
-          CHARACTER_MAXIMUM_LENGTH,
-          NUMERIC_PRECISION,
-          NUMERIC_SCALE,
-          COLUMN_COMMENT
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = '${process.env.DB_NAME}' 
-        AND TABLE_NAME = '${tableName}'
-        ORDER BY ORDINAL_POSITION
-      `,
-      
-      // Index information
-      indexes: `
-        SELECT 
-          INDEX_NAME,
-          COLUMN_NAME,
-          NON_UNIQUE,
-          SEQ_IN_INDEX,
-          INDEX_TYPE,
-          COMMENT
-        FROM INFORMATION_SCHEMA.STATISTICS 
-        WHERE TABLE_SCHEMA = '${process.env.DB_NAME}' 
-        AND TABLE_NAME = '${tableName}'
-        ORDER BY INDEX_NAME, SEQ_IN_INDEX
-      `,
-      
-      // Foreign key information
-      foreignKeys: `
-        SELECT 
-          CONSTRAINT_NAME,
-          COLUMN_NAME,
-          REFERENCED_TABLE_NAME,
-          REFERENCED_COLUMN_NAME,
-          UPDATE_RULE,
-          DELETE_RULE
-        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-        WHERE TABLE_SCHEMA = '${process.env.DB_NAME}' 
-        AND TABLE_NAME = '${tableName}'
-        AND REFERENCED_TABLE_NAME IS NOT NULL
-      `,
-      
-      // Table information
-      tableInfo: `
-        SELECT 
-          ENGINE,
-          TABLE_COLLATION,
-          TABLE_COMMENT,
-          AUTO_INCREMENT
-        FROM INFORMATION_SCHEMA.TABLES 
-        WHERE TABLE_SCHEMA = '${process.env.DB_NAME}' 
-        AND TABLE_NAME = '${tableName}'
-      `
-    };
+    // Use SHOW CREATE TABLE which works with read-only permissions
+    const query = `SHOW CREATE TABLE \`${tableName}\``;
 
-    const results = {};
-    let completed = 0;
-    const totalQueries = Object.keys(queries).length;
+    connection.query(query, (error, results) => {
+      connection.release();
 
-    Object.keys(queries).forEach(queryType => {
-      connection.query(queries[queryType], (error, queryResults) => {
-        if (error) {
-          console.error(`Error fetching ${queryType} for ${tableName}:`, error);
-          results[queryType] = [];
-        } else {
-          results[queryType] = queryResults;
-        }
-        
-        completed++;
-        if (completed === totalQueries) {
-          connection.release();
-          res.json({
-            tableName: tableName,
-            ...results
-          });
-        }
-      });
+      if (error) {
+        console.error(`Error fetching CREATE TABLE for ${tableName}:`, error);
+        return res.status(500).json({ error: 'Failed to fetch table schema', details: error.message });
+      }
+
+      // SHOW CREATE TABLE returns a result with 'Create Table' column
+      if (results && results.length > 0) {
+        const createTableStatement = results[0]['Create Table'];
+        res.json({
+          tableName: tableName,
+          createStatement: createTableStatement
+        });
+      } else {
+        res.status(404).json({ error: 'Table not found' });
+      }
     });
   });
 });
@@ -393,44 +328,128 @@ app.get('/schema/table/:tableName', (req, res) => {
 // Export table to CSV
 app.get('/export/csv/:tableName', (req, res) => {
   const tableName = req.params.tableName;
-  
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error('Error getting database connection:', err);
-      return res.status(500).json({ error: 'Database connection error', details: err.message });
-    }
 
+  console.log('=== CSV EXPORT REQUEST ===');
+  console.log('Table name:', tableName);
+
+  try {
     // Sanitize table name to prevent SQL injection
     const sanitizedTableName = tableName.replace(/[^a-zA-Z0-9_]/g, '');
-    
+
     // Query to get all data from the table
-    const query = `SELECT * FROM \`${sanitizedTableName}\``;
-    
-    connection.query(query, (error, results) => {
-      connection.release();
-      
-      if (error) {
-        console.error(`Error exporting table ${tableName} to CSV:`, error);
-        return res.status(500).json({ error: 'Query execution error', details: error.message });
+    const query = `SELECT * FROM \`${sanitizedTableName}\` LIMIT 10000`;
+
+    console.log('Export query:', query);
+
+    // Check if there's an active connection from connection manager
+    const activePool = connectionManager?.getActivePool();
+    const activeConnectionInfo = connectionManager?.getActiveConnection();
+
+    console.log('Active pool exists:', !!activePool);
+    console.log('Active connection exists:', !!activeConnectionInfo);
+
+    if (activePool && activeConnectionInfo) {
+      console.log('Using active connection pool for CSV export');
+      const dbType = activeConnectionInfo.type;
+
+      if (dbType === 'mysql') {
+        activePool.getConnection((err, connection) => {
+          if (err) {
+            console.error('Error getting active MySQL connection:', err);
+            return res.status(500).json({ error: 'Database connection error', details: err.message });
+          }
+
+          connection.query(query, (error, results) => {
+            connection.release();
+
+            if (error) {
+              console.error(`Error exporting table ${tableName} to CSV:`, error);
+              return res.status(500).json({ error: 'Query execution error', details: error.message });
+            }
+
+            if (!results || results.length === 0) {
+              res.setHeader('Content-Type', 'text/csv');
+              res.setHeader('Content-Disposition', `attachment; filename="${tableName}.csv"`);
+              return res.send('');
+            }
+
+            const csvContent = generateCsvFromResults(results);
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', `attachment; filename="${tableName}.csv"`);
+            res.send(csvContent);
+          });
+        });
+      } else if (dbType === 'postgresql') {
+        activePool.connect((err, client, release) => {
+          if (err) {
+            console.error('Error getting active PostgreSQL connection:', err);
+            return res.status(500).json({ error: 'Database connection error', details: err.message });
+          }
+
+          client.query(query, (error, result) => {
+            release();
+
+            if (error) {
+              console.error(`Error exporting table ${tableName} to CSV:`, error);
+              return res.status(500).json({ error: 'Query execution error', details: error.message });
+            }
+
+            const results = result.rows;
+
+            if (!results || results.length === 0) {
+              res.setHeader('Content-Type', 'text/csv');
+              res.setHeader('Content-Disposition', `attachment; filename="${tableName}.csv"`);
+              return res.send('');
+            }
+
+            const csvContent = generateCsvFromResults(results);
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', `attachment; filename="${tableName}.csv"`);
+            res.send(csvContent);
+          });
+        });
+      } else {
+        return res.status(500).json({ error: 'Unsupported database type for CSV export' });
+      }
+    } else {
+      console.log('Using fallback pool for CSV export');
+
+      if (!pool) {
+        console.log('ERROR: No fallback pool available');
+        return res.status(500).json({ error: 'No database connection available', details: 'Please create a connection first' });
       }
 
-      if (!results || results.length === 0) {
-        // Handle empty table
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="${tableName}.csv"`);
-        return res.send('');
-      }
+      pool.getConnection((err, connection) => {
+        if (err) {
+          console.error('Error getting database connection:', err);
+          return res.status(500).json({ error: 'Database connection error', details: err.message });
+        }
 
-      // Generate CSV content
-      const csvContent = generateCsvFromResults(results);
-      
-      // Set headers for CSV download
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="${tableName}.csv"`);
-      
-      res.send(csvContent);
-    });
-  });
+        connection.query(query, (error, results) => {
+          connection.release();
+
+          if (error) {
+            console.error(`Error exporting table ${tableName} to CSV:`, error);
+            return res.status(500).json({ error: 'Query execution error', details: error.message });
+          }
+
+          if (!results || results.length === 0) {
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', `attachment; filename="${tableName}.csv"`);
+            return res.send('');
+          }
+
+          const csvContent = generateCsvFromResults(results);
+          res.setHeader('Content-Type', 'text/csv');
+          res.setHeader('Content-Disposition', `attachment; filename="${tableName}.csv"`);
+          res.send(csvContent);
+        });
+      });
+    }
+  } catch (error) {
+    console.error('Error in CSV export:', error);
+    return res.status(500).json({ error: 'Export failed', details: error.message });
+  }
 });
 
 // Helper function to generate CSV from query results

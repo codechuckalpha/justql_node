@@ -1,5 +1,11 @@
 [
   {
+    "id": "1764851279022",
+    "name": "Query 1",
+    "query": "-- Note: This is a simplified CREATE TABLE statement generated from basic schema information.\n-- It may not include all indexes, constraints, and table options.\n\nCREATE TABLE `bilateral_contracts` (\n  `id` INT NOT NULL,\n  `counterparty_id` INT,\n  `region_id` INT NOT NULL,\n  `buy_sell` VARCHAR DEFAULT 'buy',\n  `start_date` DATE,\n  `end_date` DATE,\n  `contract_volume_30minutes` INT,\n  `contract_price` DECIMAL,\n  `base_charge` VARCHAR,\n  `product_type_id` INT,\n  `profile_type_id` INT,\n  `index_type_id` INT,\n  `delivery_type_id` INT,\n  `day_type` VARCHAR,\n  `contract_date` DATE,\n  `period_id_start` INT DEFAULT '1',\n  `period_id_end` INT DEFAULT '48',\n  `created_at` DATETIME,\n  `cap_floor` DECIMAL,\n  `premium` DECIMAL,\n  `file` VARCHAR,\n  `is_occto` TINYINT DEFAULT '1',\n  `modified_at` DATETIME,\n  PRIMARY KEY (`id`)\n);\n\nbilaterals_st",
+    "createdAt": "2025-12-04T12:27:59.022Z"
+  },
+  {
     "id": "1752414036108",
     "name": "kakutei_master_check",
     "query": "select a.id as account_id, k.spid, k.filename, k.meter_read_date, max(k.maximum_demand), k.usage_amount_monthly\n\tfrom data_kakutei k\n  left join spids_ep s on s.spid = k.spid\n  left join accounts_ep a on a.id = s.account_id\n  group by a.id, k.spid, k.filename, k.meter_read_date, k.usage_amount_monthly\n  order by a.id desc, k.meter_read_date desc, k.spid, k.filename",

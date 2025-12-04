@@ -678,194 +678,101 @@ async function generateCreateScript(tableName) {
         if (currentLoadedQuery || isQueryModified) {
             await autoSaveCurrentQuery();
         }
-        
-        console.log(`Fetching complete schema for table: ${tableName}`);
-        const response = await fetch(`/schema/table/${tableName}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+
+        console.log(`Fetching CREATE TABLE statement for: ${tableName}`);
+
+        // Try to get the full CREATE TABLE statement from the database
+        try {
+            const response = await fetch(`/schema/table/${tableName}`);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('CREATE TABLE statement loaded:', data);
+
+                // Set the script in the editor
+                const textarea = document.getElementById('sql-textarea');
+                textarea.value = data.createStatement;
+
+                // Reset query state
+                currentLoadedQuery = null;
+                isQueryModified = false;
+                updateQueryInfo();
+
+                console.log(`Generated CREATE TABLE script for: ${tableName}`);
+                return;
+            }
+        } catch (err) {
+            console.log('SHOW CREATE TABLE failed, using fallback method:', err.message);
         }
-        
-        const schema = await response.json();
-        console.log('Complete schema loaded:', schema);
-        
-        // Generate the CREATE TABLE script
-        const createScript = buildCreateTableScript(schema);
-        
+
+        // Fallback: Generate a basic CREATE TABLE from schema/detailed data
+        console.log('Using fallback method to generate CREATE TABLE');
+        const schemaResponse = await fetch('/schema/detailed');
+
+        if (!schemaResponse.ok) {
+            throw new Error('Failed to fetch schema information');
+        }
+
+        const schema = await schemaResponse.json();
+        const table = schema.tables.find(t => t.name === tableName);
+
+        if (!table) {
+            throw new Error(`Table ${tableName} not found in schema`);
+        }
+
+        // Generate a basic CREATE TABLE statement
+        let createScript = `CREATE TABLE \`${tableName}\` (\n`;
+
+        const columnDefinitions = table.columns.map(col => {
+            // Basic column definition with name and type
+            let def = `  \`${col.name}\` ${col.type.toUpperCase()}`;
+
+            // Add NOT NULL if the column is not nullable
+            if (!col.nullable) {
+                def += ' NOT NULL';
+            }
+
+            // Add DEFAULT if available
+            if (col.default !== null && col.default !== undefined) {
+                if (col.default === 'CURRENT_TIMESTAMP' || col.default === 'NULL') {
+                    def += ` DEFAULT ${col.default}`;
+                } else {
+                    def += ` DEFAULT '${col.default}'`;
+                }
+            }
+
+            return def;
+        });
+
+        createScript += columnDefinitions.join(',\n');
+
+        // Add primary key if available
+        const primaryKeys = table.columns.filter(col => col.key === 'PRI');
+        if (primaryKeys.length > 0) {
+            const pkColumns = primaryKeys.map(col => `\`${col.name}\``).join(', ');
+            createScript += `,\n  PRIMARY KEY (${pkColumns})`;
+        }
+
+        createScript += '\n);';
+
+        // Add a comment explaining this is a simplified version
+        createScript = `-- Note: This is a simplified CREATE TABLE statement generated from basic schema information.\n-- It may not include all indexes, constraints, and table options.\n\n${createScript}`;
+
         // Set the script in the editor
         const textarea = document.getElementById('sql-textarea');
         textarea.value = createScript;
-        
+
         // Reset query state
         currentLoadedQuery = null;
         isQueryModified = false;
         updateQueryInfo();
-        
-        console.log(`Generated CREATE TABLE script for: ${tableName}`);
-        
+
+        console.log(`Generated simplified CREATE TABLE script for: ${tableName}`);
+
     } catch (error) {
         console.error('Error generating CREATE script:', error);
-        // You might want to show a user-friendly error message here
+        alert(`Failed to generate CREATE TABLE script: ${error.message}`);
     }
-}
-
-// Function to build the CREATE TABLE script from schema data
-function buildCreateTableScript(schema) {
-    const { tableName, columns, indexes, foreignKeys, tableInfo } = schema;
-    
-    let script = `CREATE TABLE \`${tableName}\` (\n`;
-    
-    // Add columns
-    const columnDefinitions = columns.map(col => {
-        let definition = `  \`${col.COLUMN_NAME}\` ${formatDataType(col)}`;
-        
-        // Add NOT NULL
-        if (col.IS_NULLABLE === 'NO') {
-            definition += ' NOT NULL';
-        }
-        
-        // Add AUTO_INCREMENT
-        if (col.EXTRA && col.EXTRA.includes('auto_increment')) {
-            definition += ' AUTO_INCREMENT';
-        }
-        
-        // Add DEFAULT
-        if (col.COLUMN_DEFAULT !== null && col.COLUMN_DEFAULT !== undefined) {
-            if (col.COLUMN_DEFAULT === 'CURRENT_TIMESTAMP') {
-                definition += ` DEFAULT ${col.COLUMN_DEFAULT}`;
-            } else {
-                definition += ` DEFAULT '${col.COLUMN_DEFAULT}'`;
-            }
-        }
-        
-        // Add COMMENT
-        if (col.COLUMN_COMMENT) {
-            definition += ` COMMENT '${col.COLUMN_COMMENT.replace(/'/g, "''")}'`;
-        }
-        
-        return definition;
-    });
-    
-    script += columnDefinitions.join(',\n');
-    
-    // Add primary key
-    const primaryKeyColumns = columns.filter(col => col.COLUMN_KEY === 'PRI');
-    if (primaryKeyColumns.length > 0) {
-        const pkColumns = primaryKeyColumns.map(col => `\`${col.COLUMN_NAME}\``).join(', ');
-        script += `,\n  PRIMARY KEY (${pkColumns})`;
-    }
-    
-    // Add unique keys
-    const uniqueIndexes = groupIndexes(indexes).filter(idx => idx.name !== 'PRIMARY' && !idx.nonUnique);
-    uniqueIndexes.forEach(idx => {
-        const columns = idx.columns.map(col => `\`${col}\``).join(', ');
-        script += `,\n  UNIQUE KEY \`${idx.name}\` (${columns})`;
-    });
-    
-    // Add regular indexes
-    const regularIndexes = groupIndexes(indexes).filter(idx => idx.name !== 'PRIMARY' && idx.nonUnique);
-    regularIndexes.forEach(idx => {
-        const columns = idx.columns.map(col => `\`${col}\``).join(', ');
-        script += `,\n  KEY \`${idx.name}\` (${columns})`;
-    });
-    
-    // Add foreign keys
-    if (foreignKeys && foreignKeys.length > 0) {
-        const fkGroups = groupForeignKeys(foreignKeys);
-        fkGroups.forEach(fk => {
-            const localColumns = fk.columns.map(col => `\`${col.local}\``).join(', ');
-            const refColumns = fk.columns.map(col => `\`${col.referenced}\``).join(', ');
-            script += `,\n  CONSTRAINT \`${fk.name}\` FOREIGN KEY (${localColumns}) REFERENCES \`${fk.referencedTable}\` (${refColumns})`;
-            
-            if (fk.updateRule && fk.updateRule !== 'RESTRICT') {
-                script += ` ON UPDATE ${fk.updateRule}`;
-            }
-            if (fk.deleteRule && fk.deleteRule !== 'RESTRICT') {
-                script += ` ON DELETE ${fk.deleteRule}`;
-            }
-        });
-    }
-    
-    script += '\n)';
-    
-    // Add table options
-    if (tableInfo && tableInfo.length > 0) {
-        const info = tableInfo[0];
-        if (info.ENGINE) {
-            script += ` ENGINE=${info.ENGINE}`;
-        }
-        if (info.AUTO_INCREMENT && info.AUTO_INCREMENT > 1) {
-            script += ` AUTO_INCREMENT=${info.AUTO_INCREMENT}`;
-        }
-        if (info.TABLE_COLLATION) {
-            script += ` DEFAULT CHARSET=${info.TABLE_COLLATION.split('_')[0]} COLLATE=${info.TABLE_COLLATION}`;
-        }
-        if (info.TABLE_COMMENT) {
-            script += ` COMMENT='${info.TABLE_COMMENT.replace(/'/g, "''")}'`;
-        }
-    }
-    
-    script += ';';
-    
-    return script;
-}
-
-// Helper function to format data types
-function formatDataType(column) {
-    let dataType = column.DATA_TYPE.toUpperCase();
-    
-    if (column.CHARACTER_MAXIMUM_LENGTH) {
-        dataType += `(${column.CHARACTER_MAXIMUM_LENGTH})`;
-    } else if (column.NUMERIC_PRECISION) {
-        if (column.NUMERIC_SCALE) {
-            dataType += `(${column.NUMERIC_PRECISION},${column.NUMERIC_SCALE})`;
-        } else {
-            dataType += `(${column.NUMERIC_PRECISION})`;
-        }
-    }
-    
-    return dataType;
-}
-
-// Helper function to group indexes
-function groupIndexes(indexes) {
-    const grouped = {};
-    
-    indexes.forEach(idx => {
-        if (!grouped[idx.INDEX_NAME]) {
-            grouped[idx.INDEX_NAME] = {
-                name: idx.INDEX_NAME,
-                nonUnique: idx.NON_UNIQUE === 1,
-                columns: []
-            };
-        }
-        grouped[idx.INDEX_NAME].columns.push(idx.COLUMN_NAME);
-    });
-    
-    return Object.values(grouped);
-}
-
-// Helper function to group foreign keys
-function groupForeignKeys(foreignKeys) {
-    const grouped = {};
-    
-    foreignKeys.forEach(fk => {
-        if (!grouped[fk.CONSTRAINT_NAME]) {
-            grouped[fk.CONSTRAINT_NAME] = {
-                name: fk.CONSTRAINT_NAME,
-                referencedTable: fk.REFERENCED_TABLE_NAME,
-                updateRule: fk.UPDATE_RULE,
-                deleteRule: fk.DELETE_RULE,
-                columns: []
-            };
-        }
-        grouped[fk.CONSTRAINT_NAME].columns.push({
-            local: fk.COLUMN_NAME,
-            referenced: fk.REFERENCED_COLUMN_NAME
-        });
-    });
-    
-    return Object.values(grouped);
 }
 
 // Function to copy text to clipboard
@@ -898,22 +805,47 @@ async function copyToClipboard(text) {
 async function exportTableToCsv(tableName) {
     try {
         console.log(`Exporting table to CSV: ${tableName}`);
-        
-        // Create a link to download the CSV
-        const downloadUrl = `/export/csv/${tableName}`;
-        
-        // Create a temporary link element and trigger download
+
+        // First, check if the endpoint will work by fetching it
+        const response = await fetch(`/export/csv/${tableName}`);
+
+        if (!response.ok) {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const errorData = await response.json();
+                throw new Error(errorData.details || errorData.error || 'Failed to export table');
+            } else {
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            }
+        }
+
+        // Get the CSV content as text
+        const csvContent = await response.text();
+
+        if (!csvContent || csvContent.trim().length === 0) {
+            alert(`Table "${tableName}" is empty. No data to export.`);
+            return;
+        }
+
+        // Create a blob and download it
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
         const link = document.createElement('a');
-        link.href = downloadUrl;
+        link.href = url;
         link.download = `${tableName}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
-        console.log(`CSV export initiated for: ${tableName}`);
-        
+
+        // Clean up the URL object
+        URL.revokeObjectURL(url);
+
+        console.log(`CSV export completed for: ${tableName}`);
+
     } catch (error) {
         console.error('Error exporting table to CSV:', error);
+        alert(`Failed to export table to CSV: ${error.message}`);
     }
 }
 
