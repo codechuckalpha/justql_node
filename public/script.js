@@ -98,6 +98,98 @@ document.querySelectorAll('.section-header').forEach(header => {
     });
 })();
 
+// Handle favourites resizer drag functionality
+(function() {
+    const resizer = document.getElementById('favourites-resizer');
+    if (!resizer) return;
+
+    const favouritesSection = resizer.previousElementSibling;
+
+    let isResizing = false;
+    let startY = 0;
+    let startFavouritesHeight = 0;
+
+    resizer.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        startY = e.clientY;
+        startFavouritesHeight = favouritesSection.offsetHeight;
+
+        // Prevent text selection while dragging
+        e.preventDefault();
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'ns-resize';
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+
+        const deltaY = e.clientY - startY;
+        const newHeight = startFavouritesHeight + deltaY;
+
+        // Set minimum and maximum heights
+        const minHeight = 50;
+        const maxHeight = 600;
+
+        if (newHeight >= minHeight && newHeight <= maxHeight) {
+            favouritesSection.style.maxHeight = newHeight + 'px';
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.userSelect = '';
+            document.body.style.cursor = '';
+        }
+    });
+})();
+
+// Handle queries resizer drag functionality
+(function() {
+    const resizer = document.getElementById('queries-resizer');
+    if (!resizer) return;
+
+    const queriesSection = resizer.previousElementSibling;
+
+    let isResizing = false;
+    let startY = 0;
+    let startQueriesHeight = 0;
+
+    resizer.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        startY = e.clientY;
+        startQueriesHeight = queriesSection.offsetHeight;
+
+        // Prevent text selection while dragging
+        e.preventDefault();
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'ns-resize';
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+
+        const deltaY = e.clientY - startY;
+        const newHeight = startQueriesHeight + deltaY;
+
+        // Set minimum and maximum heights
+        const minHeight = 50;
+        const maxHeight = 600;
+
+        if (newHeight >= minHeight && newHeight <= maxHeight) {
+            queriesSection.style.maxHeight = newHeight + 'px';
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.userSelect = '';
+            document.body.style.cursor = '';
+        }
+    });
+})();
+
 // Connection Management
 class ConnectionManager {
     constructor() {
