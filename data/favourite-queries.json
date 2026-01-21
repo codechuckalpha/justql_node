@@ -30,5 +30,13 @@
     "createdAt": "2025-06-27T11:22:15.788Z",
     "updatedAt": "2025-06-27T14:49:51.253Z",
     "addedToFavourites": "2025-06-27T14:49:03.056Z"
+  },
+  {
+    "id": "1768968229996",
+    "name": "usage_aggregated_check",
+    "query": "select concat(d.date, ' ', p.time_period) as date_time,\n\t\tconcat(r.name, '-', d.connection_type_id) as region_conn_type,\n\t\tsum(d.usage_amount) as usage_amount\n\t\tfrom usages_aggregated d\n\t\tleft join ref_periods p on p.id = d.period_id\n\t\tleft join ref_regions r on r.id = d.region_id\n\t\twhere d.connection_type_id in(1,2)\n\t\tand d.date > current_date - interval 7 day\n\t\tgroup by concat(d.date, ' ', p.time_period),\n \t\tconcat(r.name, '-', d.connection_type_id)",
+    "createdAt": "2026-01-21T04:03:49.996Z",
+    "updatedAt": "2026-01-21T04:04:15.172Z",
+    "addedToFavourites": "2026-01-21T04:04:22.108Z"
   }
 ]
